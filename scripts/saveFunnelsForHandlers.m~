@@ -1,0 +1,11 @@
+
+for i = 1:5, 
+    Ktk{i} = funnel{i}.K; 
+    utk{i} = funnel{i}.u; 
+    xtk{i} = funnel{i}.x; 
+    ttk{i} = funnel{i}.t; 
+    Ptk{i} = funnel{i}.P; end
+for i = 1:4, for j = 1:5, Kik{j,i} = funnelIn{j,i}.K; uik{j,i} = funnelIn{j,i}.u; xik{j,i} = funnelIn{j,i}.x; tik{j,i} = funnelIn{j,i}.t; Pik{j,i} = funnelIn{j,i}.P; end, end
+for i = 1:5, Kjk{i} = funnelJoin{i}.K; ujk{i} = funnelJoin{i}.u; xjk{i} = funnelJoin{i}.x; tjk{i} = funnelJoin{i}.t; Pjk{i} = funnelJoin{i}.P; end
+
+save('~/testwithstruct.mat','ttk','xtk','utk','Ktk','Ptk','tik','xik','uik','Kik','Pik','tjk','xjk','ujk','Kjk','Pjk','aut')

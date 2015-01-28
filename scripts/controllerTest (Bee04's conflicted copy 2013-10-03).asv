@@ -1,0 +1,116 @@
+
+global Xk Uk K t
+
+% Model parameters
+n = 3;  
+n1 = 3;
+
+Hout = eye(2);
+if n == 3 && isCyclic
+    limsNonRegState = [-pi; pi];
+elseif n == 4 && ~isCyclic
+    limsNonRegState = [-1 -1; 1 1];
+end
+isCyclic1 = true;
+isCyclic = true;
+
+% LQR controller parameters
+S0 = 1e4*eye(n);   % Qf in terminal cost
+if n == 3
+    Q = @(t) 1e0*diag([100 100 0.0001]);
+elseif n == 4
+    Q = @(t) 1e0*diag([100 100 0.0001 0.0001]);
+end
+
+% R = @(t) 1e2*eye(2);
+R = @(t) diag([1e4 1e2]);
+
+initState = [0;0;0];
+% initState = [0;0;pi/2];
+initState1 = initState;
+if n == 4
+    tmp = initState(3);
+    initState1(3) = sin(tmp);
+    initState1(4) = cos(tmp);
+else
+    initState1 = initState;
+end
+initOutput = initState(1:2);
+
+goalState = [-10;1;3];
+% goalState = [-1;-10;3];
+goalState1 = goalState;
+if n == 4
+    tmp = goalState(3);
+    goalState1(3) = sin(tmp);
+    goalState1(4) = cos(tmp);
+else
+    goalState1 = goalState;
+end
+goalOutput = goalState(1:2);
+
+% initial valus of test traj
+% % X0 = initState1;
+X0 = [-0.5;-0.5;0];
+% X0 = [0.5;-0.5;0];
+% X0 = [-2.2793;    1.2588;   -3.1066];
+% X0 = [-2.2793;    0.5;   -3.1066];
+
+[t,Xk,Uk] = genNominalTrajectory(initState,[initOutput';goalOutput'],Hout,n1,isCyclic1);
+
+figure(10)
+clf
+hold on
+axis equal
+plot(Xk(:,1),Xk(:,2),'r')
+
+if n == 4
+    Xk1 = Xk(:,1:2);
+    Xk1(:,3) = sin(Xk(:,3));
+    Xk1(:,4) = cos(Xk(:,3));
+else
+    Xk1 = Xk;
+end
+[traject] = computeControllerNoFunnel(t,Xk1,Uk,S0,Q,R,Hout,n,isCyclic);
+
+Xk0 = traject.x;
+Uk0 = traject.u;
+K0 = traject.K;
+t0 = traject.t;
+
+figure(10)
+plot(Xk(:,1),Xk(:,2),'k')
+
+%%
+
+Xk = Xk0; Uk = Uk0; K = K0; t = t0;
+clear nrm K1 K2
+for i = 1:size(Xk,1), nrm(i) = norm(X0' - Xk(i,:)); end
+startIdx = find(min(nrm) == nrm)
+Xk(1:startIdx-1,:) = [];
+Uk(1:startIdx-1,:) = [];
+K(:,:,1:startIdx-1) = [];
+t(1:startIdx-1) = [];
+K1 = squeeze(K(1,:,:))';
+K2 = squeeze(K(2,:,:))';
+
+%         isinternal(ellTmp1(1),X0)
+if n == 3
+    [t2,Xk2] = ode45(@ CreateKinematicsNL, t, X0);
+elseif n == 4
+    [t2,Xk2] = ode45(@ CreateKinematicsNLAlt, t, X0);
+end    
+% sim('simCreateKinematicsNL');
+% Wrap theta from -pi to pi
+Xk1(:,3) = mod(Xk1(:,3)+pi,2*pi)-pi;
+
+%%
+figure(11)
+clf
+hold on 
+axis equal
+% plot(Xk1(:,1),Xk1(:,2))
+plot(Xk2(:,1),Xk2(:,2),'g')
+plot(Xk(:,1),Xk(:,2),'r')
+drawnow
+

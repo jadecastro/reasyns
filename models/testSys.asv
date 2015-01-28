@@ -1,0 +1,8 @@
+function [Xdot] = testSys(t, X)
+
+x1 = X(1);  x2 = X(2);
+
+f = [(-20*x1-5*x2);
+   (10*x1*x2-20*x2)];
+
+Xdot = f;

@@ -1,0 +1,533 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>gotoStay3regionsMap</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-09-13"><meta name="DC.source" content="gotoStay3regionsMap.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% Set up map</span>
+pix2m = 10/(100*2.65);
+
+<span class="comment">% Use a test map for now</span>
+bndPos = [145, 73]*pix2m;
+bndPoints = [0, 0; 261, 0; 261, 250; 0, 250]*pix2m;
+r1pos = [0, 0]*pix2m;
+r1points = [0, 0; 90, 0; 90, 134; 0, 134]*pix2m;
+r2pos = [90, 0]*pix2m;
+r2points = [0, 0; 50, 0; 50, 100; 0, 100]*pix2m;
+r3pos = [90, 0]*pix2m;
+r3points = [0, 0; 90, 0; 90, 134; 0, 134]*pix2m;
+
+vReg{1} = [
+    r1pos+r1points(1,:);
+    r1pos+r1points(2,:);
+    r1pos+r1points(3,:);
+    r1pos+r1points(4,:)];
+vReg{2} = [
+    r2pos+r2points(1,:);
+    r2pos+r2points(2,:);
+    r2pos+r2points(3,:);
+    r2pos+r2points(4,:)];
+vReg{3} = [
+    r2pos+r2points(4,:);
+    r2pos+r2points(3,:);
+    r2pos+r2points(2,:);
+    r3pos+r3points(2,:);
+    r3pos+r3points(3,:);
+    r3pos+r3points(4,:)];
+vBndOuter{1} = [
+    vReg{1}(1,:);
+    vReg{3}(4,:);
+    vReg{3}(5,:);
+    vReg{1}(4,:)];
+vBnd = vBndOuter;
+
+<span class="comment">% Bloated regions</span>
+dBloat = 0.2;
+<span class="comment">% positive bloat: smaller avoid regions</span>
+vRegB{1} = [
+    r1pos+r1points(1,:);
+    r1pos+r1points(2,:)-dBloat*[1 0];
+    r1pos+r1points(3,:)-dBloat*[1 0];
+    r1pos+r1points(4,:)];
+vRegB{2} = [
+    r2pos+r2points(1,:)-dBloat*[-1 0];
+    r2pos+r2points(2,:)-dBloat*[1 0];
+    r2pos+r2points(3,:)-dBloat*[1 1];
+    r2pos+r2points(4,:)-dBloat*[-1 1]];
+vRegB{3} = [
+    vReg{3}(1,:)-dBloat*[-1 -1];
+    vReg{3}(2,:)-dBloat*[-1 -1];
+    vReg{3}(3,:)-dBloat*[-1 0];
+    vReg{3}(4,:);
+    vReg{3}(5,:);
+    vReg{3}(6,:)-dBloat*[-1 0]];
+<span class="comment">% negative bloat: larger interior regions</span>
+vRegBN{1} = [
+    r1pos+r1points(1,:);
+    r1pos+r1points(2,:)+dBloat*[1 0];
+    r1pos+r1points(3,:)+dBloat*[1 0];
+    r1pos+r1points(4,:)];
+vRegBN{2} = [
+    r2pos+r2points(1,:)+dBloat*[-1 0];
+    r2pos+r2points(2,:)+dBloat*[1 0];
+    r2pos+r2points(3,:)+dBloat*[1 1];
+    r2pos+r2points(4,:)+dBloat*[-1 1]];
+vRegBN{3} = [
+    vReg{3}(1,:)+dBloat*[-1 -1];
+    vReg{3}(2,:)+dBloat*[-1 -1];
+    vReg{3}(3,:)+dBloat*[-1 0];
+    vReg{3}(4,:);
+    vReg{3}(5,:);
+    vReg{3}(6,:)+dBloat*[-1 0]];
+
+<span class="comment">% These regions are defined for checking if funnels are misbehaving... need</span>
+<span class="comment">% some conservatism</span>
+vBndOuterB{1} = [
+    vBndOuter{1}(1,:)+0.1*[-1 -1];
+    vBndOuter{1}(2,:)+0.1*[1 -1];
+    vBndOuter{1}(3,:)+0.1*[1 1];
+    vBndOuter{1}(4,:)+0.1*[-1 1]];
+vRegB2{1} = [
+    r1pos+r1points(1,:);
+    r1pos+r1points(2,:)-(dBloat+0.1)*[1 0];
+    r1pos+r1points(3,:)-(dBloat+0.1)*[1 0];
+    r1pos+r1points(4,:)];
+vRegB2{2} = [
+    r2pos+r2points(1,:)-(dBloat+0.1)*[-1 0];
+    r2pos+r2points(2,:)-(dBloat+0.1)*[1 0];
+    r2pos+r2points(3,:)-(dBloat+0.1)*[1 1];
+    r2pos+r2points(4,:)-(dBloat+0.1)*[-1 1]];
+
+vRegB2{3} = [
+    vReg{3}(1,:)-(dBloat+0.1)*[-1 -1];
+    vReg{3}(2,:)-(dBloat+0.1)*[-1 -1];
+    vReg{3}(3,:)-(dBloat+0.1)*[-1 0];
+    vReg{3}(4,:);
+    vReg{3}(5,:);
+    vReg{3}(6,:)-(dBloat+0.1)*[-1 0]];
+
+
+dBloat = 0;
+vRegBN2{1} = [
+    r1pos+r1points(1,:);
+    r1pos+r1points(2,:)+(dBloat+0.1)*[1 0];
+    r1pos+r1points(3,:)+(dBloat+0.1)*[1 0];
+    r1pos+r1points(4,:)];
+vRegBN2{2} = [
+    r2pos+r2points(1,:)+(dBloat+0.1)*[-1 0];
+    r2pos+r2points(2,:)+(dBloat+0.1)*[1 0];
+    r2pos+r2points(3,:)+(dBloat+0.1)*[1 1];
+    r2pos+r2points(4,:)+(dBloat+0.1)*[-1 1]];
+
+vRegBN2{3} = [
+    vReg{3}(1,:)+(dBloat+0.1)*[-1 -1];
+    vReg{3}(2,:)+(dBloat+0.1)*[-1 -1];
+    vReg{3}(3,:)+(dBloat+0.1)*[-1 0];
+    vReg{3}(4,:);
+    vReg{3}(5,:);
+    vReg{3}(6,:)+(dBloat+0.1)*[-1 0]];
+
+
+<span class="comment">% Transitions</span>
+clear <span class="string">trans</span>
+trans{1} = [1 2];
+trans{2} = [2 3];
+trans{2} = [3 2];
+
+<span class="comment">% Automaton definition</span>
+clear <span class="string">aut</span>
+aut.q{1} = 1;
+aut.q{2} = 2;
+aut.trans{1} = [1 2];
+aut.trans{2} = [2 3];
+aut.trans{2} = [3 2];
+
+isReactive(1) = true;
+isReactive(2) = false;
+isReactive(3) = false;
+
+<span class="comment">% Construct polytopes</span>
+pReg{1} = polytope(vReg{1});
+pReg{2} = polytope(vReg{2});
+pReg{3} = polytope(vReg{3});
+<span class="comment">% pReg{4} = polytope(vReg{4});</span>
+<span class="comment">%pReg{5} = polytope(vReg{5});</span>
+
+pRegB{1} = polytope(vRegB{1});
+pRegB2{1} = polytope(vRegB2{1});
+pRegBN{1} = polytope(vRegBN{1});
+pRegB{2} = polytope(vRegB{2});
+pRegB2{2} = polytope(vRegB2{2});
+pRegBN{2} = polytope(vRegBN{2});
+pRegB{3} = polytope(vRegB{3});
+pRegB2{3} = polytope(vRegB2{3});
+pRegBN{3} = polytope(vRegBN{3});
+pRegBN2{1} = polytope(vRegBN2{1});
+[v,c] = double(pRegBN2{1});
+hRegBN2{1} = hyperplane(v',c');
+pRegBN2{2} = polytope(vRegBN2{2});
+[v,c] = double(pRegBN2{2});
+hRegBN2{2} = hyperplane(v',c');
+pRegBN2{3} = polytope(vRegBN2{3});
+[v,c] = double(pRegBN2{3});
+hRegBN2{3} = hyperplane(v',c');
+
+pBnd{1} = polytope(vBndOuter{1});
+[v,c] = double(pBnd{1});
+hBnd{1} = hyperplane(v',c');
+pBndB{1} = polytope(vBndOuterB{1});
+[v,c] = double(pBndB{1});
+hBndB{1} = hyperplane(v',c');
+
+x = msspoly(<span class="string">'x'</span>,2);
+<span class="keyword">for</span> i = 1:length(pReg)
+    [H,K] = double(pReg{i});
+    mssReg{i} = (H*x(1:2)-K)' + eps*sum(x);
+    [H,K] = double(pRegB{i});
+    mssRegB{i} = (H*x(1:2)-K)' + eps*sum(x);
+    <span class="keyword">if</span> ~isempty(double(pRegBN{i}))
+        [H,K] = double(pRegBN{i});
+        mssRegBN{i} = (H*x(1:2)-K)' + eps*sum(x);
+    <span class="keyword">else</span>
+        mssRegBN{i} = mssReg{i};
+    <span class="keyword">end</span>
+
+    reg{i}.p = pReg{i};
+    reg{i}.pB = pRegB{i};
+    reg{i}.pB2 = pRegB2{i};
+    reg{i}.hBN2 = hRegBN2{i};
+    reg{i}.mssExt = -mssReg{i};
+    reg{i}.mssExtB = -mssRegBN{i};
+    reg{i}.mssInt{1} = [];
+    reg{i}.mssIntB{1} = [];
+    reg{i}.v = vReg{i};
+    reg{i}.vB = vRegB{i};
+    reg{i}.vBN = vRegBN{i};
+<span class="keyword">end</span>
+<span class="comment">% TODO: automate the setting of internal regions??</span>
+reg{3}.mssInt{1} = mssReg{2};
+reg{3}.mssIntB{1} = mssRegB{2};
+
+<span class="keyword">for</span> i = 1:length(pBnd)
+    [H,K] = double(pBnd{i});
+    mssBnd{i} = (H*x(1:2)-K)' + eps*sum(x);
+
+    regBnd{i}.p = pBnd{i};
+    regBnd{i}.hB = hBndB{i};
+    regBnd{i}.mss = -mssBnd{i};
+    regBnd{i}.v = vBnd{i};
+<span class="keyword">end</span>
+
+<span class="comment">% Construct composite region for each transition</span>
+regX{1}.mssExt = regBnd{1}.mss;
+regX{1}.mssExtB = regBnd{1}.mss;
+regX{1}.mssInt{1} = mssReg{3};
+regX{1}.mssIntB{1} = mssRegB{3};
+regX{1}.pExt = regBnd{1}.p;
+regX{1}.hExtB = regBnd{1}.hB;
+regX{1}.pInt(1) = pReg{3};
+regX{1}.pIntB(1) = pRegB{3};
+regX{1}.pIntB2(1) = pRegB2{3};
+
+regX{2}.mssExt = regBnd{1}.mss;
+regX{2}.mssExtB = regBnd{1}.mss;
+regX{2}.mssInt{1} = [];
+regX{2}.mssIntB{1} = [];
+regX{2}.pExt = regBnd{1}.p;
+regX{2}.hExtB = regBnd{1}.hB;
+regX{2}.pInt = [];
+regX{2}.pIntB = [];
+regX{2}.pIntB2 = [];
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+
+
+% Set up map
+pix2m = 10/(100*2.65);
+
+% Use a test map for now
+bndPos = [145, 73]*pix2m;
+bndPoints = [0, 0; 261, 0; 261, 250; 0, 250]*pix2m;
+r1pos = [0, 0]*pix2m;
+r1points = [0, 0; 90, 0; 90, 134; 0, 134]*pix2m;
+r2pos = [90, 0]*pix2m;
+r2points = [0, 0; 50, 0; 50, 100; 0, 100]*pix2m;
+r3pos = [90, 0]*pix2m;
+r3points = [0, 0; 90, 0; 90, 134; 0, 134]*pix2m;
+
+vReg{1} = [
+    r1pos+r1points(1,:); 
+    r1pos+r1points(2,:); 
+    r1pos+r1points(3,:); 
+    r1pos+r1points(4,:)];
+vReg{2} = [
+    r2pos+r2points(1,:); 
+    r2pos+r2points(2,:); 
+    r2pos+r2points(3,:); 
+    r2pos+r2points(4,:)];
+vReg{3} = [
+    r2pos+r2points(4,:); 
+    r2pos+r2points(3,:); 
+    r2pos+r2points(2,:); 
+    r3pos+r3points(2,:); 
+    r3pos+r3points(3,:); 
+    r3pos+r3points(4,:)]; 
+vBndOuter{1} = [
+    vReg{1}(1,:); 
+    vReg{3}(4,:); 
+    vReg{3}(5,:); 
+    vReg{1}(4,:)];
+vBnd = vBndOuter;
+
+% Bloated regions
+dBloat = 0.2;
+% positive bloat: smaller avoid regions
+vRegB{1} = [
+    r1pos+r1points(1,:); 
+    r1pos+r1points(2,:)-dBloat*[1 0]; 
+    r1pos+r1points(3,:)-dBloat*[1 0]; 
+    r1pos+r1points(4,:)];
+vRegB{2} = [
+    r2pos+r2points(1,:)-dBloat*[-1 0];
+    r2pos+r2points(2,:)-dBloat*[1 0]; 
+    r2pos+r2points(3,:)-dBloat*[1 1]; 
+    r2pos+r2points(4,:)-dBloat*[-1 1]];
+vRegB{3} = [
+    vReg{3}(1,:)-dBloat*[-1 -1]; 
+    vReg{3}(2,:)-dBloat*[-1 -1]; 
+    vReg{3}(3,:)-dBloat*[-1 0]; 
+    vReg{3}(4,:); 
+    vReg{3}(5,:);
+    vReg{3}(6,:)-dBloat*[-1 0]]; 
+% negative bloat: larger interior regions
+vRegBN{1} = [
+    r1pos+r1points(1,:); 
+    r1pos+r1points(2,:)+dBloat*[1 0]; 
+    r1pos+r1points(3,:)+dBloat*[1 0]; 
+    r1pos+r1points(4,:)];
+vRegBN{2} = [
+    r2pos+r2points(1,:)+dBloat*[-1 0];
+    r2pos+r2points(2,:)+dBloat*[1 0]; 
+    r2pos+r2points(3,:)+dBloat*[1 1]; 
+    r2pos+r2points(4,:)+dBloat*[-1 1]];
+vRegBN{3} = [
+    vReg{3}(1,:)+dBloat*[-1 -1]; 
+    vReg{3}(2,:)+dBloat*[-1 -1]; 
+    vReg{3}(3,:)+dBloat*[-1 0]; 
+    vReg{3}(4,:); 
+    vReg{3}(5,:); 
+    vReg{3}(6,:)+dBloat*[-1 0]]; 
+
+% These regions are defined for checking if funnels are misbehaving... need
+% some conservatism
+vBndOuterB{1} = [
+    vBndOuter{1}(1,:)+0.1*[-1 -1]; 
+    vBndOuter{1}(2,:)+0.1*[1 -1]; 
+    vBndOuter{1}(3,:)+0.1*[1 1]; 
+    vBndOuter{1}(4,:)+0.1*[-1 1]];
+vRegB2{1} = [
+    r1pos+r1points(1,:); 
+    r1pos+r1points(2,:)-(dBloat+0.1)*[1 0]; 
+    r1pos+r1points(3,:)-(dBloat+0.1)*[1 0]; 
+    r1pos+r1points(4,:)];
+vRegB2{2} = [
+    r2pos+r2points(1,:)-(dBloat+0.1)*[-1 0]; 
+    r2pos+r2points(2,:)-(dBloat+0.1)*[1 0]; 
+    r2pos+r2points(3,:)-(dBloat+0.1)*[1 1]; 
+    r2pos+r2points(4,:)-(dBloat+0.1)*[-1 1]];
+
+vRegB2{3} = [
+    vReg{3}(1,:)-(dBloat+0.1)*[-1 -1]; 
+    vReg{3}(2,:)-(dBloat+0.1)*[-1 -1]; 
+    vReg{3}(3,:)-(dBloat+0.1)*[-1 0]; 
+    vReg{3}(4,:); 
+    vReg{3}(5,:); 
+    vReg{3}(6,:)-(dBloat+0.1)*[-1 0]]; 
+
+
+dBloat = 0;
+vRegBN2{1} = [
+    r1pos+r1points(1,:); 
+    r1pos+r1points(2,:)+(dBloat+0.1)*[1 0]; 
+    r1pos+r1points(3,:)+(dBloat+0.1)*[1 0]; 
+    r1pos+r1points(4,:)];
+vRegBN2{2} = [
+    r2pos+r2points(1,:)+(dBloat+0.1)*[-1 0]; 
+    r2pos+r2points(2,:)+(dBloat+0.1)*[1 0]; 
+    r2pos+r2points(3,:)+(dBloat+0.1)*[1 1]; 
+    r2pos+r2points(4,:)+(dBloat+0.1)*[-1 1]];
+
+vRegBN2{3} = [
+    vReg{3}(1,:)+(dBloat+0.1)*[-1 -1]; 
+    vReg{3}(2,:)+(dBloat+0.1)*[-1 -1]; 
+    vReg{3}(3,:)+(dBloat+0.1)*[-1 0]; 
+    vReg{3}(4,:); 
+    vReg{3}(5,:); 
+    vReg{3}(6,:)+(dBloat+0.1)*[-1 0]]; 
+
+
+% Transitions
+clear trans
+trans{1} = [1 2];
+trans{2} = [2 3];
+trans{2} = [3 2];
+
+% Automaton definition
+clear aut
+aut.q{1} = 1;
+aut.q{2} = 2;
+aut.trans{1} = [1 2];
+aut.trans{2} = [2 3];
+aut.trans{2} = [3 2];
+
+isReactive(1) = true;
+isReactive(2) = false;
+isReactive(3) = false;
+
+% Construct polytopes
+pReg{1} = polytope(vReg{1});
+pReg{2} = polytope(vReg{2});
+pReg{3} = polytope(vReg{3});
+% pReg{4} = polytope(vReg{4});
+%pReg{5} = polytope(vReg{5});
+
+pRegB{1} = polytope(vRegB{1});
+pRegB2{1} = polytope(vRegB2{1});
+pRegBN{1} = polytope(vRegBN{1});
+pRegB{2} = polytope(vRegB{2});
+pRegB2{2} = polytope(vRegB2{2});
+pRegBN{2} = polytope(vRegBN{2});
+pRegB{3} = polytope(vRegB{3});
+pRegB2{3} = polytope(vRegB2{3});
+pRegBN{3} = polytope(vRegBN{3});
+pRegBN2{1} = polytope(vRegBN2{1});
+[v,c] = double(pRegBN2{1});
+hRegBN2{1} = hyperplane(v',c');
+pRegBN2{2} = polytope(vRegBN2{2});
+[v,c] = double(pRegBN2{2});
+hRegBN2{2} = hyperplane(v',c');
+pRegBN2{3} = polytope(vRegBN2{3});
+[v,c] = double(pRegBN2{3});
+hRegBN2{3} = hyperplane(v',c');
+
+pBnd{1} = polytope(vBndOuter{1});
+[v,c] = double(pBnd{1});
+hBnd{1} = hyperplane(v',c');
+pBndB{1} = polytope(vBndOuterB{1});
+[v,c] = double(pBndB{1});
+hBndB{1} = hyperplane(v',c');
+
+x = msspoly('x',2);
+for i = 1:length(pReg)
+    [H,K] = double(pReg{i});
+    mssReg{i} = (H*x(1:2)-K)' + eps*sum(x);
+    [H,K] = double(pRegB{i});
+    mssRegB{i} = (H*x(1:2)-K)' + eps*sum(x);
+    if ~isempty(double(pRegBN{i}))
+        [H,K] = double(pRegBN{i});
+        mssRegBN{i} = (H*x(1:2)-K)' + eps*sum(x);
+    else
+        mssRegBN{i} = mssReg{i};
+    end
+    
+    reg{i}.p = pReg{i};
+    reg{i}.pB = pRegB{i};
+    reg{i}.pB2 = pRegB2{i};
+    reg{i}.hBN2 = hRegBN2{i};
+    reg{i}.mssExt = -mssReg{i};
+    reg{i}.mssExtB = -mssRegBN{i};
+    reg{i}.mssInt{1} = [];
+    reg{i}.mssIntB{1} = [];    
+    reg{i}.v = vReg{i};
+    reg{i}.vB = vRegB{i};
+    reg{i}.vBN = vRegBN{i};
+end
+% TODO: automate the setting of internal regions??
+reg{3}.mssInt{1} = mssReg{2};
+reg{3}.mssIntB{1} = mssRegB{2};
+
+for i = 1:length(pBnd)
+    [H,K] = double(pBnd{i});
+    mssBnd{i} = (H*x(1:2)-K)' + eps*sum(x);
+    
+    regBnd{i}.p = pBnd{i};
+    regBnd{i}.hB = hBndB{i};
+    regBnd{i}.mss = -mssBnd{i};
+    regBnd{i}.v = vBnd{i};
+end
+
+% Construct composite region for each transition
+regX{1}.mssExt = regBnd{1}.mss;
+regX{1}.mssExtB = regBnd{1}.mss;
+regX{1}.mssInt{1} = mssReg{3};
+regX{1}.mssIntB{1} = mssRegB{3};
+regX{1}.pExt = regBnd{1}.p;
+regX{1}.hExtB = regBnd{1}.hB;
+regX{1}.pInt(1) = pReg{3};
+regX{1}.pIntB(1) = pRegB{3};
+regX{1}.pIntB2(1) = pRegB2{3};
+
+regX{2}.mssExt = regBnd{1}.mss;
+regX{2}.mssExtB = regBnd{1}.mss;
+regX{2}.mssInt{1} = [];
+regX{2}.mssIntB{1} = [];
+regX{2}.pExt = regBnd{1}.p;
+regX{2}.hExtB = regBnd{1}.hB;
+regX{2}.pInt = [];
+regX{2}.pIntB = [];
+regX{2}.pIntB2 = [];
+
+##### SOURCE END #####
+--></body></html>
