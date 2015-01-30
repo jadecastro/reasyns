@@ -1,4 +1,4 @@
-function [randPt] = getCenterRand_new(sys,reg,ac_trans,options)
+function [randPt] = getCenterRand_new(sys,reg,ac_trans,options,varargin)
 
 H = sys.params.H;
 n = sys.params.n;
@@ -13,12 +13,21 @@ if size(limsNonRegState,2) ~= n - length(H), error('Dimension mismatch in limsNo
 minNonRegStates = limsNonRegState(1,:);
 maxNonRegStates = limsNonRegState(2,:);
 
-tmpNonRegStates = minNonRegStates + (maxNonRegStates - minNonRegStates).*rand(1,n-length(H));
-
-vReg = reg.v;
-maxReg = max(vReg);
-minReg = min(vReg);
-tmpRegStates = (H\((1/2*(maxReg + minReg) + Qrand*randn(1,length(H)))*H)')';
+if nargin < 5
+    tmpNonRegStates = minNonRegStates + (maxNonRegStates - minNonRegStates).*rand(1,n-length(H));
+else
+    qCenter = varargin{1}';
+    tmpNonRegStates = qCenter(length(H)+1:n);
+end
+    
+if nargin < 5
+    vReg = reg.v;
+    maxReg = max(vReg);
+    minReg = min(vReg);
+    tmpRegStates = (H\((1/2*(maxReg + minReg) + Qrand*randn(1,length(H)))*H)')';
+else
+    tmpRegStates = (H\((qCenter(1:length(H))  + Qrand*randn(1,length(H)))*H)')';
+end
 
 % If in obstacle or outside invariant, recompute its location in a deterministic fashion
 for indx = 2:100
@@ -34,7 +43,11 @@ for indx = 2:100
             break
         end
     end
-    tmpRegStates = (H\((1/2*(maxReg + minReg) + Qrand*randn(1,length(H)))*H)')';
+    if nargin < 5
+        tmpRegStates = (H\((1/2*(maxReg + minReg) + Qrand*randn(1,length(H)))*H)')';
+    else
+        tmpRegStates = (H\((qCenter(1:length(H))  + Qrand*randn(1,length(H)))*H)')';
+    end
 end
 
 if indx == 100

@@ -86,7 +86,7 @@ ac = quadraticAC(x0,u0,K0,P0,rho0,Vquad,sys);
 
 
 % plot the projection
-figure(20)
+figure(5)
 hold on
 options.inclusion = 'projection';
 options.plotdims = [1 2];

@@ -56,7 +56,7 @@ options.coverPct = 0.8;
 
 % Number of funnels/controllers for each state
 options.maxFunnelsTrans(1:Nmodes) = 1;
-options.maxFunnelsInward(1:Nmodes) = [0 2 0 0];
+options.maxFunnelsInward(1:Nmodes) = [0 0 0 0];
 options.maxFunnelsReactJoin(1:Nmodes) = 10;
 
 % TODO: need?
@@ -78,6 +78,7 @@ options.maxTrials2 = 20;
 options.maxTrials3 = 2;  % set to a low value because funFail takes care of final point interations.
 options.maxNonRegTrials = 30;
 
+trans = vertcat(aut.trans{:});
 
 % for imode = 1:Nmodes
 %     qReg = aut.q{imode};
@@ -85,6 +86,7 @@ options.maxNonRegTrials = 30;
 % end
 
 figure(5)
+plot(reg)
 % axis([min(regBnd{1}.v(:,1)) max(regBnd{1}.v(:,1)) min(regBnd{1}.v(:,2)) max(regBnd{1}.v(:,2))])
 
 
@@ -92,7 +94,6 @@ figure(5)
 
 tic
 
-% plotWS(pReg)
 
 %%
 NmodesReach = Nmodes;
@@ -101,27 +102,149 @@ NmodesReach = Nmodes;
 tic
 toc
 fprintf(fid,'%f : Starting ....\n',toc);
+j = 0;
 for iModeToPatch = 1:NmodesReach
-    %% Reach Operation
-    ac_trans = reachOp_new(sys,reg,regBnd,aut,iModeToPatch,options);
-    toc
-    fprintf(fid,'%f : Finished Reach operation for mode %d.\n',toc,iModeToPatch);
+    for itrans = find(trans(:,1)==iModeToPatch)'
+        j = j+1;
+        ac{j} = [];
+    end
+end
+
+%%
+joinedModes = false*ones(Nmodes,1);  % keep a list of modes which need joining
+patchedModes = false*ones(Nmodes,1);  % keep a list of modes which need joining
+
+%%
+for iModeToGo = 1:NmodesReach
     
-    %% Sequence Operation
-    sequenceOp
-    fprintf(fid,'%f : Finished Sequence operation for mode %d.\n',toc,iModeToPatch);
+    patchedAndUnvistedModesToPatch = ~(patchedModes(1:iModeToGo));
     
+    for iPatchTry = 1:10  % max number of tries
+        for iModeToPatch =  find(patchedAndUnvistedModesToPatch)'
+            
+            %% Reach Operation
+            fprintf(fid,'%f : Attempting to patch and join mode %d.\n',toc,iModeToPatch);
+            reachIncomplete = true;
+            % while reachIncomplete
+            [ac_trans,lastTrans] = reachOp_new(sys,reg,regBnd,aut,ac,iModeToPatch,options);
+            if ~isempty(lastTrans)
+                disp('Reach was unsuccessful. Repeating the Reach.')
+                reachIncomplete = true;
+                joinedModes(iModeToPatch) = false;
+                patchedModes(iModeToPatch) = false;
+            else
+                disp('Reach was successful.')
+                reachIncomplete = false;
+                joinedModes(iModeToPatch) = false;
+                patchedModes(iModeToPatch) = true;
+                tmp = find(trans(:,2)==iModeToPatch)';
+                if length(tmp) == 1
+                    if ~isempty(ac{tmp})
+                        joinedModes(iModeToPatch) = true;
+                        break
+                    end
+                end
+            end
+            % end
+            toc
+            
+            if ~patchedModes(iModeToPatch)
+                iPreModeToPatch = [];
+                if ~isempty([ac{lastTrans}])
+                    iPreModeToPatch = trans(lastTrans,1);
+                end
+                disp(['... Failed to perform Reach for mode ',num2str(iModeToPatch),'. Need to re-patch.'])
+                toc
+                fprintf(fid,'%f : Failed to perform Reach for mode %d. Re-performing the Reach operation\n',toc,iModeToPatch);
+                break
+            else
+                toc
+                disp('Finished Reach operation.')
+                fprintf(fid,'%f : Finished Reach operation for mode %d.\n',toc,iModeToPatch);
+                j = 0;
+                for i = find(trans(:,1)==iModeToPatch)'
+                    j = j+1;
+                    ac{i} = ac_trans(j);
+                end
+            end
+        end
+        
+        %% Sequence Operation
+        ac_inward = sequenceOp_new(sys,reg,regBnd,aut,iModeToPatch,options);
+        fprintf(fid,'%f : Finished Sequence operation for mode %d.\n',toc,iModeToPatch);
+        
+        if ~patchedModes(iModeToGo)
+            % update the list of modes which have already been joined but are affected by the patch and concatenate with the list of unvisited modes
+            patchedAndUnvistedModesToPatch = find(~(patchedModes(iModeToPatch:iModeToGo))) + (iModeToPatch-1);  % everything left on the todo list
+            patchedAndUnvistedModesToPatch = [setdiff(trans(trans(:,1)==iModeToPatch,2),iModeToGo+1:Nmodes); patchedAndUnvistedModesToPatch];  % every successor to the current mode which had been joined
+            if ~isempty(iPreModeToPatch)
+                patchedAndUnvistedModesToPatch = [setdiff(trans(trans(:,1)==iPreModeToPatch,2),iModeToGo+1:Nmodes); patchedAndUnvistedModesToPatch];
+                patchedAndUnvistedModesToPatch = [setdiff(iPreModeToPatch,iModeToGo+1:Nmodes); patchedAndUnvistedModesToPatch];
+            end
+            
+            patchedAndUnvistedModesToPatch = unique(patchedAndUnvistedModesToPatch);
+            patchedAndUnvistedModesToPatch
+            patchedModes = [~ismember(1:iModeToGo,patchedAndUnvistedModesToPatch)'; patchedModes(iModeToGo+1:Nmodes)];
+            
+            %%
+            if ~isempty(iPreModeToPatch)  % if join failed, also patch the pre mode
+                disp(['... Now patching the pre-mode (mode ',num2str(iPreModeToPatch),') ...'])
+                toc
+                fprintf(fid,'%f : Now Patching the pre-mode %d to the failed mode (%d).\n',toc,iPreModeToPatch,iModeToPatch);
+                
+                [ac_trans,lastTrans] = reachOp_new(sys,reg,regBnd,aut,ac,iPreModeToPatch,options);
+                if ~isempty(lastTrans)
+                    disp('Reach was unsuccessful. Repeating the Reach.')
+                    reachIncomplete = true;
+                    joinedModes(iPreModeToPatch) = false;
+                    patchedModes(iPreModeToPatch) = false;
+                else
+                    disp('Reach was successful.')
+                    reachIncomplete = false;
+                    joinedModes(iPreModeToPatch) = false;
+                    patchedModes(iPreModeToPatch) = true;
+                    tmp = find(trans(:,2)==iPreModeToPatch)';
+                    if length(tmp) == 1
+                        if ~isempty(ac{tmp})
+                            joinedModes(iPreModeToPatch) = true;
+                            break
+                        end
+                    end
+                end
+                toc
+                
+                if ~patchedModes(iPreModeToPatch)
+                    disp(['... Failed to join mode ',num2str(iModeToPatch),'.'])
+                    toc
+                    fprintf(fid,'%f : Failed to perform Reach for mode %d. Quitting.\n',toc,iModeToPatch);
+                    error('Failed to perform Reach');
+                else
+                    toc
+                    fprintf(fid,'%f : Finished Reach operation for mode %d.\n',toc,iPreModeToPatch);
+                    j = 0;
+                    for i = find(trans(:,1)==iPreModeToPatch)'
+                        j = j+1;
+                        ac{i} = ac_trans(j);
+                    end
+                end
+                fprintf(fid,'%f : ... Finished Reach operation for pre-mode %d.\n',toc,iPreModeToPatch);
+                ac_inward = sequenceOp_new(sys,reg,regBnd,aut,iPreModeToPatch,options);
+                fprintf(fid,'%f : ... Finished Sequence operation for pre-mode %d.\n',toc,iPreModeToPatch);
+            end
+        end
+        if all(patchedModes(1:iModeToGo))
+            break
+        end
+    end
 end
 toc
 fprintf(fid,'%f : Finished Reach operation for all modes. Now performing Join operation.\n',toc)
 
 save test
 
-%%
-joinedModes = false*ones(Nmodes,1);  % keep a list of modes which need joining
 
 %%
-for imode = 3:4%1:NmodesReach
+for imode = 1:NmodesReach
     patchedAndUnvistedModesToJoin = ~(joinedModes(1:imode));
     
     for iJoinTry = 1:10  % max number of tries
@@ -146,11 +269,11 @@ for imode = 3:4%1:NmodesReach
         if ~joinedModes(imode) 
             % update the list of modes which have already been joined but are affected by the patch and concatenate with the list of unvisited modes
             patchedAndUnvistedModesToJoin = find(~(joinedModes(iModeToJoin:imode))) + (iModeToJoin-1);  % everything left on the todo list
-            patchedAndUnvistedModesToJoin = [setdiff(transTmp(transTmp(:,1)==iModeToJoin,2),imode+1:Nmodes); patchedAndUnvistedModesToJoin];  % every successor to the current mode which had been joined
+            patchedAndUnvistedModesToJoin = [setdiff(trans(trans(:,1)==iModeToJoin,2),imode+1:Nmodes); patchedAndUnvistedModesToJoin];  % every successor to the current mode which had been joined
             if ~joinedModes(iModeToJoin) 
-                patchedAndUnvistedModesToJoin = [setdiff(transTmp(transTmp(:,1)==iPreModeToJoin,2),imode+1:Nmodes); patchedAndUnvistedModesToJoin];
+                patchedAndUnvistedModesToJoin = [setdiff(trans(trans(:,1)==iPreModeToJoin,2),imode+1:Nmodes); patchedAndUnvistedModesToJoin];
                 patchedAndUnvistedModesToJoin = [setdiff(iPreModeToJoin,imode+1:Nmodes); patchedAndUnvistedModesToJoin];
-            end    
+            end
             
             patchedAndUnvistedModesToJoin = unique(patchedAndUnvistedModesToJoin);
             patchedAndUnvistedModesToJoin
@@ -192,7 +315,7 @@ save test_joined
 %%
 reactJoinedModes = false*ones(Nmodes,1);
 
-for iModeToReactJoin = unique(transTmp(isReactive,1))'
+for iModeToReactJoin = unique(trans(isReactive,1))'
     disp(['... Attempting to reactively join the mode ',num2str(iModeToReactJoin),'.'])
     % Reactive Join Operation
     for iReactTry = 1:10
