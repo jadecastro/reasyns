@@ -117,10 +117,10 @@ patchedModes = false*ones(Nmodes,1);  % keep a list of modes which need joining
 %%
 for iModeToGo = 1:NmodesReach
     
-    patchedAndUnvistedModesToPatch = ~(patchedModes(1:iModeToGo));
+    patchedAndUnvistedModesToPatch = find(~(patchedModes(1:iModeToGo)));
     
     for iPatchTry = 1:10  % max number of tries
-        for iModeToPatch =  find(patchedAndUnvistedModesToPatch)'
+        for iModeToPatch =  patchedAndUnvistedModesToPatch'
             
             %% Reach Operation
             fprintf(fid,'%f : Attempting to patch and join mode %d.\n',toc,iModeToPatch);
@@ -141,10 +141,14 @@ for iModeToGo = 1:NmodesReach
                 if length(tmp) == 1
                     if ~isempty(ac{tmp})
                         joinedModes(iModeToPatch) = true;
-                        break
                     end
                 end
             end
+            
+            iModeToGo
+            patchedModes
+            joinedModes
+            iModeToPatch
             % end
             toc
             
@@ -152,6 +156,7 @@ for iModeToGo = 1:NmodesReach
                 iPreModeToPatch = [];
                 if ~isempty([ac{lastTrans}])
                     iPreModeToPatch = trans(lastTrans,1);
+                    iPreModeToPatch
                 end
                 disp(['... Failed to perform Reach for mode ',num2str(iModeToPatch),'. Need to re-patch.'])
                 toc
@@ -165,6 +170,8 @@ for iModeToGo = 1:NmodesReach
                 for i = find(trans(:,1)==iModeToPatch)'
                     j = j+1;
                     ac{i} = ac_trans(j);
+                    i
+                    ac
                 end
             end
         end
@@ -185,6 +192,7 @@ for iModeToGo = 1:NmodesReach
             patchedAndUnvistedModesToPatch = unique(patchedAndUnvistedModesToPatch);
             patchedAndUnvistedModesToPatch
             patchedModes = [~ismember(1:iModeToGo,patchedAndUnvistedModesToPatch)'; patchedModes(iModeToGo+1:Nmodes)];
+            patchedModes
             
             %%
             if ~isempty(iPreModeToPatch)  % if join failed, also patch the pre mode
@@ -207,11 +215,15 @@ for iModeToGo = 1:NmodesReach
                     if length(tmp) == 1
                         if ~isempty(ac{tmp})
                             joinedModes(iPreModeToPatch) = true;
-                            break
                         end
                     end
                 end
                 toc
+                
+                iModeToGo
+                patchedModes
+                joinedModes
+                iModeToPatch
                 
                 if ~patchedModes(iPreModeToPatch)
                     disp(['... Failed to join mode ',num2str(iModeToPatch),'.'])
@@ -220,11 +232,14 @@ for iModeToGo = 1:NmodesReach
                     error('Failed to perform Reach');
                 else
                     toc
+                    patchedAndUnvistedModesToPatch = setdiff(patchedAndUnvistedModesToPatch, iPreModeToPatch);
                     fprintf(fid,'%f : Finished Reach operation for mode %d.\n',toc,iPreModeToPatch);
                     j = 0;
                     for i = find(trans(:,1)==iPreModeToPatch)'
                         j = j+1;
                         ac{i} = ac_trans(j);
+                        i
+                        ac
                     end
                 end
                 fprintf(fid,'%f : ... Finished Reach operation for pre-mode %d.\n',toc,iPreModeToPatch);
@@ -233,6 +248,7 @@ for iModeToGo = 1:NmodesReach
             end
         end
         if all(patchedModes(1:iModeToGo))
+            disp(['finished ',num2str(iModeToGo)]);
             break
         end
     end

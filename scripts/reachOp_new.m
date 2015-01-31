@@ -34,6 +34,7 @@ for funindx = 1:maxFunTrials
         qCenter = ppval(acLast.x0.pp,ttmp(end));
         options.Qrand = 1e-4;
         initState = getCenterRand_new(sys,reg(aut.q{iModeToPatch}),[],options,qCenter);
+        options.Qrand = 2;
     else
         initState = getCenterRand_new(sys,reg(iModeToPatch),[],options);
     end
