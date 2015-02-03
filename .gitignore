@@ -1,4 +1,4 @@
-.asv
-.m~
-.txt
-.mat
+*.asv
+*.m~
+*.txt
+*.mat

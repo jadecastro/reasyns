@@ -106,7 +106,7 @@ j = 0;
 for iModeToPatch = 1:NmodesReach
     for itrans = find(trans(:,1)==iModeToPatch)'
         j = j+1;
-        ac{j} = [];
+        ac_trans{j} = [];
     end
 end
 
@@ -126,7 +126,7 @@ for iModeToGo = 1:NmodesReach
             fprintf(fid,'%f : Attempting to patch and join mode %d.\n',toc,iModeToPatch);
             reachIncomplete = true;
             % while reachIncomplete
-            [ac_trans,lastTrans] = reachOp_new(sys,reg,regBnd,aut,ac,iModeToPatch,options);
+            [ac_tmp,lastTrans] = reachOp_new(sys,reg,regBnd,aut,ac_trans,iModeToPatch,options);
             if ~isempty(lastTrans)
                 disp('Reach was unsuccessful. Repeating the Reach.')
                 reachIncomplete = true;
@@ -139,7 +139,7 @@ for iModeToGo = 1:NmodesReach
                 patchedModes(iModeToPatch) = true;
                 tmp = find(trans(:,2)==iModeToPatch)';
                 if length(tmp) == 1
-                    if ~isempty(ac{tmp})
+                    if ~isempty(ac_trans{tmp})  % we have just joined the funnel from the previous transition
                         joinedModes(iModeToPatch) = true;
                     end
                 end
@@ -154,7 +154,7 @@ for iModeToGo = 1:NmodesReach
             
             if ~patchedModes(iModeToPatch)
                 iPreModeToPatch = [];
-                if ~isempty([ac{lastTrans}])
+                if ~isempty([ac_trans{lastTrans}])
                     iPreModeToPatch = trans(lastTrans,1);
                     iPreModeToPatch
                 end
@@ -169,9 +169,9 @@ for iModeToGo = 1:NmodesReach
                 j = 0;
                 for i = find(trans(:,1)==iModeToPatch)'
                     j = j+1;
-                    ac{i} = ac_trans(j);
+                    ac_trans{i} = ac_tmp(j);
                     i
-                    ac
+                    ac_trans
                 end
             end
         end
@@ -182,11 +182,14 @@ for iModeToGo = 1:NmodesReach
         
         if ~patchedModes(iModeToGo)
             % update the list of modes which have already been joined but are affected by the patch and concatenate with the list of unvisited modes
-            patchedAndUnvistedModesToPatch = find(~(patchedModes(iModeToPatch:iModeToGo))) + (iModeToPatch-1);  % everything left on the todo list
-            patchedAndUnvistedModesToPatch = [setdiff(trans(trans(:,1)==iModeToPatch,2),iModeToGo+1:Nmodes); patchedAndUnvistedModesToPatch];  % every successor to the current mode which had been joined
+            patchedAndUnvistedModesToPatch = find(~(patchedModes(iModeToPatch:iModeToGo))) + (iModeToPatch-1);  % everything left in the todo list
+            tmp = setdiff(trans(trans(:,1)==iModeToPatch,2),find(~joinedModes));   % include everything that that *could be* affected by re-patching the current mode; in particular, those that have been joined.
+            patchedAndUnvistedModesToPatch = [setdiff(tmp,iModeToGo+1:Nmodes); patchedAndUnvistedModesToPatch];  % every successor to the current mode which had been joined
             if ~isempty(iPreModeToPatch)
-                patchedAndUnvistedModesToPatch = [setdiff(trans(trans(:,1)==iPreModeToPatch,2),iModeToGo+1:Nmodes); patchedAndUnvistedModesToPatch];
-                patchedAndUnvistedModesToPatch = [setdiff(iPreModeToPatch,iModeToGo+1:Nmodes); patchedAndUnvistedModesToPatch];
+                tmp = setdiff(trans(trans(:,1)==iPreModeToPatch,2),find(~joinedModes));  % include everything that that *could be* affected by re-patching the pre mode; in particular, those that have been joined.  
+                %TODO: we can relax by assuming no effect, then checking for containment
+                patchedAndUnvistedModesToPatch = [setdiff(tmp,iModeToGo+1:Nmodes); patchedAndUnvistedModesToPatch];  % do not flag modes which we know haven't yet been visited
+                patchedAndUnvistedModesToPatch = [setdiff(iPreModeToPatch,iModeToGo+1:Nmodes); patchedAndUnvistedModesToPatch];  % don't forget the pre-mode!
             end
             
             patchedAndUnvistedModesToPatch = unique(patchedAndUnvistedModesToPatch);
@@ -200,7 +203,7 @@ for iModeToGo = 1:NmodesReach
                 toc
                 fprintf(fid,'%f : Now Patching the pre-mode %d to the failed mode (%d).\n',toc,iPreModeToPatch,iModeToPatch);
                 
-                [ac_trans,lastTrans] = reachOp_new(sys,reg,regBnd,aut,ac,iPreModeToPatch,options);
+                [ac_tmp,lastTrans] = reachOp_new(sys,reg,regBnd,aut,ac_trans,iPreModeToPatch,options);
                 if ~isempty(lastTrans)
                     disp('Reach was unsuccessful. Repeating the Reach.')
                     reachIncomplete = true;
@@ -213,7 +216,7 @@ for iModeToGo = 1:NmodesReach
                     patchedModes(iPreModeToPatch) = true;
                     tmp = find(trans(:,2)==iPreModeToPatch)';
                     if length(tmp) == 1
-                        if ~isempty(ac{tmp})
+                        if ~isempty(ac_trans{tmp})  % we have just joined the funnel from the previous transition
                             joinedModes(iPreModeToPatch) = true;
                         end
                     end
@@ -226,9 +229,9 @@ for iModeToGo = 1:NmodesReach
                 iModeToPatch
                 
                 if ~patchedModes(iPreModeToPatch)
-                    disp(['... Failed to join mode ',num2str(iModeToPatch),'.'])
+                    disp(['... Failed to join mode ',num2str(iPreModeToPatch),'.'])
                     toc
-                    fprintf(fid,'%f : Failed to perform Reach for mode %d. Quitting.\n',toc,iModeToPatch);
+                    fprintf(fid,'%f : Failed to perform Reach for mode %d. Quitting.\n',toc,iPreModeToPatch);
                     error('Failed to perform Reach');
                 else
                     toc
@@ -237,9 +240,9 @@ for iModeToGo = 1:NmodesReach
                     j = 0;
                     for i = find(trans(:,1)==iPreModeToPatch)'
                         j = j+1;
-                        ac{i} = ac_trans(j);
+                        ac_trans{i} = ac_tmp(j);
                         i
-                        ac
+                        ac_trans
                     end
                 end
                 fprintf(fid,'%f : ... Finished Reach operation for pre-mode %d.\n',toc,iPreModeToPatch);

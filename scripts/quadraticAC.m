@@ -6,6 +6,10 @@ classdef quadraticAC < polynomialAC
         P;
     end
     
+    properties(SetAccess = private) 
+        Einv;
+    end
+    
     methods
         function obj = quadraticAC(x0,u0,K,P,rho,V,sys)
             % Constructor
@@ -43,6 +47,10 @@ classdef quadraticAC < polynomialAC
             end
             
             obj.P = P;
+            for i = 1:length(t)
+                obj.Einv(i).P = ppval(obj.P.pp,t(i));
+                obj.Einv(i).x = ppval(obj.x0.pp,t(i));
+            end
         end
         
 %         function display(obj)
@@ -67,11 +75,14 @@ classdef quadraticAC < polynomialAC
             % the atomic controller
             for i = 1:size(ac,1)
                 for j = 1:size(ac,2)
-                    t = getTimeVec(ac);
-                    P = ppval(ac.pp,t);
-                    Pinv = inv(P);
-                    Pinv_sym = (Pinv'+Pinv)/2;  % to ensure it is symmetric
-                    E{i,j} = ellipsoids.ellipsoid(ac.x0',Pinv_sym);
+                    t = getTimeVec(ac(i,j).x0);
+                    x = ppval(ac(i,j).x0.pp,t);
+                    P = ppval(ac(i,j).P.pp,t);
+                    for k = 1:size(P,3)
+                        Pinv = inv(P(:,:,k));
+                        Pinv_sym = (Pinv'+Pinv)/2;  % to ensure it is symmetric
+                        E(k) = ellipsoid(x(:,k),Pinv_sym);
+                    end
                 end
             end
         end
@@ -89,9 +100,13 @@ classdef quadraticAC < polynomialAC
         % TODO: generalize to arbitrary polynomials
         function Eproj = projection(ac,sys)
             %
+            n = ac.x0.pp.dim;
             if ~isempty(sys.H)
                 for i = 1:length(ac)
-                    Eproj(i) = projection(ac(i).E,[sys.H; zeros(sys.n-length(sys.H),length(sys.H))]);
+                    ell = ellipsoid(ac(i));
+                    for j = 1:length(ell)
+                        Eproj(j,i) = projection(ell(j),[sys.H; zeros(n-length(sys.H),length(sys.H))]);
+                    end
                 end
             else
                 error('H not defined. Only linear state-output relationships supported.')
@@ -127,8 +142,7 @@ classdef quadraticAC < polynomialAC
         
         function res = isinternal(acobj, X, s)
             %
-            E = ellipsoid(acobj);
-            res = isinternal_quickInv(E, X, s);
+            res = isinternal_quickInv(acobj.Einv, X, s);
         end
         
         function res = isinside(acobj,regobj)
@@ -153,12 +167,14 @@ classdef quadraticAC < polynomialAC
         function plot(ac,sys,fignum,color)
             %
             %TODO: treat both 2d and 3d cases
+            
             Eproj = projection(ac,sys);
             figure(fignum)
             plot(Eproj)
         end
         
-        function disp
+        function disp(ac)
+            fprintf('Quadratic Atomic Controller with parameters\n');
         end
         
     end

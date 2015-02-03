@@ -84,6 +84,7 @@ for funindx = 1:maxFunTrials
                 plot(ac.x0,'k',5)
                 
             catch ME
+                %  rethrow(ME)
                 disp('something went wrong with the funnel computation...  kicking back out to the main script.')
                 errTrans = trans(:,2)==iModeToPatch;
                 break

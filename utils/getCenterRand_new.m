@@ -34,7 +34,7 @@ for indx = 2:100
     isect = isinside(reg,sys,tmpRegStates);
     if isect
         if ~isempty(ac_trans)
-            if isinside(ac_trans,[tmpRegStates tmpNonRegStates]')
+            if isinternal(ac_trans,[tmpRegStates tmpNonRegStates]','u')
                 break
             else
                 tmpNonRegStates = minNonRegStates + (maxNonRegStates - minNonRegStates).*rand(1,n-length(H));
