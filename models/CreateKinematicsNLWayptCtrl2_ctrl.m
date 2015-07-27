@@ -24,7 +24,7 @@ Vy = desYR - y;
 [uV, uW] = feedbackLin(Vx, Vy, th, e);
 
 % Limit on velocity
-uV = 2;%max(uV,0);  % Limits velocity on (1,0)
-uW = max(min(uW,3),-3);  % Limits angular velocity on (-1,1)
+uV = 0.05;%max(uV,0);  % Limits velocity on (1,0)
+uW = max(min(uW,0.25),-0.25);  % Limits angular velocity on (-1,1)
 
 U = [uV; uW];

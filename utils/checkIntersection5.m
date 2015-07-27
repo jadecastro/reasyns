@@ -1,7 +1,11 @@
-function [isect,qBadIndx,ellInInvR,ellBoundInvR] = checkIntersection5(vBound,vObs1,ellBoundInv1,ellInInv1,q,H,n,isCyclic)
+function [isect,qBadIndx,ellInInvR,ellBoundInvR] = checkIntersection5(vBound,vObs1,ellBoundInv1,ellInInv1,q,sys)
 % Polytopes are assumed to be 2-D, ellipses are n-D
 
 global debugFlg
+
+H = sys.params.H;
+n = sys.params.n;
+isCyclic = sys.params.isCyclic;
 
 if sum(isCyclic) > 1, error('number of cyclic dimensions cannot exceed 1'), end
 if length(isCyclic) ~= n, error('number of entries in isCylic must be equal to n!'), end

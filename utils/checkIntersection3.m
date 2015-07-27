@@ -1,4 +1,4 @@
-function [isect,qGoodIndx] = checkIntersection3(vBound,vObs1,vObs2,ellBoundInv1,ellBoundInv2,ellInInv1,ellInInv2,q,H,n,isCyclic,succRegChk)
+function [isect,qGoodIndx] = checkIntersection3(vBound,vObs1,vObs2,ellBoundInv1,ellBoundInv2,ellInInv1,ellInInv2,q,H,n,isCyclic,succRegChk,ac,reg,sys)
 % Polytopes are assumed to be 2-D, ellipses are n-D
             
 global debugFlg
@@ -21,14 +21,20 @@ for ii = 1:size(q,1)
     %         ii
     %         q(ii,:)
     %     end
-    if ~isempty(vObs1)
+    
+    if ~isempty(reg)
+        isectTmp1 = ~isinside(reg,sys,q);
+    elseif ~isempty(vObs1)
         for mm = 1:length(vObs1),
             isectTmp1(mm) = inpolygon(q(ii,1),q(ii,2),vObs1{mm}(:,1),vObs1{mm}(:,2));
         end
     else
         isectTmp1 = [];
     end
-    if ~isempty(vObs2)
+    
+    if ~isempty(reg)
+        isectTmp2 = ~isinside(reg,sys,q);
+    elseif ~isempty(vObs2)
         for mm = 1:length(vObs2),
             isectTmp2(mm) = inpolygon(q(ii,1),q(ii,2),vObs2{mm}(:,1),vObs2{mm}(:,2));
         end
@@ -83,7 +89,11 @@ for ii = 1:size(q,1)
         regID(ii) = 0;
         
         isect1 = false;
-        if ~isempty(ellBoundInv1)
+        if ~isempty(ac)
+            for nn = 1:numel(ac)
+                isect2(nn) = ~any(isinternal(ac(nn),repmat(q(ii,:)',1,3)+trialMat,'u'));
+            end
+        elseif ~isempty(ellBoundInv1)
             for nn = 1:size(ellBoundInv1,2)
                 for mm = 1:size(ellBoundInv1,1),
                     if isstruct(ellBoundInv1) || iscell(ellBoundInv1)
@@ -100,7 +110,7 @@ for ii = 1:size(q,1)
                     else % we're dealing with an array
                         if ~isempty(ellBoundInv1(mm,nn))
                             if any(isCyclic)
-                                isect1(mm) = ~any(isinternal_quickInv(ellBoundInv1(mm,nn),repmat(q(ii,:)',1,3)+trialMat,'u'));
+                                isect1(mm) = ~any(isinternal_quickInv(ellBoundInv1(mm,nn),repmat(q(ii,:)',1,3)+trialMat,'u'));   
                             else
                                 isect1(mm) = ~any(isinternal_quickInv(ellBoundInv1(mm,nn),q(ii,:)','u'));
                             end

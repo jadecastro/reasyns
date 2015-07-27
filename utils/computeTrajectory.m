@@ -8,7 +8,7 @@ trimTraj = true;
 forcedEndIndx = Inf;
 
 TstepTraj = 0.02;
-Tfin = 10;
+Tfin = 100;
 t = 0:TstepTraj:Tfin;
 
 % Model and Controller 
@@ -37,6 +37,7 @@ dist2LastPt = sqrt(sum((outputk - repmat(xyPath(end,:),size(outputk,1),1)).^2,2)
 
 %indx = find(abs(dist2LastPt) < abs(distAccept),1,'first');
 dist2LastPt(size(Xk,1)+1) = inf;
+indx = size(Xk,1);
 if trimTraj
     for k = 1:size(Xk,1)
         if (abs(dist2LastPt(k+1)) > abs(dist2LastPt(k)) && dist2LastPt(k) < sys.params.closeEnough) || k == forcedEndIndx
@@ -53,7 +54,6 @@ else
         end
     end
 end
-
 
 gotopt = 1;         % Initialize waypoint index
 for k = 1:1:size(Xk,1)

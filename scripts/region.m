@@ -9,6 +9,7 @@ classdef region < handle
         p;
         mssExt;
         mssInt;
+        mssBnd;
         
         p_bnd;
         mss_bnd;
@@ -77,7 +78,10 @@ classdef region < handle
                 [H,K] = double(regobj.p);
                 if length(regobj.p) > 1
                     for i = 1:length(regobj.p)
-                        regobj.p(i) = polytope(H{i},K{i}+regobj.epsilon);
+                        tmp = polytope(H{i},K{i}+regobj.epsilon);
+                        if ~isempty(double(tmp))
+                            regobj.p(i) = tmp;
+                        end
                         mssReg = (H{i}*x(1:2)-(K{i}+regobj.epsilon))' + eps*sum(x);
                         regobj.mssExt{i} = -mssReg;
                     end
@@ -110,9 +114,24 @@ classdef region < handle
             
         end
         
+        function reg = intersect(reg1,reg2)
+            %  find the intersection of two region objects, returning a new region object
+            
+            p = intersect(reg1.p,reg2.p);
+            verts = extractOrderedVertsFromPolytope(p);
+            reg = region(verts);
+        end
+        
+        function reg = union(reg1,reg2)
+            %  find the union of two region objects, returning a new region object
+            
+            p = union([reg1.p,reg2.p]);
+            verts = extractOrderedVertsFromPolytope(p);
+            reg = region(verts);
+        end
+        
         function isect = isinside(regobj,sys,q,sampSkip)
-            % check whether or not any of the states values supplied in q
-            % do not lie in the region.
+            % check whether or not any of the states values supplied in q do not lie in a given region.
             
             H = sys.params.H;
             if isa(q,'traject')
@@ -164,8 +183,11 @@ classdef region < handle
                     vDiff = vDiffNew;
                 end
             end
-            if verLessThan('matlab','7.15')
+            if verLessThan('matlab','7.15') % use the DIY version
                 a = vDiff(:,1); b = vDiff(:,2);
+                amean=mean(vDiff(:,1));  bmean=mean(vDiff(:,2));
+                [~, indx] = sort(atan2(a-amean,b-bmean));
+                a = a(indx);  b = b(indx);
             else
                 [a,b] = poly2ccw(vDiff(:,1),vDiff(:,2));
             end
@@ -199,7 +221,7 @@ classdef region < handle
         
         function plot(regobj,varargin)
             %
-            plot(regobj.p,varargin{:})
+            plot(regobj.p,varargin{:});
         end
         
 %         function subsasgn
@@ -261,6 +283,7 @@ classdef region < handle
                 trueRep(regobj,p1);
             end
             
+            % compute an mss object for the polytope
             [H,K] = double(regobj.p);
             x = msspoly('x',2);
             if length(regobj.p) > 1
@@ -273,9 +296,16 @@ classdef region < handle
                 regobj.mssExt = -mssReg;
             end
             
+            % form a convex hull of the polytope
             bnd = hull(regobj.p);
             regobj.p_bnd = bnd;
+            
+            % compute an mss object for the convex hull
+            [H,K] = double(regobj.p_bnd);
+            mssReg = (H*x(1:2)-K)' + eps*sum(x);
+            regobj.mssBnd = -mssReg;
 
         end
+        
     end
 end

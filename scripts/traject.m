@@ -219,6 +219,9 @@ classdef traject
         
         function plot(ppobj,color,fignum)
             %
+            if nargin == 3 && isempty(color)
+                color = 'k';
+            end
             if nargin < 3
                 fignum = 1;
             end

@@ -1,8 +1,14 @@
-function [path] = buildCtrlSpaceRRT(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,qInit,qGoal,stepSize,Hout,n,isCyclic,modelType)
+function [path] = buildCtrlSpaceRRT(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,qInit,qGoal,stepSize,sys,reg,ac,options)
 % BUILDRRT: Computes a path from qInit to qGoal using RRT assuming a
 % circular robot.
 
-maxNodes = 100;
+maxNodes = 500;
+
+modelType = 'unicycle';
+
+Hout = sys.params.H;
+n = sys.params.n;
+isCyclic = sys.params.isCyclic;
 
 % Initialize the set V
 node = qInit;
@@ -18,7 +24,7 @@ path.u = [];
 
 % Choose random points
 gaussWeight = 0.9;  % Weight [0-1] on Gaussian sampling biasing at qGoal
-M = 5*eye(n);    % Covariance matrix
+M = 1*eye(n);    % Covariance matrix
 
 isect1 = true;
 isect2 = true;
@@ -30,7 +36,7 @@ end
 
 for i = 1:maxNodes
     i
-%     plotNewNode(node,edge) % uncomment to plot- will slow things down
+    plotNewNode(node,edge) % uncomment to plot- will slow things down
     
     % Test whether any elements in V are in the goal region (TODO: for now-- must be at least two points in the vector)
     if i > 1 && edge(end,1) ~= 1  % want at least 1 segment!
@@ -41,13 +47,21 @@ for i = 1:maxNodes
         for ii = 1:length(nodeXU.t), tsum = tsum + length(nodeXU.t{ii}); end
         tmp = tsum - length(nodeXU.t{i-1}) + 1;
         for k = 1:length(t)
-            isect1(k) = checkIntersection3(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,Xk(k,:),Hout,n,isCyclic,'allPts');
-            isect2(k) = checkIntersection4(ellBndInv11,Xk(k,:),Hout,n,isCyclic);
+            isect1(k) = checkIntersection3(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,Xk(k,:),Hout,n,isCyclic,'allPts',ac,reg,sys);
+%             isect2(k) = checkIntersection4(ellBndInv11,Xk(k,:),Hout,n,isCyclic);
+            isect2(k) = isinternal(ac,Xk(k,:)','u');
+            if isect2(k)
+                disp('intersection with goal set!')
+%                 keyboard
+            else
+                disp('no intersection.')
+            end
             %isectBnd = checkIntersection4(ellBndInv11,Xk,Hout,n,isCyclic)  % isect == true --> for all m,n there is some n for which the point is outside for all m, where ell{m,n}.
             %isectC = checkIntersection4(tmpEllCInv11,Xk,Hout,n,isCyclic)  % isect == true --> for all m,n there is some n for which the point is outside for all m, where ell{m,n}.
             %isect = isectBnd && isectC;
             % TODO: which is point in the curve which we consider the last one inside?
-            if ~isect1(k) && ~isect2(k) && k ~= length(t) && k > 10
+%             if ~isect1(k) && ~isect2(k) && k ~= length(t) && k > 10
+            if isect2(k) % && k ~= length(t) && k > 10
                 inGoalSet = true;
                 nodeXU.t{i-1}(k+1:end) = [];
                 nodeXU.x{i-1}(k+1:end,:) = [];
@@ -87,7 +101,7 @@ for i = 1:maxNodes
     end
     
     % If not, go fish
-    [qNew,t,Xk,Uk,nearI] = addNodeDynamics(vBound,vObs1,vObs2,qGoal,node,gaussWeight,M,stepSize,Hout,n,isCyclic,modelType);
+    [qNew,t,Xk,Uk,nearI] = addNodeDynamics(vBound,vObs1,vObs2,qGoal,node,gaussWeight,M,stepSize,ac,reg,sys,options);
     if isempty(t) || isempty(qNew)
         disp('add node failed.')
         break

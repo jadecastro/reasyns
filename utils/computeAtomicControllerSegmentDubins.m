@@ -1,7 +1,7 @@
-function [ac] = computeAtomicControllerSegmentDubins(u0,x0,sys,ctrloptions,sampSkip)
+function [ac] = computeAtomicControllerSegmentDubins(u0,x0,sys,ctrloptions,sampSkip,xMssExt)
 
 try
-    ac = computeAtomicControllerDubins(u0,x0,sys,ctrloptions,sampSkip);
+    ac = computeAtomicControllerDubins(u0,x0,sys,ctrloptions,sampSkip,xMssExt);
 
 catch ME
     if strcmp(ME.identifier, 'Drake:PolynomialTrajectorySystem:InfeasibleRho')
@@ -11,13 +11,13 @@ catch ME
             [u01, u02] = bisect(u0);
             
             %TODO: ensure containment of sequenced funnels - reverse ordering 
-            ac2 = computeAtomicControllerSegmentDubins(u02,x02,sys,ctrloptions,sampSkip);
-            t0 = getTimeVec(ac2.P);
-            ctrloptions.Qf = double(ac2.P,t0(1));
+            ac2 = computeAtomicControllerSegmentDubins(u02,x02,sys,ctrloptions,sampSkip,xMssExt);
+            t0 = ac2.P.getTimeVec();
+            ctrloptions.Qf = double(ac2.P,t0(1))*double(ac2.rho,t0(1));
             %             Qf = getMaximalQ(funnelI2,Xk2(1+Noverlap,:));
-            ac1 = computeAtomicControllerSegmentDubins(u01,x01,sys,ctrloptions,sampSkip);
-            t0 = getTimeVec(ac1.P);
-            ctrloptions.Qf = double(ac1.P,t0(1));
+            ac1 = computeAtomicControllerSegmentDubins(u01,x01,sys,ctrloptions,sampSkip,xMssExt);
+            t0 = ac1.P.getTimeVec();
+            ctrloptions.Qf = double(ac1.P,t0(1))*double(ac1.rho,t0(1));
             %             Qf = getMaximalQ(funnelI1,Xk1(1+Noverlap,:));
             
             %collect into one atomiccontroller

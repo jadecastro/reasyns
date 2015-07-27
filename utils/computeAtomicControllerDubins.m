@@ -1,4 +1,4 @@
-function [ac] = computeAtomicControllerDubins(u0,x0,sys,ctrloptions,sampSkip)
+function [ac] = computeAtomicControllerDubins(u0,x0,sys,ctrloptions,sampSkip,xMssExt)
 
 Q = ctrloptions.Q;
 R = ctrloptions.R;
@@ -39,6 +39,7 @@ options.stability = false;
 
 % Do funnel computation
 Vtraj = sampledFiniteTimeVerification(poly,xtraj.getBreaks(),Qf,V,options);
+% Vtraj = sampledFiniteTimeVerification(poly,xtraj.getBreaks(),Qf,V,options,xMssExt);
 disp('done');
 
 % Convert V back to state frame
@@ -86,13 +87,17 @@ ac = quadraticAC(x0,u0,K0,P0,rho0,Vquad,sys);
 
 
 % plot the projection
+% figure(5)
+% hold on
+% options.inclusion = 'projection';
+% options.plotdims = [1 2];
+% plotFunnel(Vxframe,options);
+% fnplt(xtraj,[1 2]);
+% axis equal
+
 figure(5)
 hold on
-options.inclusion = 'projection';
-options.plotdims = [1 2];
-plotFunnel(Vxframe,options);
-fnplt(xtraj,[1 2]);
-axis equal
+plot(ac,sys,5)
 
 
 % Tests to make sure simulated trajectories stay inside computed funnel

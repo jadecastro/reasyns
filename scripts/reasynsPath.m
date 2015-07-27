@@ -1,4 +1,7 @@
 
+% disable JxBrowser to prevent idle cpu use
+com.mathworks.mlwidgets.html.HtmlComponentFactory.setDefaultType('HTMLRENDERER');
+
 addpath(genpath([pwd,'/../../reasyns']));
 rmpath([pwd,'/../../reasyns/lib/ellipsoids/solvers/SeDuMi_1_1']);
 rmpath([pwd,'/../../reasyns/lib/mpt/solvers/SeDuMi_1_3']);

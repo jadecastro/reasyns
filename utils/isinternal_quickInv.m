@@ -118,8 +118,10 @@ if (s == 'u')
             r = q' * Qinv * q;
             
             if (r < 1) | (abs(r - 1) < ellOptions.abs_tol)
-                res = 1;
-                return;
+                if all(eig(Qinv) >= -1e-6)
+                    res = 1;
+                    return;
+                end
             end
         end
     end

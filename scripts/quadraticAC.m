@@ -81,7 +81,14 @@ classdef quadraticAC < polynomialAC
                     for k = 1:size(P,3)
                         Pinv = inv(P(:,:,k));
                         Pinv_sym = (Pinv'+Pinv)/2;  % to ensure it is symmetric
-                        E(k) = ellipsoid(x(:,k),Pinv_sym);
+                        try 
+                            E(k) = ellipsoid(x(:,k),Pinv_sym);
+                        catch ME
+                            Pinv = inv(double(E(k-1)));
+                            Pinv_sym = (Pinv'+Pinv)/2;  % to ensure it is symmetric
+                            E(k) = ellipsoid(x(:,k),Pinv_sym);
+                            %rethrow(ME)
+                        end
                     end
                 end
             end
@@ -103,7 +110,11 @@ classdef quadraticAC < polynomialAC
             n = ac.x0.pp.dim;
             if ~isempty(sys.H)
                 for i = 1:length(ac)
-                    ell = ellipsoid(ac(i));
+                    try
+                        ell = ellipsoid(ac(i));
+                    catch
+                        keyboard
+                    end
                     for j = 1:length(ell)
                         Eproj(j,i) = projection(ell(j),[sys.H; zeros(n-length(sys.H),length(sys.H))]);
                     end
@@ -140,14 +151,37 @@ classdef quadraticAC < polynomialAC
         function intersect
         end
         
-        function res = isinternal(acobj, X, s)
+        function res = isinternal(acobj, X, s, varargin)
             %
             res = isinternal_quickInv(acobj.Einv, X, s);
+
+            if ~isempty(varargin)
+                sys = varargin{1};
+                %NB: not complete.
+                if ~res
+                    for i = find(sys.params.isCyclic)'
+                        X(i) = X(i) + 2*pi;
+                        res = isinternal_quickInv(acobj.Einv, X, s);
+                        X(i) = X(i) - 2*pi;
+                    end
+                end
+                if ~res
+                    for i = find(sys.params.isCyclic)'
+                        X(i) = X(i) - 2*pi;
+                        res = isinternal_quickInv(acobj.Einv, X, s);
+                        X(i) = X(i) + 2*pi;
+                    end
+                end
+            end
+                
         end
         
-        function res = isinside(acobj,regobj)
+        function res = isinside(acobj,regobj,sys)
             %
-            
+            [H,K] = double(regobj.p);
+            hpp = hyperplane(H',K');
+            res = intersect(projection(acobj,sys),hpp,'u');
+            res = ~any(res);
         end
         
 %         function sample
@@ -164,13 +198,23 @@ classdef quadraticAC < polynomialAC
             acres = quadraticAC(actmp.x0,actmp.u0,actmp.K,Pn,actmp.rho,actmp.V,actmp.sys);
         end
         
-        function plot(ac,sys,fignum,color)
+        function plot(ac,sys,fignum,threedflag,color)
             %
             %TODO: treat both 2d and 3d cases
             
-            Eproj = projection(ac,sys);
-            figure(fignum)
-            plot(Eproj)
+            if exist('threedflag')
+                if threedflag
+                    tmp = downsample(ac.ellipsoid,1);
+                    figure(fignum)
+                    hold on
+                    plot(tmp,'r')
+                end
+            else
+                Eproj = projection(ac,sys);
+                figure(fignum)
+                plot(Eproj,'b')
+            end
+            drawnow
         end
         
         function disp(ac)
