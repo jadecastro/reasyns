@@ -1,6 +1,6 @@
-function drawCar(x)
+function H = drawCar(x)
 
-scl = 0.36;  % NB: axle displacement = 0.5 with this geometry
+scl = 0.16;  % NB: axle displacement = 0.5 with this geometry
 
 bodyCoords = scl*[[-0.8 -0.8 0.8 0.8];[-1.2 1.2 1.2 -1.2]];
 wheel1Coords = scl*[[-0.8 -1.2 -1.2 -0.8];[0.4 0.4 -0.4 -0.4]+0.7];
@@ -24,10 +24,10 @@ angleW4 = atan2(wheel4Coords(1,:),wheel4Coords(2,:)) - x(3) + pi/2;
 magW4 = sqrt(wheel4Coords(1,:).^2+wheel4Coords(2,:).^2);
 rotWheel4Coords = [magW4.*sin(angleW4); magW4.*cos(angleW4)];
 
-fill(rotBodyCoords(1,:)+x(1),rotBodyCoords(2,:)+x(2),'y')
-fill(rotWheel1Coords(1,:)+x(1),rotWheel1Coords(2,:)+x(2),'k')
-fill(rotWheel2Coords(1,:)+x(1),rotWheel2Coords(2,:)+x(2),'k')
-fill(rotWheel3Coords(1,:)+x(1),rotWheel3Coords(2,:)+x(2),'k')
-fill(rotWheel4Coords(1,:)+x(1),rotWheel4Coords(2,:)+x(2),'k')
-
+H1 = fill(rotBodyCoords(1,:)+x(1),rotBodyCoords(2,:)+x(2),'y');
+H2 = fill(rotWheel1Coords(1,:)+x(1),rotWheel1Coords(2,:)+x(2),'k');
+H3 = fill(rotWheel2Coords(1,:)+x(1),rotWheel2Coords(2,:)+x(2),'k');
+H4 = fill(rotWheel3Coords(1,:)+x(1),rotWheel3Coords(2,:)+x(2),'k');
+H5 = fill(rotWheel4Coords(1,:)+x(1),rotWheel4Coords(2,:)+x(2),'k');
+H = [H1;H2;H3;H4;H5];
 

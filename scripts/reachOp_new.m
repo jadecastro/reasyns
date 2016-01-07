@@ -1,4 +1,4 @@
-function [ac_trans, errTrans] = reachOp_new(sys,reg,regDefl,regBnd,aut,acIn,iModeToPatch,options)
+function [ac_trans, errTrans] = reachOp_new(sysArray,reg,regDefl,regBnd,aut,acIn,iModeToPatch,options)
 %
 % Reach operation -- construct transition funnels
 %
@@ -31,46 +31,51 @@ for funindx = 1:maxFunTrials
     
     lastTrans = trans(:,2)==iModeToPatch;
     acLast = [acIn{lastTrans}]; 
-    if ~isempty(acLast) && length(find(lastTrans)) == 1  % if there is precisely one incoming funnel to join, we may as well select the initial point as the final point in that funnel
-        ttmp = getTimeVec(acLast.x0);
-        qCenter = ppval(acLast.x0.pp,ttmp(end));
-        Qsav = options.Qrand;
-        options.Qrand = 1e-4;
-        for trial2 = 1:maxTrials2
-            try
-                initState = getCenterRand_new(sys,regDefl(aut.q{iModeToPatch}),[],options,qCenter);
-                break
-            catch ME
-                disp(ME.message)
-                disp('something went wrong with the initial state generation... recomputing')
-            end  
-        end
-        if trial2 == maxTrials2
-            funFail = true;
-        end
-        options.Qrand = Qsav;
-    else
-        for trial2 = 1:maxTrials2
-            try
-                initState = getCenterRand_new(sys,regDefl(aut.q{iModeToPatch}),[],options);
-                break
-            catch ME
-                disp(ME.message)
-                disp('something went wrong with the initial state generation... recomputing')
-            end
-        end
-    end
-    initState
-    initOutput = initState(1:length(sys.H))*sys.H;
     
     for itrans = find(trans(:,1)==iModeToPatch)'
         iModeSuccessor = trans(itrans,2);
         
-        % TODO: put this in region class
-        [H,K] = double(hull([reg(aut.q{trans(itrans,1)}).p,reg(aut.q{trans(itrans,2)}).p]));
-        x = msspoly('x',2);
-        mssReg = (H*x(1:2)-K)' + eps*sum(x);
-        xMssExt = -mssReg;
+        % get system model for this transition
+        aut.f{itrans}
+        sys = sysArray(aut.f{itrans});
+        
+        if ~isempty(acLast) && length(find(lastTrans)) == 1  % if there is precisely one incoming funnel to join, we may as well select the initial point as the final point in that funnel
+            ttmp = getTimeVec(acLast.x0);
+            qCenter = double(acLast.x0,ttmp(end));
+            Qsav = options.Qrand;
+            options.Qrand = 1e-4;
+            for trial2 = 1:maxTrials2
+                try
+                    initState = getCenterRand_new(sys,regDefl(aut.q{iModeToPatch}),[],options,qCenter);
+                    break
+                catch ME
+                    disp(ME.message)
+                    disp('something went wrong with the initial state generation... recomputing')
+                end
+            end
+            if trial2 == maxTrials2
+                funFail = true;
+            end
+            options.Qrand = Qsav;
+        else
+            for trial2 = 1:maxTrials2
+                try
+                    initState = getCenterRand_new(sys,regDefl(aut.q{iModeToPatch}),[],options);
+                    break
+                catch ME
+                    disp(ME.message)
+                    disp('something went wrong with the initial state generation... recomputing')
+                end
+            end
+        end
+        initState
+        initOutput = initState(1:length(sys.H))*sys.H;
+        
+        if strfind(func2str(sys.polyMdlFun),'CreateKinematics')
+            sampSkipFun = options.sampSkipFun;
+        elseif strfind(func2str(sys.polyMdlFun),'Holonomic')
+            sampSkipFun = 10*options.sampSkipFun;
+        end
         
         regSafeSG = getRegTrans(reg,regBnd,aut,itrans);
 %         regSafeG = getReg(reg,regBnd,aut,iModeSuccessor);
@@ -85,10 +90,17 @@ for funindx = 1:maxFunTrials
                 finalState = getCenterRand_new(sys,regDefl(aut.q{iModeSuccessor}),[],options); %,vReg{aut.q{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
                 goalOutput = finalState(1:length(sys.H))*sys.H;
                 
-                path = [initOutput; goalOutput];
+                if strfind(func2str(sys.polyMdlFun),'CreateKinematics')
+                    path = [initOutput; goalOutput];
+                    type = 'output';
+                elseif strfind(func2str(sys.polyMdlFun),'Holonomic')
+                    path = [initState; finalState];
+                    type = 'state';
+                end
                 disp('Computing nominal trajectory....')
                 
-                [u0,x0] = computeTrajectory(sys,initState,path);
+                sys.polyMdlFun
+                [u0,x0] = computeTrajectory(sys,initState,path,type);
                 figure(500), hold on, plot(x0,[],500)
                 isect = isinside([reg(aut.q{trans(itrans,1)}),reg(aut.q{trans(itrans,2)})],sys,downsampleUniformly(x0,options.sampSkipColl)');
                 if isect && length(x0) > 1 && length(x0) < maxTrajLength,
@@ -111,7 +123,7 @@ for funindx = 1:maxFunTrials
             disp('Computing funnel....')
             
             try
-                ac = computeAtomicControllerSegmentDubins(u0,x0,sys,options.ctrloptions_trans,options.sampSkipFun,xMssExt);
+                ac = computeAtomicControllerSegmentDubins(u0,x0,sys,options.ctrloptions_trans,sampSkipFun,[]);
                 ac_trans = [ac_trans; ac];
                 funFail = false;
                 
@@ -120,7 +132,7 @@ for funindx = 1:maxFunTrials
                 plot(ac.x0,'k',5)
                 
             catch ME
-%                 rethrow(ME)
+                rethrow(ME)
                 disp(ME.message)
                 disp('something went wrong with the funnel computation...  kicking back out to the main script.')
                 errTrans = trans(:,2)==iModeToPatch;

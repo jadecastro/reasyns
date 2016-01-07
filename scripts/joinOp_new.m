@@ -1,4 +1,4 @@
-function [ac_inward, errTrans] = joinOp_new(sys,reg,regDefl,regBnd,aut,acIn,iModeToJoin,options)
+function [ac_inward, errTrans] = joinOp_new(sysArray,reg,regDefl,regBnd,aut,acTrans,iModeToJoin,options)
 %
 % Reach operation -- construct transition funnels
 %
@@ -29,27 +29,23 @@ for funindx = 1:maxFunTrials
     i = 1;
     %         while true  % will only increment i if atomic controller generation has succeeded.
     
-    lastTrans = trans(:,2)==iModeToJoin;
-    nextTrans = trans(:,1)==iModeToJoin;
-    acLast = [acIn{lastTrans}];
-    acNext = [acIn{nextTrans}];
+    %lastTrans = trans(:,2)==iModeToJoin;
+    nextTrans = trans(:,1)==iModeToJoin;  % we are using a deterministic strategy, so the transition out of the state is necessarily a singleton
+    %acLast = [acTrans{lastTrans}];
+    acNext = [acTrans{nextTrans}];
     
     for itrans = find(trans(:,2)==iModeToJoin)'
         
-        % TODO: put this in region class
-        [H,K] = double(hull([reg(aut.q{trans(itrans,1)}).p,reg(aut.q{trans(itrans,2)}).p]));
-        x = msspoly('x',2);
-        mssReg = (H*x(1:2)-K)' + eps*sum(x);
-        xMssExt = -mssReg;
+        sys = sysArray(aut.f{nextTrans}); % Assign the dynamics according to the transition to be taken.
         
         regSafeSG = getRegTrans(reg,regBnd,aut,itrans);
 %         regSafeG = getReg(reg,regBnd,aut,iModeSuccessor);
         
         %                 ellTransS = ellipsoid(ac_trans(itrans,1));
         
-        ttmp = getTimeVec(acIn{itrans}.x0);
+        ttmp = getTimeVec(acTrans{itrans}.x0);
         
-        qCenter = ppval(acIn{itrans}.x0.pp,ttmp(end));
+        qCenter = double(acTrans{itrans}.x0,ttmp(end));
         Qsav = options.Qrand;
         options.Qrand = 1e-4;
         for trial2 = 1:maxTrials2
@@ -73,21 +69,29 @@ for funindx = 1:maxFunTrials
             
             disp('Computing final point....')
             try
-                qCenter = ppval(acNext.x0.pp,0);  % in the vicinity of the first point of the funnel
+                qCenter = double(acNext.x0,0);  % in the vicinity of the first point of the funnel
 %                 finalState = getCenterRand_new(sys,regDefl(aut.q{iModeToJoin}),acNext,options,qCenter) %,vReg{aut.q{iModeToJoin}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
-                finalState = ppval(acNext.x0.pp,0)' %,vReg{aut.q{iModeToJoin}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
+                finalState = double(acNext.x0,0)' %,vReg{aut.q{iModeToJoin}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
                 goalOutput = finalState(1:length(sys.H))*sys.H;
                 
-                path = [initOutput; goalOutput];
-                stepSize = 0.05;
+                % TODO: make this work for both types of dynamics!
+                %                 if strfind(func2str(sys.polyMdlFun),'CreateKinematics')
+                %                     path = [initOutput; goalOutput];
+                %                     type = 'output';
+                %                 elseif strfind(func2str(sys.polyMdlFun),'Holonomic')
+                %                     path = [initState; finalState];
+                %                     type = 'state';
+                %                 end
+                
+                stepSize = 0.2;
                 
                 figure(3)
                 clf
                 plot(acNext,sys,3)
                 axis equal
                 
-                [path] = buildCtrlSpaceRRT(regBnd.v,{reg(aut.q{iModeToJoin}).v},{reg(aut.q{iModeToJoin}).v},acIn{itrans}.ellipsoid,[],[],[],initState,finalState,stepSize,sys,reg(aut.q{iModeToJoin}),acNext,options);
-%                 [path] = buildCtrlSpaceRRT(regBnd.v,{reg(aut.q{iModeToJoin}).v},{reg(aut.q{iModeToJoin}).v},acIn{itrans}.ellipsoid,[],[],[],initState,finalState,stepSize,sys,regBnd,acNext,options);
+                [path] = buildCtrlSpaceRRT(regBnd.v,{reg(aut.q{iModeToJoin}).v},{reg(aut.q{iModeToJoin}).v},[],[],[],[],initState,finalState,stepSize,sys,reg(aut.q{iModeToJoin}),acNext,options);
+%                 [path] = buildCtrlSpaceRRT(regBnd.v,{reg(aut.q{iModeToJoin}).v},{reg(aut.q{iModeToJoin}).v},acTrans{itrans}.ellipsoid,[],[],[],initState,finalState,stepSize,sys,regBnd,acNext,options);
                 disp('Computing nominal trajectory....')
                 
                 x0 = traject(path.t',path.x');
@@ -114,7 +118,7 @@ for funindx = 1:maxFunTrials
             disp('Computing funnel....')
             
             try
-                ac = computeAtomicControllerSegmentDubins(u0,x0,sys,options.ctrloptions_trans,options.sampSkipFun,xMssExt);
+                ac = computeAtomicControllerSegmentDubins(u0,x0,sys,options.ctrloptions_trans,options.sampSkipFun,[]);
                 ac_inward = [ac_inward; ac];
                 funFail = false;
                 

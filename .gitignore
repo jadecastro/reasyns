@@ -2,3 +2,8 @@
 *.m~
 *.txt
 *.mat
+*.log
+*.eps
+*.fig
+*.png
+

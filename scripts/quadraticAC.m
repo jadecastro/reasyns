@@ -96,7 +96,7 @@ classdef quadraticAC < polynomialAC
         
         % TODO: generalize to arbitrary polynomials
         function ac = normalizerho(ac)
-            %
+            % TODO: create a flag to indicate if already normalized
             rho = ppval(ac.rho,getTimeVec(ac));
 %             P = ppval(ac.P,getTimeVec(ac));
             if all(rho) == 1.0, return; end
@@ -105,18 +105,24 @@ classdef quadraticAC < polynomialAC
         end
         
         % TODO: generalize to arbitrary polynomials
-        function Eproj = projection(ac,sys)
+        function Eproj = projection(ac,sys,idx)
             %
             n = ac.x0.pp.dim;
             if ~isempty(sys.H)
-                for i = 1:length(ac)
-                    try
-                        ell = ellipsoid(ac(i));
-                    catch
-                        keyboard
-                    end
-                    for j = 1:length(ell)
-                        Eproj(j,i) = projection(ell(j),[sys.H; zeros(n-length(sys.H),length(sys.H))]);
+                if nargin > 2
+                    % makes sense to assume only one ac in this case
+                    ell = ellipsoid(ac);
+                    Eproj = projection(ell(idx),[sys.H; zeros(n-length(sys.H),length(sys.H))]);
+                else
+                    for i = 1:length(ac)
+                        try
+                            ell = ellipsoid(ac(i));
+                        catch
+                            keyboard
+                        end
+                        for j = 1:length(ell)
+                            Eproj(j,i) = projection(ell(j),[sys.H; zeros(n-length(sys.H),length(sys.H))]);
+                        end
                     end
                 end
             else
@@ -176,12 +182,28 @@ classdef quadraticAC < polynomialAC
                 
         end
         
-        function res = isinside(acobj,regobj,sys)
-            %
+        function [res, idx, isectArray] = isinside(acobj,regobj,sys)
+            % checks for containment by simply checking intersections with
+            % any of the boundary hyperplanes.
             [H,K] = double(regobj.p);
             hpp = hyperplane(H',K');
-            res = intersect(projection(acobj,sys),hpp,'u');
-            res = ~any(res);
+            isectArray = [];
+            if nargout > 1
+                res = true;
+                idx = [];
+                for i = 1:length(acobj.ellipsoid)
+                    tmp = ~intersect(projection(acobj,sys,i),hpp,'u');
+                    isectArray = [isectArray; tmp];
+                    if ~all(tmp)
+                        res = false;
+                        idx = [idx; i];
+                    end
+                end
+            else
+                tmp = ~intersect(projection(acobj,sys),hpp,'u');
+                isectArray = [isectArray; tmp];
+                res = ~all(tmp);
+            end
         end
         
 %         function sample
@@ -202,17 +224,34 @@ classdef quadraticAC < polynomialAC
             %
             %TODO: treat both 2d and 3d cases
             
-            if exist('threedflag')
+            if ~exist('threedflag')
+                threedflag = [];
+            end
+            
+            isColorAsOption = false;
+            if nargin < 5
+                color = 'b';
+            elseif length(color) == 3 && isnumeric(color)
+                Options.color = color;
+                isColorAsOption = true;
+            end
+            Options.width = 3;
+            
+            if isempty(threedflag)
+                Eproj = projection(ac,sys);
+                figure(fignum)
+                if isColorAsOption
+                    plot(Eproj,Options)
+                else
+                    plot(Eproj,color)
+                end
+            else
                 if threedflag
                     tmp = downsample(ac.ellipsoid,1);
                     figure(fignum)
                     hold on
                     plot(tmp,'r')
                 end
-            else
-                Eproj = projection(ac,sys);
-                figure(fignum)
-                plot(Eproj,'b')
             end
             drawnow
         end

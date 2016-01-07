@@ -14,54 +14,77 @@ clk = fix(clock);
 fid = fopen(['reasyns_log_',date,'_',num2str(clk(4)),num2str(clk(5)),num2str(clk(6)),'.txt'],'w');
 
 % make copies of files that we may be modifying later on
-%! cp /home/jon/Dropbox/Repos/LTLMoP/src/examples/complex_map/complex_map.regions /home/jon/Dropbox/Repos/LTLMoP/src/examples/complex_map/complex_map_sav.regions
-%! cp /home/jon/Dropbox/Repos/LTLMoP/src/examples/complex_map/complex_map_decomposed.regions /home/jon/Dropbox/Repos/LTLMoP/src/examples/complex_map/complex_map_decomposed_sav.regions
-%! cp /home/jon/Dropbox/Repos/LTLMoP/src/examples/complex_map/complex_map.structuredslugs /home/jon/Dropbox/Repos/LTLMoP/src/examples/complex_map/complex_map_sav.structuredslugs
-%! cp /home/jon/Dropbox/Repos/LTLMoP/src/examples/complex_map/complex_map.spec /home/jon/Dropbox/Repos/LTLMoP/src/examples/complex_map/complex_map_sav.spec
-%! cp /home/jon/Dropbox/Repos/LTLMoP/src/examples/complex_map/config/complex_map.config /home/jon/Dropbox/Repos/LTLMoP/src/examples/complex_map/config/complex_map_sav.config
+resetAllInputFiles
 
 % load automaton
+% TODO: input dynamics propositions also
 %autFile_complexMap
 %autFile_inspectionMap
-[aut, transTmp, transTmpNew, transTmpNewWithoutSelfLoops, transWithoutSelfLoops] = ...
-    processAutFileFastSlow('/home/jon/Dropbox/Repos/LTLMoP/src/examples/light_painting_letters/light_painting.aut');
+% autFile_twoRegions
+% [aut, transTmp, transTmpNew, transTmpNewWithoutSelfLoops, transWithoutSelfLoops] = ...
+%     processAutFileFastSlow('/home/jon/Dropbox/Repos/LTLMoP/src/examples/box_pushing/box_pushing.aut');
+
+load aut_boxPushing
+aut = renumberStates(aut);
+% aut.f = {2, 1, 1, 1, 1, 2, 2};  % enforce certain dynamics depending on the current transition (region activation
+aut.f = {3, 3, 3, 3, 3, 3, 3};  % enforce certain dynamics depending on the current transition (region activation
 
 Ntrans = length(aut.trans);
 Nmodes = length(aut.q);
 
 % load map
 %regFile_complexMap
-regFile_inspectionMap
+regFile_boxPushing
+% regFile_twoRegions
+% aut.f = {1, 1};
 
 % reg(1) = region(vReg{1});
 % reg(2) = region(vReg{2});
 % reg(3) = region(vReg{3});
 % regBnd = region(vBnd{1});
 
-% Model parameters
-polyMdlFun = @(t,x,u) CreateKinematicsPoly(t,x,u);
-mdlFun = @(t,x,options,p1,p2) CreateKinematicsNLWayptCtrl2(t,x,options,p1,p2);
-ctrlFun = @(x,options,p1,p2) CreateKinematicsNLWayptCtrl2_ctrl(x,options,p1,p2);
-sysparams.n = 3; % number of states
-sysparams.m = 2; % number of inputs
-sysparams.limsNonRegState = [-pi; pi];
-sysparams.isCyclic = [0 0 1]';
-sysparams.H = eye(2);
-sysparams.l = 1.0;  % for car model
-sysparams.x_look = 1;
-sysparams.e = 0.1;
-sysparams.closeEnough = 0.5;
-sysparams.distAccept = 0.1;
-sys = systemdynamics(polyMdlFun,mdlFun,ctrlFun,sysparams.H,sysparams);
+% Model parameters - Unicycle
+polyMdlFun{1} = @(t,x,u) CreateKinematicsPoly(t,x,u);
+mdlFun{1} = @(t,x,options,p1,p2) CreateKinematicsNLWayptCtrl2(t,x,options,p1,p2);
+ctrlFun{1} = @(x,options,p1,p2) CreateKinematicsNLWayptCtrl2_ctrl(x,options,p1,p2);
+sysparams(1).n = 3; % number of states
+sysparams(1).m = 2; % number of inputs
+sysparams(1).limsNonRegState = [-pi; pi];
+sysparams(1).isCyclic = [0 0 1]';
+sysparams(1).H = eye(2);
+sysparams(1).l = 1.0;  % for car model
+sysparams(1).x_look = 1;
+sysparams(1).e = 0.1;
+sysparams(1).closeEnough = 0.5;
+sysparams(1).distAccept = 0.1;
+
+% Model parameters - Holonomic Robot
+polyMdlFun{2} = @(t,x,u) HolonomicPoly(t,x,u);
+mdlFun{2} = @(t,x,options,p1,p2) HolonomicWayptCtrl(t,x,options,p1,p2);
+ctrlFun{2} = @(x,options,p1,p2) HolonomicWayptCtrl_ctrl(x,options,p1,p2);
+sysparams(2) = sysparams(1);
+
+% Model parameters - Dubins Car with fwd velocity as a parameter
+polyMdlFun{3} = @(t,x,u) CreateKinematicsVelAsParamPoly(t,x,u);
+mdlFun{3} = @(t,x,options,p1,p2) CreateKinematicsVelAsParamNLWayptCtrl2(t,x,options,p1,p2);
+ctrlFun{3} = @(x,options,p1,p2) CreateKinematicsNLWayptCtrl2_ctrl(x,options,p1,p2);
+sysparams(3) = sysparams(1);
+sysparams(3).n = 4; % number of states
+sysparams(3).isCyclic = [0 0 1 0]';
+sysparams(3).limsNonRegState = [-pi 4; pi 4];
+
+sys(1) = systemdynamics(polyMdlFun{1},mdlFun{1},ctrlFun{1},sysparams(1).H,sysparams(1));
+sys(2) = systemdynamics(polyMdlFun{2},mdlFun{2},ctrlFun{2},sysparams(2).H,sysparams(2));
+sys(3) = systemdynamics(polyMdlFun{3},mdlFun{3},ctrlFun{3},sysparams(3).H,sysparams(3));
 
 % Feedback controller params
-options.ctrloptions_trans.Q = diag([0.01 0.01 0.01]); %0.01*eye(sysparams.n);
+options.ctrloptions_trans.Q = 1*diag([0.01 0.01 0.01 1e-8]); %0.01*eye(sysparams.n);
 % options.ctrloptions_trans.R = 0.007;
 options.ctrloptions_trans.R = 0.05;
-options.ctrloptions_trans.Qf = 1*eye(sysparams.n);
+options.ctrloptions_trans.Qf = 1*eye(max([sysparams.n]));
 
 % Sampling parameters
-options.Qrand = 1;
+options.Qrand = 0.1;
 options.Ncover = 10000;
 options.Nterm = 10;  % number of consecutive failures before coverage terminates
 options.coverPct = 0.8;
@@ -69,11 +92,12 @@ options.coverPct = 0.8;
 % Number of funnels/controllers for each state
 options.maxFunnelsTrans(1:Nmodes) = 1;
 options.maxFunnelsInward(1:Nmodes) = zeros(1,Nmodes);
+% options.maxFunnelsInward(4) = 1;
 options.maxFunnelsReactJoin(1:Nmodes) = 10;
 
 % TODO: need?
 TstepTraj = 0.02;
-options.maxTrajLength = 100/TstepTraj; % 10 seconds; otherwise we're probably spiraling
+options.maxTrajLength = 200/TstepTraj; % 10 seconds; in attempt to avoid 
 
 % Tree depth
 % depthTrans = 1;
@@ -96,8 +120,6 @@ trans = vertcat(aut.trans{:});
 %     qReg = aut.q{imode};
 %     qCover{imode} = getCoverPts(vReg,{qReg},1,options.Ncover,sysparams.H,n,sysparams.limsNonRegState);
 % end
-
-ac_inward = [];
 
 figure(5)
 plot(reg)
@@ -124,6 +146,7 @@ toc
 fprintf(fid,'%f : Starting ....\n',toc);
 j = 0;
 for iModeToPatch = 1:NmodesReach
+    ac_inward{iModeToPatch} = [];
     for itrans = find(trans(:,1)==iModeToPatch)'
         j = j+1;
         ac_trans{j} = [];
@@ -219,7 +242,8 @@ for iModeToGo = 1:NmodesReach
         end
         
         %% Sequence Operation
-        ac_inward = sequenceOp_new(sys,reg,regBnd,aut,iModeToPatch,options);
+        ac_tmp = sequenceOp_new(sys,reg,regDefl,regBnd,aut,ac_trans,iModeToPatch,options);
+        ac_inward{iModeToPatch} = ac_tmp;
         fprintf(fid,'%f : Finished Sequence operation for mode %d.\n',toc,iModeToPatch);
         
         if ~patchedModes(iModeToGo)
@@ -288,7 +312,8 @@ for iModeToGo = 1:NmodesReach
                     end
                 end
                 fprintf(fid,'%f : ... Finished Reach operation for pre-mode %d.\n',toc,iPreModeToPatch);
-                ac_inward = sequenceOp_new(sys,reg,regBnd,aut,iPreModeToPatch,options);
+                ac_tmp = sequenceOp_new(sys,reg,regDefl,regBnd,aut,ac_trans,iPreModeToPatch,options);
+                ac_inward{iModeToPatch} = ac_tmp;
                 fprintf(fid,'%f : ... Finished Sequence operation for pre-mode %d.\n',toc,iPreModeToPatch);
             end
         end
@@ -326,9 +351,8 @@ for imode = 1:NmodesReach
                 tmp = find(trans(:,2)==iModeToJoin)';
                 j=0;
                 i = find(trans(:,1)==iModeToJoin)';
-                for j = 1:length(ac_tmp)
-                    ac_inward{i}(j) = ac_tmp(j);
-                end
+                ac_inward{i} = [ac_inward{i}; ac_tmp];
+                
 %                 for i = find(trans(:,1)==iModeToJoin)'  % TODO: ordering is preserved, as this agrees with what is in reachOp_new, but need to make more robust
 %                     j = j+1;
 %                     ac_inward{i} = ac_tmp(j);
@@ -403,7 +427,7 @@ reactJoinedModes = false*ones(Nmodes,1);
 for imode = 1:NmodesReach
     if sum(trans(:,1) == imode) > 1 
         
-        [ac_tmp, lastTrans, existingReg, newReg] = reactiveJoinOp_new(sys,reg,regDefl,regBnd,aut,ac_trans,imode,options);
+        [ac_tmp, bc_tmp, lastTrans, existingReg, newRegArray, reg] = reactiveJoinOp_new1(sys,reg,regDefl,regBnd,aut,ac_trans,[],imode,calibMatrix,options);
         
         if ~isempty(lastTrans)
             disp('Reactive Join was unsuccessful. ')
@@ -415,10 +439,14 @@ for imode = 1:NmodesReach
             joinedModes(imode) = false;
             tmp = find(trans(:,2)==imode)';
             j=0;
-            i = find(trans(:,1)==imode)';
+            % i = find(trans(:,1)==imode)';
             for j = 1:length(ac_tmp)
-                ac_react{i}(j) = ac_tmp(j);
+                ac_react{imode}(j) = ac_tmp(j);
+                bc_react{imode}(j) = bc_tmp(j);
             end
+            
+            ac_inward{imode} = ac_react{imode};
+            
 %             for i = find(trans(:,1)==iModeToJoin)'  % TODO: ordering is preserved, as this agrees with what is in reachOp_new, but need to make more robust
 %                 j = j+1;
 %                 ac_react{i} = ac_tmp(j);
@@ -437,13 +465,13 @@ for imode = 1:NmodesReach
             % Find a new polytope for the region
             %buildNewRegion
             
-            if ~isempty(newReg)
-                % Update the Region file
-                addNewRegionToFile
-                
-                % Update the Structuredslugs file
-                modifySpecForNewRegion
-            end
+%             if ~isempty(newReg)
+%                 % Update the Region file
+%                 addNewRegionToFile
+%                 
+%                 % Update the Structuredslugs file
+%                 modifySpecForNewRegion
+%             end
         end
     end
 end

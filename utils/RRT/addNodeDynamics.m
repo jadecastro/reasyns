@@ -2,14 +2,12 @@ function [qNew,t,Xk,Uk,nearI] = addNodeDynamics(vBound,vObs1,vObs2,qGoal,node,ga
 % ADDNODE: Adds a node according to a Gaussian sampling scheme which is
 % stepSize away from the nearest point in the tree.
 
-modelType = 'unicycle';
-
 Hout = sys.params.H;
 n = sys.params.n;
 isCyclic = sys.params.isCyclic;
 
 maxTrials = 10;
-weightDist = ones(1,n) + 0.1*isCyclic';
+weightDist = ones(1,n) + 0.01*isCyclic';
 
 isect = false;
 
@@ -23,6 +21,9 @@ for i = 1:maxTrials %while isect
         % Bias the sampling toward qGoal
         %     if rand < gaussWeight
         qRand = randn(1,n)*chol(M) + qGoal;
+        figure(3)
+        hold on
+        plot(qRand(1),qRand(2),'m.')
         %     else
         %         qRand = min(vBound) + (max(vBound) - min(vBound)).*rand(1,n);
         %     end
@@ -53,7 +54,7 @@ for i = 1:maxTrials %while isect
         [Xk,t] = downsampleUniformly(x0,options.sampSkipColl);
         t = t';
         Xk = Xk';
-        Uk = ppval(u0.pp,t)';
+        Uk = double(u0,t)';
         
         if length(t) > 1
             
@@ -80,6 +81,7 @@ for i = 1:maxTrials %while isect
     catch ME
         disp(ME.message)
         disp('trajectory too small; retrying')
+%         keyboard
     end
     
 end

@@ -1,4 +1,4 @@
-function [ac] = computeAtomicControllerDubins(u0,x0,sys,ctrloptions,sampSkip,xMssExt)
+function [ac,c] = computeAtomicControllerDubins(u0,x0,sys,ctrloptions,sampSkip,xMssExt)
 
 Q = ctrloptions.Q;
 R = ctrloptions.R;
@@ -16,10 +16,21 @@ else
 end
 
 xtraj = PPTrajectory(foh(tRed,xRed)); % should we be using xRed, uRed here?
-utraj = PPTrajectory(foh(tRed,uRed(2,:)));
+if strfind(func2str(sys.polyMdlFun),'CreateKinematics')
+    utraj = PPTrajectory(foh(tRed,uRed(2,:)));
+elseif strfind(func2str(sys.polyMdlFun),'Holonomic')
+    utraj = PPTrajectory(foh(tRed,uRed));
+end
 
 % Declare Dubins car model
-p = DubinsPlant();
+if strfind(func2str(sys.polyMdlFun),'CreateKinematics') && sys.params.n == 3
+    p = DubinsPlant();
+elseif strfind(func2str(sys.polyMdlFun),'CreateKinematics') && sys.params.n == 4
+    p = DubinsPlantVelocityAsParam();
+elseif strfind(func2str(sys.polyMdlFun),'Holonomic')
+    p = HolonomicPlant();
+    R = R*eye(3);
+end
 
 % Set input limits
 p = setInputLimits(p,-Inf,Inf);
@@ -38,7 +49,10 @@ options.max_iterations = 5; % Maximum number of iterations to run for
 options.stability = false;
 
 % Do funnel computation
-Vtraj = sampledFiniteTimeVerification(poly,xtraj.getBreaks(),Qf,V,options);
+
+rhof = 0.1;   % todo: handle the more general case and get it from containment
+
+Vtraj = sampledFiniteTimeVerification(poly,xtraj.getBreaks(),Qf,rhof,V,options);
 % Vtraj = sampledFiniteTimeVerification(poly,xtraj.getBreaks(),Qf,V,options,xMssExt);
 disp('done');
 
@@ -60,9 +74,9 @@ rho0 = traject(rhopp);
 rhoup = double(rho0,tk);
 %TODO: fix this hack to get Drake data
 if verLessThan('matlab','7.15')
-    zeromatrix = repmat([0 0 0],[1,1,length(tk)]);
+    zeromatrix = repmat(zeros(length(utraj),3),[1,1,length(tk)]);
 else
-    zeromatrix = repmat([0 0 0],1,1,length(tk));
+    zeromatrix = repmat(zeros(length(utraj),3),1,1,length(tk));
 end
 tmp1 = traject(tk,zeromatrix);
 tmp2 = traject(c.D.pp);

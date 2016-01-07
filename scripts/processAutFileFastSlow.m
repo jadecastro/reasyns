@@ -215,3 +215,15 @@ if ~isempty(newTransPost)
 end
 
 
+function [temp2] = getAut(aut)
+% prints the aut structure in a (somewhat) human-readable format
+    
+for i=1:length(aut.trans), 
+    temp(i,:) = [aut.q{aut.trans{i}(1)} aut.q{aut.trans{i}(2)}]; 
+end
+for i=1:length(aut.trans), 
+    temp1(i,:) = [aut.trans{i}(1) aut.trans{i}(2)]; 
+end
+temp2 = [temp1 temp];
+
+

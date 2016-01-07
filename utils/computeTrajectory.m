@@ -1,8 +1,13 @@
-function [u0,x0] = computeTrajectory(sys,X0,xyPath)
+function [u0,x0] = computeTrajectory(sys,X0,xyPath,varargin)
 
 n = sys.params.n;
 
 if length(sys.H) > 2, error('Workspaces of dimension greater than two not yet supported. Sorry.'); end
+if ~isempty(varargin)
+    type = varargin{1};
+else
+    type = 'output';
+end
 
 trimTraj = true;
 forcedEndIndx = Inf;
@@ -27,7 +32,11 @@ for indx = 1:n
 end
 
 % X = Xk(:,1); Y = Xk(:,2); 
-outputk = Xk(:,1:length(sys.H))*sys.H;
+if strmatch(type,'state');
+    outputk = Xk;
+elseif strmatch(type,'output')
+    outputk = Xk(:,1:length(sys.H))*sys.H;
+end
 nonRegStatek = Xk(:,length(sys.H)+1:end);
 
 % Remove data beyond when the final waypoint has been achieved

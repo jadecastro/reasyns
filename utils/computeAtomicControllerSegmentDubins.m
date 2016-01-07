@@ -1,7 +1,19 @@
-function [ac] = computeAtomicControllerSegmentDubins(u0,x0,sys,ctrloptions,sampSkip,xMssExt)
+function [ac,c] = computeAtomicControllerSegmentDubins(u0,x0,sys,ctrloptions,sampSkip,xMssExt,varargin)
 
+c = [];
+
+minimal = false;
+if ~isempty(varargin)
+    rhoi = varargin{1};
+    minimal = true;
+end
+    
 try
-    ac = computeAtomicControllerDubins(u0,x0,sys,ctrloptions,sampSkip,xMssExt);
+    if minimal
+        [ac,c] = computeAtomicControllerDubinsMinimal(u0,x0,sys,ctrloptions,sampSkip,rhoi,xMssExt);
+    else
+        [ac,c] = computeAtomicControllerDubins(u0,x0,sys,ctrloptions,sampSkip,xMssExt);
+    end
 
 catch ME
     if strcmp(ME.identifier, 'Drake:PolynomialTrajectorySystem:InfeasibleRho')
@@ -10,18 +22,32 @@ catch ME
             [x01, x02] = bisect(x0);
             [u01, u02] = bisect(u0);
             
+            figidx = 20;
             %TODO: ensure containment of sequenced funnels - reverse ordering 
-            ac2 = computeAtomicControllerSegmentDubins(u02,x02,sys,ctrloptions,sampSkip,xMssExt);
+            [ac2, c2] = computeAtomicControllerSegmentDubins(u02,x02,sys,ctrloptions,sampSkip,xMssExt);
             t0 = ac2.P.getTimeVec();
             ctrloptions.Qf = double(ac2.P,t0(1))*double(ac2.rho,t0(1));
+            double(ac2.rho,t0)
+            tmp = projection(ac2,sys);
+            figure(figidx)
+            plot(tmp(1))
+            hold on
             %             Qf = getMaximalQ(funnelI2,Xk2(1+Noverlap,:));
-            ac1 = computeAtomicControllerSegmentDubins(u01,x01,sys,ctrloptions,sampSkip,xMssExt);
+            %keyboard
+            
+            [ac1, c1] = computeAtomicControllerSegmentDubins(u01,x01,sys,ctrloptions,sampSkip,xMssExt);
             t0 = ac1.P.getTimeVec();
             ctrloptions.Qf = double(ac1.P,t0(1))*double(ac1.rho,t0(1));
             %             Qf = getMaximalQ(funnelI1,Xk1(1+Noverlap,:));
+            double(ac1.rho,t0)
+            tmp = projection(ac1,sys);
+            figure(figidx)
+            plot(tmp(end),'b')
+            hold on
             
             %collect into one atomiccontroller
             ac = merge(ac1,ac2); 
+            c = [c1; c2];
         else
             error('Rho infeasible after segmenting the trajecory to its maximal extent. No smaller segments allowed.')
         end

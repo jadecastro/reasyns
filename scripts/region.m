@@ -97,7 +97,7 @@ classdef region < handle
                 mssReg = (H*x(1:2)-(K-regobj.epsilon))' + eps*sum(x);
                 regobj.mss_bnd = -mssReg;
                 
-                %                 regobj.v = extreme(regobj.p);
+                regobj.v = extreme(regobj.p);
                 %                 regobj.v = [];
                 regobj.inflated = true; % flag as inflated
             end
@@ -126,6 +126,14 @@ classdef region < handle
             %  find the union of two region objects, returning a new region object
             
             p = union([reg1.p,reg2.p]);
+            verts = extractOrderedVertsFromPolytope(p);
+            reg = region(verts);
+        end
+        
+        function reg = regiondiff(reg1,reg2)
+            %  find the difference between two region objects, returning a new region object
+            
+            p = regiondiff(reg1.p,reg2.p);
             verts = extractOrderedVertsFromPolytope(p);
             reg = region(verts);
         end

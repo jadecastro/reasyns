@@ -3,8 +3,7 @@ function [path] = buildCtrlSpaceRRT(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,e
 % circular robot.
 
 maxNodes = 500;
-
-modelType = 'unicycle';
+sampleSkipColl = 2;
 
 Hout = sys.params.H;
 n = sys.params.n;
@@ -24,9 +23,10 @@ path.u = [];
 
 % Choose random points
 gaussWeight = 0.9;  % Weight [0-1] on Gaussian sampling biasing at qGoal
-M = 1*eye(n);    % Covariance matrix
+% M = 0.1*eye(n);    % Covariance matrix
+M = diag([0.1, 0.1, 1]);    % Covariance matrix
 
-isect1 = true;
+%isect1 = true;
 isect2 = true;
 inGoalSet = false;
 
@@ -34,20 +34,24 @@ for j = 1:length(ellCInv11)
     tmpEllCInv11{j,1} = ellCInv11{j};
 end
 
+figure(3), clf
+hold on
+axis equal
+
 for i = 1:maxNodes
     i
     plotNewNode(node,edge) % uncomment to plot- will slow things down
     
     % Test whether any elements in V are in the goal region (TODO: for now-- must be at least two points in the vector)
     if i > 1 && edge(end,1) ~= 1  % want at least 1 segment!
-        isect1 = [];
+        %isect1 = [];
         isect2 = [];
         inGoalSet = false;
         tsum = 0;
         for ii = 1:length(nodeXU.t), tsum = tsum + length(nodeXU.t{ii}); end
         tmp = tsum - length(nodeXU.t{i-1}) + 1;
-        for k = 1:length(t)
-            isect1(k) = checkIntersection3(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,Xk(k,:),Hout,n,isCyclic,'allPts',ac,reg,sys);
+        for k = 1:sampleSkipColl:length(t)
+            %isect1(k) = checkIntersection3(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,Xk(k,:),Hout,n,isCyclic,'allPts',ac,reg,sys);
 %             isect2(k) = checkIntersection4(ellBndInv11,Xk(k,:),Hout,n,isCyclic);
             isect2(k) = isinternal(ac,Xk(k,:)','u');
             if isect2(k)
