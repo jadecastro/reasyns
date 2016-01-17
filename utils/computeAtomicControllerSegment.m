@@ -1,4 +1,4 @@
-function [ac,c] = computeAtomicController(u0,x0,sys,sampSkip,xMssExt)
+function [ac,c] = computeAtomicControllerSegment(u0,x0,sys,sampSkip,rho_if,isMaximization)
 
 Q = sys.params.ctrloptions.Q;
 R = sys.params.ctrloptions.R;
@@ -40,12 +40,11 @@ options = struct();
 options.rho0_tau = 2; % Determine initial guess for rho
 options.max_iterations = 5; % Maximum number of iterations to run for
 options.stability = false;
+options.max = isMaximization;
 
 % Do funnel computation
 
-rhof = 0.1;   % todo: handle the more general case and get it from containment
-
-Vtraj = sampledFiniteTimeVerification(poly,xtraj.getBreaks(),Qf,rhof,V,options);
+Vtraj = sampledFiniteTimeVerification(poly,xtraj.getBreaks(),Qf,rho_if,V,options);
 % Vtraj = sampledFiniteTimeVerification(poly,xtraj.getBreaks(),Qf,V,options,xMssExt);
 disp('done');
 

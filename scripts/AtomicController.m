@@ -1,5 +1,5 @@
 
-classdef atomiccontroller
+classdef AtomicController
     
     properties
         % system model
@@ -18,11 +18,11 @@ classdef atomiccontroller
     end
     
     methods
-        function obj = atomiccontroller(x0,u0,K,sys)
+        function obj = AtomicController(x0,u0,K,sys)
             % Constructor
             
-            if ~isa(x0,'traject') || ~isa(u0,'traject') || ~isa(K,'traject')
-                error('One or more of the arguments is not of type traject!')
+            if ~isa(x0,'Traject') || ~isa(u0,'Traject') || ~isa(K,'Traject')
+                error('One or more of the arguments is not of type Traject!')
             end
             t = getTimeVec(x0);
             tlen = length(t);
@@ -109,7 +109,7 @@ classdef atomiccontroller
             xn = timecat(acobj1.x0,acobj2.x0);
             un = timecat(acobj1.u0,acobj2.u0);
             Kn = timecat(acobj1.K,acobj2.K);
-            acres = atomiccontroller(xn,un,Kn,acobj1.sys);
+            acres = AtomicController(xn,un,Kn,acobj1.sys);
         end
         
         function plot(ac,fignum,color)

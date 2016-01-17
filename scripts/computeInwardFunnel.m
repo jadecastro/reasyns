@@ -1,6 +1,6 @@
-function [ac_inward, bc_inward, errTrans, existingReg, newReg] = reactiveJoinOp_new(sysArray,reg,regDefl,regBnd,aut,acTrans,acIn,iModeToPatch,calibMatrix,options)
+function [ac_inward, bc_inward, errTrans, existingReg, newRegArray, reg] = computeInwardFunnel(fileName,sysArray,reg,regDefl,regBnd,aut,acTrans,acIn,iModeToPatch,options)
 %
-% Reach operation -- construct transition funnels
+% Compute inward funnels 
 %
 
 global ME
@@ -20,6 +20,8 @@ IsectInAll{iModeToPatch} = 0;%zeros(1,size(qCover{iModeToPatch},1));
 ac_inward = [];
 bc_inward = [];
 errTrans = [];
+newRegArray = [];
+bc = [];
 
 % ==========================
 % Compute inward funnels
@@ -30,9 +32,15 @@ isectReact = false;
 
 lastTrans = trans(:,2)==iModeToPatch;
 acLast = [acTrans{lastTrans}];
-acLast = acLast(1); % NB: for simplicity, only support one incoming transition..
+if ~isempty(acLast)
+    acLast = acLast(1); % NB: for simplicity, only support one incoming transition..
+end
+acNextAll = [];
+for itrans = find(trans(:,1)==iModeToPatch)'
+    acNextAll = [acNextAll; acTrans{itrans}];
+end
 
-for itrans = 5%find(trans(:,1)==iModeToPatch)'
+for find(trans(:,1)==iModeToPatch)'
     
     sys = sysArray(aut.f{itrans});  % For now, delay changing the dynamics until the transition reach tube is reached.
     
@@ -40,7 +48,7 @@ for itrans = 5%find(trans(:,1)==iModeToPatch)'
     
     % ==========================
     % Verify invariance of the transition funnels up to the edge of the region
-    x = msspoly('x',4); % instantiate the symbolic variables we will be using in a bit
+    x = msspoly('x',3); % instantiate the symbolic variables we will be using in a bit
     
     % 1. Verify the region boundary itself
     % TODO: extract all the indices for which there is an overlap with the region boundary; compute a hull containing the intersection with the boundary
@@ -57,113 +65,22 @@ for itrans = 5%find(trans(:,1)==iModeToPatch)'
         end
     end
     
-    isRegionVerified = false;
+    idx = idxToChkReactivity{itrans}(1);
+    %idx = 700;  % first- bad
+    %idx = 400;  % second- bad
+    %idx = 1200;  % first- good
+    %idx = 850;  % second- good
+    %idx = 750;  % first (lab)- more friendly
+    %idx = 340;  % second (lab)- more friendly
     
-    % 2. If the region itself is not verified as an invariant, then find one that is
+    % plot things
+    figure(90), hold on, axis equal
+    %plot(reg)
+    plot(acNext,sys,90)
     
-    if ~isRegionVerified
-        
-        % pick any valid final point
-        %             qCenter = double(acLast.x0,ttmp(end));  % in the vicinity of the first point of the funnel
-        qCenter = double(acNext.x0,0);  % in the vicinity of the first point of the funnel
-        finalState = getCenterRand_new(sys,reg(aut.q{iModeToPatch}),acLast,options,qCenter); %,vReg{aut.q{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
-        goalOutput = finalState(1:length(sys.H))*sys.H
-        g = goalOutput;
-        global g   % TODO: a smarter way of doing this
-        
-        % plot things
-        figure(90), hold on, axis equal
-        plot(reg(aut.q{iModeToPatch}),'r')
-        plot(reg(1),'b')
-        plot(reg(2),'m')
-        plot(reg(3),'y')
-        plot(reg(4),'g')
-        plot(acNext,sys,90)
-        
-        figure(3), hold on, axis equal
-        plot(reg(aut.q{iModeToPatch}),'r')
-        plot(reg(1),'b')
-        plot(reg(2),'m')
-        plot(reg(3),'y')
-        plot(reg(4),'g')
-        plot(acLast,sys,3)
-        
-        % get the first ellipse just inside of the boundary
-        % TODO: using ellipses since we don't have the barrier yet, and cannot do an intersection with it.. perhaps there is an underapproximation?
-        
-        
-        % continue iterating backwards until we have found a barrier
-        for idx = idxToChkReactivity{itrans}(1:end)
-            barrierSuccess = true;
-            %                 idx=idx-500
-            idx
-            tmpArray = acNext.ellipsoid;
-            [ellq,ellQ] = double(tmpArray(idx));
-            ellq = [ellq; 1];
-            ellQ = blkdiag(ellQ, 0.99);
-            % TODO: the following is specific only to the problem at hand... we will need to generalize this
-            g_X0 = 1 - (x - ellq)'*inv(ellQ)*(x - ellq);  % intial set
-            [polyH,polyK] = double(reg(aut.q{iModeToPatch}).p);
-            for iplane = 1:length(polyK)
-                g_Xu1 = polyH(iplane,:)*x(1:2) - polyK(iplane); % unsafe set
-                %                     g_Xu1 = polyH*x(1:2) - polyK; % unsafe set
-                for maxAngularVelocity = -0.15:0.3:0.15
-                    try
-                        % barrierDubinsBoxPushingExamp
-                        barrierDubinsBoxPushingExampSingleMode
-                        soln = [0 0 0];
-                        for isol = 1:length(Bf_sol), soln(isol) = subs(Bf_sol{isol},x,ellq), end
-                    catch
-                        disp('invariance check failed.')
-                        soln = -Inf;
-                    end
-                    if any(soln > 0)  % TODO: make this check more complete
-                        disp('Either the barrier is not nonpositive inside the initial set or the optimizer failed at finding a solution.')
-                        barrierSuccess = false;
-                    else
-                        barrierSuccess = true;
-                        break
-                    end
-                end
-                if ~barrierSuccess, break; end
-                b{iplane} = B_sol;
-            end
-            if barrierSuccess == true
-                disp('success!')
-                idx
-                break
-            end
-        end
-    end
-    if barrierSuccess == false
-        warning('Did not find any certificates for invariance to the region!! It is likely that the entire transition funnel will inevitably cause entry to the successor region under these dynamics.')
-    end
-    
-    % Visualize the region based on invariance only (for debugging purposes)
-    idxLast = idx + funStepSize;
-    newRegVert = [];
-    ellAcNext = projection(acNext,sys);
-    for j = length(ttmp):-funStepSize:idxLast
-        ell = ellAcNext(j);
-        isOverApprox = true;
-        buildNewRegion
-        newRegVert = [newVertT; newRegVert];
-    end
-    [newRegConvHullIdx] = convhull(newRegVert(:,1),newRegVert(:,2));
-    newReg = region(newRegVert(newRegConvHullIdx,:));
-    newReg = intersect(newReg,reg(aut.q{iModeToPatch}));
-    plot(newReg,'g')
-    
-    %%%%%% For testing only!
-    
-    %     % update the region file
-    %     addNewRegionToFile
-    %
-    %     % update the abstraction via the specification
-    %     modifySpecForNewRegion
-    
-    %%%%%%
-    
+    figure(3), hold on, axis equal
+    plot(reg(aut.q{iModeToPatch}),'r')
+%     plot(acLast,sys,3)
     
     % ==========================
     % Now, search for funnels that verify reachability from the initial set verified to be invariant
@@ -200,14 +117,22 @@ for itrans = 5%find(trans(:,1)==iModeToPatch)'
             disp('Computing final point....')
             try
                 if isempty(acIn)
-                    ttmpLast = acLast.x0.getTimeVec();
-                    qCenter = double(acLast.x0,ttmpLast(end));  % in the vicinity of the last point of the funnel
-                    finalState = getCenterRand_new(sys,regDefl(aut.q{iModeToPatch}),acLast,options,qCenter); %,vReg{aut.q{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
-                    acAcceptCriterion = acLast;
+                    if isempty(acLast)
+                        acNextFirst = acNextAll(1);
+                        ttmpFirst = acNextFirst.x0.getTimeVec();
+                        qCenter = double(acNextFirst.x0,ttmpFirst(1));  % in the vicinity of the last point of the funnel
+                        finalState = getCenterRand_new(sys,regDefl(aut.q{iModeToPatch}),acNextAll,options,qCenter); %,vReg{aut.q{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
+                        acAcceptCriterion = acNextAll;
+                    else
+                        ttmpLast = acLast.x0.getTimeVec();
+                        qCenter = double(acLast.x0,ttmpLast(end));  % in the vicinity of the last point of the funnel
+                        finalState = getCenterRand_new(sys,regDefl(aut.q{iModeToPatch}),acLast,options,qCenter); %,vReg{aut.q{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
+                        acAcceptCriterion = acLast;
+                    end
                 else  % use the provided inward funnels
                     acInward = acIn{iModeToPatch}(1);  % just get the first one in the set.
                     ttmpLast = acInward.x0.getTimeVec();
-                    qCenter = double(acInward.x0,ttmpLast(0));  % in the vicinity of the first point of the funnel
+                    qCenter = double(acInward.x0,ttmpLast(1));  % in the vicinity of the first point of the funnel
                     finalState = getCenterRand_new(sys,regDefl(aut.q{iModeToPatch}),acInward,options,qCenter); %,vReg{aut.q{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
                     acAcceptCriterion = acInward;
                 end
@@ -252,16 +177,81 @@ for itrans = 5%find(trans(:,1)==iModeToPatch)'
         
         if ~funFail
             disp('Computing funnel....')
+            save 'barrier_test'
             
             try
                 
-                % [ac,existingRegNew,newRegNew] = computePolytopeAtomicControllerDubins(u0,x0,sys,acNext,reg(aut.q{iModeToPatch}),options.sampSkipFun,xMssExt);
-                [ac] = computeAtomicControllerSegmentDubins(u0,x0,sys,options.sampSkipFun,[]);
+                % [ac,existingRegNew,newRegNew] = computePolytopeAtomicControllerDubins(u0,x0,sys,acNext,reg(aut.q{iModeToPatch}),options.ctrloptions_trans,options.sampSkipFun,xMssExt);
+                x00 = x0;  u00 = u0;
+                [ac, c] = computeAtomicController(u00,x00,sys,options);
+                plot(ac.x0,'k',5)
+                rhoi = double(ac.rho,0);
+                [res, isectIdx, isectArray] = isinside(ac,reg(aut.q{trans(itrans,1)}),sys);
+                if ~res
+                    % NB: the following assumes only one contiguous interval where the funnel left the region. 
+                    % split the funnel into three parts: 
+                    %   - one from the start to the time of the first intersection
+                    %   - another during the interval of intersection (this is created using CBFs)  
+                    %   - another following the intersection
+                    t = ac.x0.getTimeVec();
+                    acPre = [];
+                    
+                    % TODO: put all this into quadraticAC
+                    t1 = t(max(isectIdx)+1:end);
+                    x1 = Traject(t1,double(ac.x0,t1));
+                    u1 = Traject(t1,double(ac.u0,t1));
+                    K1 = Traject(t1,double(ac.K,t1));
+                    P1 = Traject(t1,double(ac.P,t1));
+                    rho1 = Traject(t1,double(ac.rho,t1));
+                    Vquad = ac.V(max(isectIdx)+1:end);
+                    acPost = QuadraticAC(x1,u1,K1,P1,rho1,Vquad,sys);
+                    
+                    if false %min(isectIdx) > 1
+                        t0 = t(1:min(isectIdx)-1);
+                        x0 = Traject(t0,double(ac.x0,t0));
+                        u0 = Traject(t0,double(ac.u0,t0));
+                        
+                        % Compute a new atomic controller that minimizes the funnel (in contrast to the original method that maximizes it). 
+                        % The minimization is used here to find a suitable initial condition for the CBF.
+                        [acPre] = computeAtomicController(u0,x0,sys,options,rhoi);
+
+                    end
+                    
+                    % Now, construct the barriers                    
+                    t01 = t(min(isectIdx):max(isectIdx));
+                    x01 = Traject(t01,double(ac.x0,t01));
+                    u01 = Traject(t01,double(ac.u0,t01));
+                                        
+                    regMode = reg(aut.q{iModeToPatch});
+                    
+                    % define the initial set as the end of the prefix funnel
+                    if ~isempty(acPre)
+                        ellToCompose = acPre.ellipsoid(end);
+                    else
+                        ellToCompose = acNext.ellipsoid(indexToCompose);
+                    end
+                    
+                    [ac, bc] = computeConformingFunnel(u01,x01,sys,regMode,ellToCompose,options);
+                    
+                    % Plot stuff
+                    figure(90)
+                    axis equal
+                    hold on
+                    plot(reg(1),'r')
+                    plot(reg(2),'g')
+                    
+                    plotBarriers(ac,bc)
+                    
+                    % pause
+                    % plot(acNext,sys,90,[],[0,0,1])
+                    % plot(acPost,sys,90,[],[0,1,0])
+                    plot(acNext.x0,'k',90)
+                    plot(ac.x0,'k',90)
+
+                end
                 funFail = false;
                 
                 % TODO: check if inside the polytopes
-                
-                plot(ac.x0,'k',5)
                 
             catch ME
                 %                     rethrow(ME)
@@ -336,41 +326,43 @@ for itrans = 5%find(trans(:,1)==iModeToPatch)'
     newRegVert = [];
     ellAcNext = projection(acNext,sys);
     for j = length(ttmp):-funStepSize:idxLast
-        ell = ellAcNext(j);
-        isOverApprox = true;
-        buildNewRegion
-        newRegVert = [newVertT; newRegVert];
+        newRegVert = [buildNewRegion(ellAcNext(j), true); newRegVert];
     end
     [newRegConvHullIdx] = convhull(newRegVert(:,1),newRegVert(:,2));
-    newReg = region(newRegVert(newRegConvHullIdx,:));
+    newReg = Region(newRegVert(newRegConvHullIdx,:));
     newReg = intersect(newReg,reg(aut.q{iModeToPatch}));
     
     % Subtract the underapproximated reactive funnel
-    newRegVert = [];
-    ellAcReact = projection(ac,sys);
-    for j = length(ttmp):-funStepSize:idxLast
-        ell = ellAcNext(j);
-        isOverApprox = false;
-        buildNewRegion
-        newRegVert = [newVertT; newRegVert];
-    end
+    %     newRegVert = [];
+    %     ellAcReact = projection(ac,sys);
+    %     ttmp = ac.x0.getTimeVec();
+    %     for j = length(ttmp):-10:1
+    %         newRegVert = [buildNewRegion(ellAcReact(j), false); newRegVert];
+    %     end
+    newRegVert = buildNewRegion(ellAcNext(idxLast), true);
+    
     [newRegConvHullIdx] = convhull(newRegVert(:,1),newRegVert(:,2));
-    subReg = region(newRegVert(newRegConvHullIdx,:));
+    subReg = Region(newRegVert(newRegConvHullIdx,:));
     subReg = intersect(subReg,reg(aut.q{iModeToPatch}));
     
     newReg = regiondiff(newReg.p,subReg.p);
     
+    %reg = [reg; newReg];
+    
     % plot it!
     plot(newReg,'m')
     
+    newRegVert = extreme(newReg);
+    newRegArray = [newRegArray; newReg];
+    
     % update the region file
-    addNewRegionToFile
+    addNewRegionToFile(newRegVert, aut, reg, fileName)    
     
     % update the abstraction via the specification
-    modifySpecForNewRegion
+    modifySpecForNewRegion(aut, trans, itrans, fileName)
     
     % save the barriers
-    bc_inward = [bc_inward; b];
+    bc_inward = [bc_inward; bc];
     
 end
 

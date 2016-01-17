@@ -76,8 +76,8 @@ if ~isempty(indx)
     Uk(indx+1:end,:) = [];
 end
 
-u0 = traject(t',Uk');
-x0 = traject(t',Xk');
+u0 = Traject(t',Uk');
+x0 = Traject(t',Xk');
 
 
 end

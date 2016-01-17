@@ -1,4 +1,7 @@
 
+function modifySpecForNewRegion(aut, trans, itrans, fileName)
+
+iModeToPatch = trans(1);
 
 % compose the string
 alphabet = {'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
@@ -8,14 +11,14 @@ nextRegName = [alphabet{aut.q{trans(itrans,2)}}];
 preStates = horzcat(aut.q{trans(trans(:,2)==iModeToPatch,1)});
 prevRegName = [alphabet{preStates}];
 
-% make sure, when entering R2, we're not already in the IC region
+% make sure, when entering R2, we're not already in the reactivity gap region
 envSafety1 = ['rob1_',currRegName,'_rc & rob1_',currRegName,' & rob1_',currRegName,'_rc'' -> !rob1_',newRegName,'_rc'''];
 
-% conditions for entering the IC region
+% conditions for entering the reactivity gap region
 envSafety2 = ['rob1_',currRegName,'_rc & !rob1_',newRegName,'_rc & rob1_',nextRegName,' -> rob1_',currRegName,'_rc'''];
 envSafety3 = ['rob1_',currRegName,'_rc & rob1_',newRegName,'_rc & rob1_',nextRegName,' -> (rob1_',newRegName,'_rc'' | rob1_',nextRegName,'_rc'')'];
 
-% we can always avoid the IC region if not activating R3 or not in R2
+% we can always avoid the reactivity gap region if not activating R3 or not in R2
 for iPrevReg = 1:length(prevRegName)
     envSafety4{iPrevReg} = ['!rob1_',nextRegName,' & m_rob1_',prevRegName(iPrevReg),' -> !rob1_',newRegName,'_rc'''];
 end
@@ -32,7 +35,7 @@ for iPrevReg = 1:length(prevRegName)
 end
 
 % write to the file
-fid = fopen('/home/jon/Dropbox/Repos/LTLMoP/src/examples/box_pushing/box_pushing_new.structuredslugs','r');
+fid = fopen([fileName,'_new.structuredslugs'],'r');
 idx = 1;
 clear A
 tline = fgetl(fid);
@@ -44,7 +47,7 @@ while ischar(tline)
 end
 fclose(fid);
 
-fid = fopen('/home/jon/Dropbox/Repos/LTLMoP/src/examples/box_pushing/box_pushing_new.structuredslugs', 'w');
+fid = fopen([fileName,'_new.structuredslugs'], 'w');
 for idx = 1:length(A)
     if A{idx+1} == -1
         fprintf(fid,'%s', A{idx});
@@ -88,9 +91,7 @@ fclose(fid);
 
 % TODO: also modify spec and config files
 %
-%
-%
-%
+
 
 
 

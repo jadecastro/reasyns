@@ -1,5 +1,5 @@
 
-classdef region < handle
+classdef Region < handle
     
     properties (SetObservable)
         numRegions;
@@ -10,6 +10,7 @@ classdef region < handle
         mssExt;
         mssInt;
         mssBnd;
+        calibMatrix;
         
         p_bnd;
         mss_bnd;
@@ -23,7 +24,7 @@ classdef region < handle
     end
 
     methods
-        function obj = region(v,epsilon,parentreg)
+        function obj = Region(v,calibMatrix,epsilon,parentreg)
             % Constructor
             % Note: vertices must be specified in counterclockwise order
             
@@ -31,8 +32,15 @@ classdef region < handle
                 return
             end
             
+            % The calibration matrix assumes an SE(2) system
+            if nargin > 1 && ~isempty(calibMatrix)
+                obj.calibMatrix = calibMatrix;
+            else
+                obj.calibMatrix = eye(3);
+            end
+            
             if isnumeric(v)
-                if nargin > 2
+                if nargin > 3
                     v = parentreg.v;
                 end
                 obj.v = v;
@@ -42,12 +50,12 @@ classdef region < handle
             
             configureRegion(obj,v);
             
-            if nargin > 1
+            if nargin > 2
                 obj.epsilon = epsilon;
                 inflate(obj);
             end
-            addlistener(obj,'v','PostSet',@region.handleSelfVertexChanges);
-            if nargin > 2
+            addlistener(obj,'v','PostSet',@Region.handleSelfVertexChanges);
+            if nargin > 3
                 % TODO: not very robust-- set-up an event trigger instead?
                 %                 addlistener(parentreg,'p','PostSet',@(src,evt)handleOtherVertexChanges(this,src,evt));
                 addlistener(parentreg,'p','PostSet',@obj.handleOtherVertexChanges);
@@ -119,7 +127,7 @@ classdef region < handle
             
             p = intersect(reg1.p,reg2.p);
             verts = extractOrderedVertsFromPolytope(p);
-            reg = region(verts);
+            reg = Region(verts,reg1.calibMatrix);
         end
         
         function reg = union(reg1,reg2)
@@ -127,7 +135,7 @@ classdef region < handle
             
             p = union([reg1.p,reg2.p]);
             verts = extractOrderedVertsFromPolytope(p);
-            reg = region(verts);
+            reg = Region(verts,reg1.calibMatrix);
         end
         
         function reg = regiondiff(reg1,reg2)
@@ -135,14 +143,14 @@ classdef region < handle
             
             p = regiondiff(reg1.p,reg2.p);
             verts = extractOrderedVertsFromPolytope(p);
-            reg = region(verts);
+            reg = Region(verts,reg1.calibMatrix);
         end
         
         function isect = isinside(regobj,sys,q,sampSkip)
             % check whether or not any of the states values supplied in q do not lie in a given region.
             
             H = sys.params.H;
-            if isa(q,'traject')
+            if isa(q,'Traject')
                 q = double(q);
             end
             
@@ -200,7 +208,7 @@ classdef region < handle
                 [a,b] = poly2ccw(vDiff(:,1),vDiff(:,2));
             end
                 
-            regDiff = region([a b]);
+            regDiff = Region([a b],regobj.calibMatrix);
         end
         
         function [regSafe] = getReg(regobj,regbnd,aut,imode)

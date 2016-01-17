@@ -1,4 +1,6 @@
 
+function newVertT = buildNewRegion(ell, isOverApprox)
+
 %overApproxEll = ellunion_ea(projection(ac_tmp(j),sys));
 
 [offset,Q] = double(ell);

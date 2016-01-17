@@ -1,24 +1,25 @@
 
-classdef systemdynamics
+classdef SystemDynamics
     
     properties
         polyMdlFun;
         mdlFun;
         ctrlFun;
+        drakeplant;
         params;
         
-        %TODO: what should we do with H?? 
         H;
 %         isCyclic;
 %         limsNonRegState;
     end
     
     methods
-        function obj = systemdynamics(polyMdlFun,mdlFun,ctrlFun,H,params)
+        function obj = SystemDynamics(polyMdlFun,mdlFun,ctrlFun,drakeplant,H,params)
             % Constructor
             obj.polyMdlFun = polyMdlFun;
             obj.mdlFun = mdlFun;
             obj.ctrlFun = ctrlFun;
+            obj.drakeplant = drakeplant;
             obj.H = H;
             obj.params = params;
         end

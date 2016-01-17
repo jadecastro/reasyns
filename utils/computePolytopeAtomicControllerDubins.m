@@ -3,9 +3,9 @@ function [ac] = computePolytopeAtomicControllerDubins(u0,x0,sys,ac,reg,varargin)
 flowstarDir = '/home/jon/Software/flowstar-1.2.0';
 verifTimeStep = 0.004;
 
-% Q = ctrloptions.Q;
-% R = ctrloptions.R;
-% Qf = ctrloptions.Qf;
+% Q = sys.params.ctrloptions.Q;
+% R = sys.params.ctrloptions.R;
+% Qf = sys.params.ctrloptions.Qf;
 
 % [~,tk] = double(x0);
 % if nargin > 4
@@ -151,7 +151,7 @@ for i = 1:length(X)
 end
 
 tVerif = 0:verifTimeStep:verifTimeStep*(length(X)-1);
-vert0 = traject(tVerif,vert);
+vert0 = Traject(tVerif,vert);
 
 % assemble the atomic controller, re-sampling the original vectors
 if verLessThan('matlab','7.15')
@@ -159,11 +159,11 @@ if verLessThan('matlab','7.15')
 else
     zeromatrix = repmat([0 0 0],1,1,length(tVerif));
 end
-K0 = traject(tVerif,zeromatrix);   % For polytope-verified atomic controllers, let's deactivate the feedback controller
-x0 = traject(tVerif,x_new');
-u0 = traject(tVerif,u_new');
+K0 = Traject(tVerif,zeromatrix);   % For polytope-verified atomic controllers, let's deactivate the feedback controller
+x0 = Traject(tVerif,x_new');
+u0 = Traject(tVerif,u_new');
 
-ac = polytopeAC(x0,u0,K0,vert0,sys);
+ac = PolytopeAC(x0,u0,K0,vert0,sys);
 
 % ac = resample(ac); % resample back to the original resolution
 

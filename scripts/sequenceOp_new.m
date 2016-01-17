@@ -103,7 +103,7 @@ for funindx = 1:maxFunTrials
             disp('Computing funnel....')
             
             try
-                ac = computeAtomicControllerSegmentDubins(u0,x0,sys,options.ctrloptions_trans,options.sampSkipFun,[]);
+                ac = computeAtomicControllerSegmentDubins(u0,x0,sys,options.sampSkipFun,[]);
                 ac_inward = [ac_inward; ac];
                 funFail = false;
                 

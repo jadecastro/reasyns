@@ -1,5 +1,5 @@
 
-classdef polynomialAC < atomiccontroller
+classdef PolynomialAC < AtomicController
     
     properties
         rho;
@@ -7,12 +7,12 @@ classdef polynomialAC < atomiccontroller
     end
     
     methods
-        function obj = polynomialAC(x0,u0,K,rho,V,sys)
+        function obj = PolynomialAC(x0,u0,K,rho,V,sys)
             % Constructor
             
-            obj = obj@atomiccontroller(x0,u0,K,sys);
-            if ~isa(rho,'traject')% || ~isa(V,'traject')
-                error('One or more of the arguments is not of type traject!')
+            obj = obj@AtomicController(x0,u0,K,sys);
+            if ~isa(rho,'Traject')% || ~isa(V,'Traject')
+                error('One or more of the arguments is not of type Traject!')
             end
             t = getTimeVec(obj.x0);
             tlen = length(t);
@@ -87,13 +87,13 @@ classdef polynomialAC < atomiccontroller
         
         function acres = merge(acobj1,acobj2)
             %
-            actmp = merge@atomiccontroller(acobj1,acobj2);
+            actmp = merge@AtomicController(acobj1,acobj2);
             rhon = timecat(acobj1.rho,acobj2.rho);
             t = getTimeVec(actmp.x0);  t1 = getTimeVec(acobj1.x0);  t2 = getTimeVec(acobj2.x0);
             [~,indx1] = intersect(t1,t);
             [~,indx2] = intersect(t2,setdiff(t,t1));
             Vn = [acobj1.V(indx1) acobj2.V(indx2)];
-            acres = polynomialAC(actmp.x0,actmp.u0,actmp.K,rhon,Vn,actmp.sys);
+            acres = PolynomialAC(actmp.x0,actmp.u0,actmp.K,rhon,Vn,actmp.sys);
         end
         
         function plot(ac,fignum,color)

@@ -94,8 +94,8 @@ for funindx = 1:maxFunTrials
 %                 [path] = buildCtrlSpaceRRT(regBnd.v,{reg(aut.q{iModeToJoin}).v},{reg(aut.q{iModeToJoin}).v},acTrans{itrans}.ellipsoid,[],[],[],initState,finalState,stepSize,sys,regBnd,acNext,options);
                 disp('Computing nominal trajectory....')
                 
-                x0 = traject(path.t',path.x');
-                u0 = traject(path.t',path.u');
+                x0 = Traject(path.t',path.x');
+                u0 = Traject(path.t',path.u');
                 isect = isinside([reg(aut.q{trans(itrans,1)}),reg(aut.q{trans(itrans,2)})],sys,downsampleUniformly(x0,options.sampSkipColl)');
                 if isect && length(x0) > 1 && length(x0) < maxTrajLength,
                     break,
@@ -118,7 +118,7 @@ for funindx = 1:maxFunTrials
             disp('Computing funnel....')
             
             try
-                ac = computeAtomicControllerSegmentDubins(u0,x0,sys,options.ctrloptions_trans,options.sampSkipFun,[]);
+                ac = computeAtomicControllerSegmentDubins(u0,x0,sys,options.sampSkipFun,[]);
                 ac_inward = [ac_inward; ac];
                 funFail = false;
                 

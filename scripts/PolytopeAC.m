@@ -1,5 +1,5 @@
 
-classdef polytopeAC < atomiccontroller
+classdef PolytopeAC < AtomicController
     
     properties
         % polytope properties
@@ -7,17 +7,17 @@ classdef polytopeAC < atomiccontroller
     end
     
     methods
-        function obj = polytopeAC(x0,u0,K,vert,sys)
+        function obj = PolytopeAC(x0,u0,K,vert,sys)
             % Constructor
             
-            obj = obj@atomiccontroller(x0,u0,K,sys);
+            obj = obj@AtomicController(x0,u0,K,sys);
             t = getTimeVec(obj.x0);
             tlen = length(t);
             if length(vert) ~= tlen
                 error('Length of vert must match that of t.')
             end            
-            if ~isa(vert,'traject')
-                error('One or more of the arguments is not of type traject!')
+            if ~isa(vert,'Traject')
+                error('One or more of the arguments is not of type Traject!')
             end
             
             obj.vert = vert;
@@ -164,7 +164,7 @@ classdef polytopeAC < atomiccontroller
             %
             actmp = merge@atomiccontroller(acobj1,acobj2);
             vert_n = timecat(acobj1.vert,acobj2.vert);
-            acres = quadraticAC(actmp.x0,actmp.u0,actmp.K,vert_n,actmp.sys);
+            acres = QuadraticAC(actmp.x0,actmp.u0,actmp.K,vert_n,actmp.sys);
         end
         
         function plot(ac,sys,fignum,threedflag,color)

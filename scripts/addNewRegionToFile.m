@@ -1,13 +1,17 @@
 
+function addNewRegionToFile(newRegVert, aut, reg, fileName)
+
 pix2m = 1;
 % calibMatrix =   [ 33.50049738,  -0.89279945,  66.48435372,
 %                   -0.27159749, -30.69295068,  67.89619503,
 %                    0.        ,   0.        ,   1.        ];
 
+calibMatrix = reg.calibMatrix;
+
 % update the existing region, add region to region list, and assign it a new state
 % reg(aut.q{iModeToPatch}) = existingReg;
 reg(length(reg)+1) = newRegVert;
-newReg = region(newRegVert);
+newReg = Region(newRegVert);
 aut.q{length(aut.q)+1} = max([aut.q{:}]) + 1;
 
 vertsToWrite = 1/pix2m*calibMatrix*[newReg.v ones(size(newReg.v,1),1)]';
@@ -32,7 +36,7 @@ newStr = [newStr,num2str(vertsToWrite(size(vertsToWrite,1),1)),',',num2str(verts
 newStr = [newStr,']],"position":[0.0,0.0],"type":"poly","size":[0.0,0.0]}'];
 
 % write to the file
-fid = fopen('/home/jon/Dropbox/Repos/LTLMoP/src/examples/box_pushing/box_pushing_new.regions','r');
+fid = fopen([fileName,'_new.regions'],'r');
 idx = 1;
 clear A
 tline = fgetl(fid);
@@ -44,7 +48,7 @@ while ischar(tline)
 end
 fclose(fid);
 
-fid = fopen('/home/jon/Dropbox/Repos/LTLMoP/src/examples/box_pushing/box_pushing_new.regions', 'w');
+fid = fopen([fileName,'_new.regions'], 'w');
 for idx = 1:length(A)
     if A{idx+1} == -1
         fprintf(fid,'%s', A{idx});
@@ -60,8 +64,9 @@ for idx = 1:length(A)
 end
 fclose(fid);
 
-% write to the file
-fid = fopen('/home/jon/Dropbox/Repos/LTLMoP/src/examples/box_pushing/box_pushing_decomposed_new.regions','r');
+% write to the decomposed region file
+% TODO: assign to 'p' names, include mapping in calib file
+fid = fopen([fileName,'_new_decomposed.regions'],'r');
 idx = 1;
 clear A
 tline = fgetl(fid);
@@ -73,7 +78,7 @@ while ischar(tline)
 end
 fclose(fid);
 
-fid = fopen('/home/jon/Dropbox/Repos/LTLMoP/src/examples/box_pushing/box_pushing_decomposed_new.regions', 'w');
+fid = fopen([fileName,'_new_decomposed.regions'], 'w');
 for idx = 1:length(A)
     if A{idx+1} == -1
         fprintf(fid,'%s', A{idx});

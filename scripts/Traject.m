@@ -1,13 +1,13 @@
 
-classdef traject
+classdef Traject
     
     properties
         pp;
-        origbreaks; % TODO: want this to be set when constructing the traject, and not able to be changed thereafter
+        origbreaks; % TODO: want this to be set when constructing the Traject, and not able to be changed thereafter
     end
     
     methods
-        function obj = traject(arg1,arg2)
+        function obj = Traject(arg1,arg2)
             % Constructor
             if isa(arg1,'struct') && isfield(arg1,'form')
                 ppobj = arg1;
@@ -86,8 +86,8 @@ classdef traject
             x1 = x(:,1:floor(end/2)+Noverlap,:);
             t2 = t(floor(end/2):end);
             x2 = x(:,floor(end/2):end,:);
-            ppres1 = traject(t1,x1);
-            ppres2 = traject(t2,x2);
+            ppres1 = Traject(t1,x1);
+            ppres2 = Traject(t2,x2);
         end
         
         function ppres = horzcat(ppobj1,ppobj2)
@@ -116,7 +116,7 @@ classdef traject
                 tmpZ = [tmpX tmpY];
                 Z = subsasgn(Z,S2,tmpZ);
             end
-            ppres = traject(t1,Z);
+            ppres = Traject(t1,Z);
         end
         
         function ppres = vertcat(ppobj1,ppobj2)
@@ -145,7 +145,7 @@ classdef traject
                 tmpZ = [tmpX; tmpY];
                 Z = subsasgn(Z,S2,tmpZ);
             end
-            ppres = traject(t1,Z);
+            ppres = Traject(t1,Z);
         end
         
         function ppres = timecat(ppobj1,ppobj2)
@@ -180,7 +180,7 @@ classdef traject
             else
                 z = x;
             end
-            ppres = traject(t,z);    
+            ppres = Traject(t,z);    
         end
         
         function ppres = rdivide(ppobj1,ppobj2)

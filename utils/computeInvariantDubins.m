@@ -1,8 +1,8 @@
-function [ac,redindx] = computeInvariantDubins(u0,x0,sys,ctrloptions,sampSkip);
+function [ac,redindx] = computeInvariantDubins(u0,x0,sys,sampSkip);
 
-Q = ctrloptions.Q;
-R = ctrloptions.R;
-Qf = ctrloptions.Qf;
+Q = sys.params.ctrloptions.Q;
+R = sys.params.ctrloptions.R;
+Qf = sys.params.ctrloptions.Qf;
 
 x = msspoly('x',3);
 

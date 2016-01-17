@@ -1,5 +1,5 @@
 
-classdef quadraticAC < polynomialAC
+classdef QuadraticAC < PolynomialAC
     
     properties
         % quadratically-parameterized funnel properties
@@ -11,7 +11,7 @@ classdef quadraticAC < polynomialAC
     end
     
     methods
-        function obj = quadraticAC(x0,u0,K,P,rho,V,sys)
+        function obj = QuadraticAC(x0,u0,K,P,rho,V,sys)
             % Constructor
             
             %             if nargin ~= 0
@@ -35,10 +35,10 @@ classdef quadraticAC < polynomialAC
             %
             %             end
             
-            obj = obj@polynomialAC(x0,u0,K,rho,V,sys);
+            obj = obj@PolynomialAC(x0,u0,K,rho,V,sys);
             
-            if ~isa(P,'traject')
-                error('One or more of the arguments is not of type traject!')
+            if ~isa(P,'Traject')
+                error('One or more of the arguments is not of type Traject!')
             end
             t = getTimeVec(obj.x0);
             tlen = length(t);
@@ -215,9 +215,9 @@ classdef quadraticAC < polynomialAC
         
         function acres = merge(acobj1,acobj2)
             %
-            actmp = merge@polynomialAC(acobj1,acobj2);
+            actmp = merge@PolynomialAC(acobj1,acobj2);
             Pn = timecat(acobj1.P,acobj2.P);
-            acres = quadraticAC(actmp.x0,actmp.u0,actmp.K,Pn,actmp.rho,actmp.V,actmp.sys);
+            acres = QuadraticAC(actmp.x0,actmp.u0,actmp.K,Pn,actmp.rho,actmp.V,actmp.sys);
         end
         
         function plot(ac,sys,fignum,threedflag,color)

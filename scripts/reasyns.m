@@ -10,109 +10,19 @@ format compact
 clear all
 close all
 
+%%%% Specify the MATLAB script containing your example problem domain in this section
+
+box_pushing_examp
+
+%%%%
+
+fileName = [filePath,'/',configAndProblemDomainName];
+
 clk = fix(clock);
 fid = fopen(['reasyns_log_',date,'_',num2str(clk(4)),num2str(clk(5)),num2str(clk(6)),'.txt'],'w');
 
 % make copies of files that we may be modifying later on
 resetAllInputFiles
-
-% load automaton
-% TODO: input dynamics propositions also
-%autFile_complexMap
-%autFile_inspectionMap
-% autFile_twoRegions
-% [aut, transTmp, transTmpNew, transTmpNewWithoutSelfLoops, transWithoutSelfLoops] = ...
-%     processAutFileFastSlow('/home/jon/Dropbox/Repos/LTLMoP/src/examples/box_pushing/box_pushing.aut');
-
-load aut_boxPushing
-aut = renumberStates(aut);
-% aut.f = {2, 1, 1, 1, 1, 2, 2};  % enforce certain dynamics depending on the current transition (region activation
-aut.f = {3, 3, 3, 3, 3, 3, 3};  % enforce certain dynamics depending on the current transition (region activation
-
-Ntrans = length(aut.trans);
-Nmodes = length(aut.q);
-
-% load map
-%regFile_complexMap
-regFile_boxPushing
-% regFile_twoRegions
-% aut.f = {1, 1};
-
-% reg(1) = region(vReg{1});
-% reg(2) = region(vReg{2});
-% reg(3) = region(vReg{3});
-% regBnd = region(vBnd{1});
-
-% Model parameters - Unicycle
-polyMdlFun{1} = @(t,x,u) CreateKinematicsPoly(t,x,u);
-mdlFun{1} = @(t,x,options,p1,p2) CreateKinematicsNLWayptCtrl2(t,x,options,p1,p2);
-ctrlFun{1} = @(x,options,p1,p2) CreateKinematicsNLWayptCtrl2_ctrl(x,options,p1,p2);
-sysparams(1).n = 3; % number of states
-sysparams(1).m = 2; % number of inputs
-sysparams(1).limsNonRegState = [-pi; pi];
-sysparams(1).isCyclic = [0 0 1]';
-sysparams(1).H = eye(2);
-sysparams(1).l = 1.0;  % for car model
-sysparams(1).x_look = 1;
-sysparams(1).e = 0.1;
-sysparams(1).closeEnough = 0.5;
-sysparams(1).distAccept = 0.1;
-
-% Model parameters - Holonomic Robot
-polyMdlFun{2} = @(t,x,u) HolonomicPoly(t,x,u);
-mdlFun{2} = @(t,x,options,p1,p2) HolonomicWayptCtrl(t,x,options,p1,p2);
-ctrlFun{2} = @(x,options,p1,p2) HolonomicWayptCtrl_ctrl(x,options,p1,p2);
-sysparams(2) = sysparams(1);
-
-% Model parameters - Dubins Car with fwd velocity as a parameter
-polyMdlFun{3} = @(t,x,u) CreateKinematicsVelAsParamPoly(t,x,u);
-mdlFun{3} = @(t,x,options,p1,p2) CreateKinematicsVelAsParamNLWayptCtrl2(t,x,options,p1,p2);
-ctrlFun{3} = @(x,options,p1,p2) CreateKinematicsNLWayptCtrl2_ctrl(x,options,p1,p2);
-sysparams(3) = sysparams(1);
-sysparams(3).n = 4; % number of states
-sysparams(3).isCyclic = [0 0 1 0]';
-sysparams(3).limsNonRegState = [-pi 4; pi 4];
-
-sys(1) = systemdynamics(polyMdlFun{1},mdlFun{1},ctrlFun{1},sysparams(1).H,sysparams(1));
-sys(2) = systemdynamics(polyMdlFun{2},mdlFun{2},ctrlFun{2},sysparams(2).H,sysparams(2));
-sys(3) = systemdynamics(polyMdlFun{3},mdlFun{3},ctrlFun{3},sysparams(3).H,sysparams(3));
-
-% Feedback controller params
-options.ctrloptions_trans.Q = 1*diag([0.01 0.01 0.01 1e-8]); %0.01*eye(sysparams.n);
-% options.ctrloptions_trans.R = 0.007;
-options.ctrloptions_trans.R = 0.05;
-options.ctrloptions_trans.Qf = 1*eye(max([sysparams.n]));
-
-% Sampling parameters
-options.Qrand = 0.1;
-options.Ncover = 10000;
-options.Nterm = 10;  % number of consecutive failures before coverage terminates
-options.coverPct = 0.8;
-
-% Number of funnels/controllers for each state
-options.maxFunnelsTrans(1:Nmodes) = 1;
-options.maxFunnelsInward(1:Nmodes) = zeros(1,Nmodes);
-% options.maxFunnelsInward(4) = 1;
-options.maxFunnelsReactJoin(1:Nmodes) = 10;
-
-% TODO: need?
-TstepTraj = 0.02;
-options.maxTrajLength = 200/TstepTraj; % 10 seconds; in attempt to avoid 
-
-% Tree depth
-% depthTrans = 1;
-% depthInward = 1;
-
-% Downsampling
-options.sampSkipColl = 5;  % skipped samples in collision check -- higher value speed up collision checks but may miss parts of the trajectory
-options.sampSkipFun = 50;  % skipped samples in funnel computation
-options.sampSkipValid = 5;  % skipped samples in misbehavior check
-
-options.maxFunTrials = 40;  % number of tries before giving up
-options.maxTrials1 = 30; % set to a high value
-options.maxTrials2 = 20;
-options.maxTrials3 = 2;  % set to a low value because funFail takes care of final point interations.
-options.maxNonRegTrials = 30;
 
 trans = vertcat(aut.trans{:});
 
@@ -120,6 +30,17 @@ trans = vertcat(aut.trans{:});
 %     qReg = aut.q{imode};
 %     qCover{imode} = getCoverPts(vReg,{qReg},1,options.Ncover,sysparams.H,n,sysparams.limsNonRegState);
 % end
+
+% Choose SDP solver
+if checkDependency('mosek')
+    options.solver = @spot_mosek;
+    options.solver_name = 'mosek';
+elseif checkDependency('sedumi')
+    options.solver = @spot_sedumi;
+    options.solver_name = 'sedumi';
+else
+    error('Please install either MOSEK or SeDuMi and try again.');
+end
 
 figure(5)
 plot(reg)
@@ -170,7 +91,7 @@ for iModeToGo = 1:NmodesReach
             fprintf(fid,'%f : Attempting to patch and join mode %d.\n',toc,iModeToPatch);
             reachIncomplete = true;
             % while reachIncomplete
-            [ac_tmp,lastTrans] = reachOp_new(sys,reg,regDefl,regBnd,aut,ac_trans,iModeToPatch,options);
+            [ac_tmp,lastTrans] = computeTransitionFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,iModeToPatch,options);
             if ~isempty(lastTrans)
                 disp('Reach was unsuccessful. Repeating the Reach.')
                 reachIncomplete = true;
@@ -215,7 +136,7 @@ for iModeToGo = 1:NmodesReach
                 disp('Finished Reach operation.')
                 fprintf(fid,'%f : Finished Reach operation for mode %d.\n',toc,iModeToPatch);
                 j = 0;
-                for i = find(trans(:,1)==iModeToPatch)'  % TODO: ordering is preserved, as this agrees with what is in reachOp_new, but need to make more robust
+                for i = find(trans(:,1)==iModeToPatch)'  % TODO: ordering is preserved, as this agrees with what is in computeTransitionFunnel, but need to make more robust
                     j = j+1;
                     
                     % If there are two or more outgoing transitions for this
@@ -269,7 +190,7 @@ for iModeToGo = 1:NmodesReach
                 toc
                 fprintf(fid,'%f : Now Patching the pre-mode %d to the failed mode (%d).\n',toc,iPreModeToPatch,iModeToPatch);
                 
-                [ac_tmp,lastTrans] = reachOp_new(sys,reg,regDefl,regBnd,aut,ac_trans,iPreModeToPatch,options);
+                [ac_tmp,lastTrans] = computeTransitionFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,iPreModeToPatch,options);
                 if ~isempty(lastTrans)
                     disp('Reach was unsuccessful. Repeating the Reach.')
                     reachIncomplete = true;
@@ -353,7 +274,7 @@ for imode = 1:NmodesReach
                 i = find(trans(:,1)==iModeToJoin)';
                 ac_inward{i} = [ac_inward{i}; ac_tmp];
                 
-%                 for i = find(trans(:,1)==iModeToJoin)'  % TODO: ordering is preserved, as this agrees with what is in reachOp_new, but need to make more robust
+%                 for i = find(trans(:,1)==iModeToJoin)'  % TODO: ordering is preserved, as this agrees with what is in computeTransitionFunnel, but need to make more robust
 %                     j = j+1;
 %                     ac_inward{i} = ac_tmp(j);
 %                 end
@@ -427,7 +348,7 @@ reactJoinedModes = false*ones(Nmodes,1);
 for imode = 1:NmodesReach
     if sum(trans(:,1) == imode) > 1 
         
-        [ac_tmp, bc_tmp, lastTrans, existingReg, newRegArray, reg] = reactiveJoinOp_new1(sys,reg,regDefl,regBnd,aut,ac_trans,[],imode,calibMatrix,options);
+        [ac_tmp, bc_tmp, lastTrans, existingReg, newRegArray, reg] = computeInwardFunnel(fileName,sys,reg,regDefl,regBnd,aut,ac_trans,[],imode,options);
         
         if ~isempty(lastTrans)
             disp('Reactive Join was unsuccessful. ')
@@ -447,7 +368,7 @@ for imode = 1:NmodesReach
             
             ac_inward{imode} = ac_react{imode};
             
-%             for i = find(trans(:,1)==iModeToJoin)'  % TODO: ordering is preserved, as this agrees with what is in reachOp_new, but need to make more robust
+%             for i = find(trans(:,1)==iModeToJoin)'  % TODO: ordering is preserved, as this agrees with what is in computeTransitionFunnel, but need to make more robust
 %                 j = j+1;
 %                 ac_react{i} = ac_tmp(j);
 %             end

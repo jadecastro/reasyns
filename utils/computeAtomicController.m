@@ -1,18 +1,16 @@
-function [ac,c] = computeAtomicControllerSegment(u0,x0,sys,sampSkip,xMssExt,varargin)
+function [ac,c] = computeAtomicController(u0,x0,sys,options,varargin)
+
+sampSkip = options.sampSkipFun;
 
 c = [];
-
-minimal = false;
-if ~isempty(varargin)
-    rhoi = varargin{1};
-    minimal = true;
-end
     
 try
-    if minimal
-        [ac,c] = computeAtomicControllerMinimal(u0,x0,sys,sampSkip,rhoi,xMssExt);
+    if ~isempty(varargin)
+        rho_if = varargin{1};  %use initial rho
+        [ac,c] = computeAtomicControllerSegment(u0,x0,sys,sampSkip,rho_if,false);
     else
-        [ac,c] = computeAtomicController(u0,x0,sys,sampSkip,xMssExt);
+        rho_if = 0.1;   %use final rho.  TODO: handle the more general case and get it from containment
+        [ac,c] = computeAtomicControllerSegment(u0,x0,sys,sampSkip,rho_if,true);
     end
 
 catch ME
@@ -24,7 +22,7 @@ catch ME
             
             figidx = 20;
             %TODO: ensure containment of sequenced funnels - reverse ordering 
-            [ac2, c2] = computeAtomicControllerSegment(u02,x02,sys,sampSkip,xMssExt);
+            [ac2, c2] = computeAtomicController(u02,x02,sys,sampSkip,xMssExt);
             t0 = ac2.P.getTimeVec();
             ctrloptions.Qf = double(ac2.P,t0(1))*double(ac2.rho,t0(1));
             double(ac2.rho,t0)
@@ -35,7 +33,7 @@ catch ME
             %             Qf = getMaximalQ(funnelI2,Xk2(1+Noverlap,:));
             %keyboard
             
-            [ac1, c1] = computeAtomicControllerSegment(u01,x01,sys,sampSkip,xMssExt);
+            [ac1, c1] = computeAtomicController(u01,x01,sys,sampSkip,xMssExt);
             t0 = ac1.P.getTimeVec();
             ctrloptions.Qf = double(ac1.P,t0(1))*double(ac1.rho,t0(1));
             %             Qf = getMaximalQ(funnelI1,Xk1(1+Noverlap,:));
