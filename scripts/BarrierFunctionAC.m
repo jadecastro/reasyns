@@ -19,46 +19,6 @@ classdef BarrierFunctionAC < PolynomialAC
             
         end
         
-%         function display(obj)
-%             % 
-%             
-% %             obj.display(obj);
-%             
-%             fprintf('P:\n'); disp(obj.P);
-%             fprintf('rho:\n'); disp(obj.rho);
-%             fprintf('V:\n'); disp(obj.V);
-%             
-%             if isempty(obj)
-%                 fprintf('Empty atomic controller.\n');
-%                 return;
-%             end
-%             
-%             return;
-%         end
-        
-
-        
-%         function newobj = interp(obj,newobj,ts)
-%             
-%             newobj = obj.interp(obj,newobj,ts);
-%             
-%             for i = 1:Nsteps;
-%                 if any(obj.isCyclic)
-%                     ith(i) = 1;
-%                     if obj(i).x(nn) > pi
-%                         ith(i) = 2;
-%                     elseif obj(i).x(nn) < -pi
-%                         ith(i) = 3;
-%                     end
-%                 else
-%                     ith(i) = 1;
-%                 end
-%                 
-%                 indx = find(min(abs(obj(i).t - ts{ith(i)})) == abs(obj(i).t - ts{ith(i)}),1,'first');
-%                 obj(i).P = obj(i).P{ith(i)};
-%             end
-%         end
-        
         function res = isinternal(obj, X, s, varargin)
             %
             res = isinternal_quickInv(obj.Einv, X, s);

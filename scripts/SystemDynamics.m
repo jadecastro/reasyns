@@ -82,11 +82,15 @@ classdef SystemDynamics
             
         end
         
-        function x = simulate(obj,x,u,deltat)
+        function [x, xout] = simulate(obj,x,u,deltat)
             %
             % simulate forward in time over a given time step in a sample-and-hold fashion with respect to the input.
             
-            obj.mdlFun()
+            tmpMdlFun = @(t,x)obj.polyMdlFun(t,x,u);
+            
+            [tout, xout] = ode45(tmpMdlFun,[0 deltat],x);
+            
+            x = xout(end,:)';
         end
         
     end

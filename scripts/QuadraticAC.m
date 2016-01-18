@@ -14,27 +14,6 @@ classdef QuadraticAC < PolynomialAC
         function obj = QuadraticAC(x0,u0,K,P,rho,V,sys)
             % Constructor
             
-            %             if nargin ~= 0
-            %                 if length(t) ~= size(x,1), error('length of x must match that of t'), end
-            %                 if length(t) ~= size(u,1), error('length of u must match that of t'), end
-            %                 if length(t) ~= size(P,3), error('length of P must match that of t'), end
-            %                 if length(t) ~= size(K,3), error('length of K must match that of t'), end
-            %                 if length(t) ~= size(rho,1), error('length of rho must match that of t'), end
-            %                 if length(t) ~= size(V,1), error('length of V must match that of t'), end
-            %
-            %                 this(length(t)) = atomiccontroller;
-            %                 for i = 1:length(t)
-            %                     this(i).t = t(i);
-            %                     this(i).x = x(i,:);
-            %                     this(i).u = u(i,:);
-            %                     this(i).P = P(:,:,i);
-            %                     this(i).K = K(:,:,i);
-            %                     this(i).rho = rho(i);
-            %                     this(i).V = V(i);
-            %                 end
-            %
-            %             end
-            
             obj = obj@PolynomialAC(x0,u0,K,rho,V,sys);
             
             if ~isa(P,'Traject')
@@ -52,23 +31,6 @@ classdef QuadraticAC < PolynomialAC
                 obj.Einv(i).x = ppval(obj.x0.pp,t(i));
             end
         end
-        
-%         function display(obj)
-%             % 
-%             
-% %             obj.display(obj);
-%             
-%             fprintf('P:\n'); disp(obj.P);
-%             fprintf('rho:\n'); disp(obj.rho);
-%             fprintf('V:\n'); disp(obj.V);
-%             
-%             if isempty(obj)
-%                 fprintf('Empty atomic controller.\n');
-%                 return;
-%             end
-%             
-%             return;
-%         end
         
         function E = ellipsoid(obj)
             % Output an array of ellipsoid objects based on parameters from
@@ -129,27 +91,6 @@ classdef QuadraticAC < PolynomialAC
                 error('H not defined. Only linear state-output relationships supported.')
             end
         end
-        
-%         function newobj = interp(obj,newobj,ts)
-%             
-%             newobj = obj.interp(obj,newobj,ts);
-%             
-%             for i = 1:Nsteps;
-%                 if any(obj.isCyclic)
-%                     ith(i) = 1;
-%                     if obj(i).x(nn) > pi
-%                         ith(i) = 2;
-%                     elseif obj(i).x(nn) < -pi
-%                         ith(i) = 3;
-%                     end
-%                 else
-%                     ith(i) = 1;
-%                 end
-%                 
-%                 indx = find(min(abs(obj(i).t - ts{ith(i)})) == abs(obj(i).t - ts{ith(i)}),1,'first');
-%                 obj(i).P = obj(i).P{ith(i)};
-%             end
-%         end
         
         function res = isinternal(obj, X, s, varargin)
             %

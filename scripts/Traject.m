@@ -46,36 +46,6 @@ classdef Traject
             x = x(:,indx);
         end
         
-        function obj = inv(obj)
-            %
-            error('wip')
-        end
-        
-        function obj = plus(obj,ppobj2)
-            %
-            error('wip')
-        end
-        
-        function obj = uminus(obj)
-            %
-            error('wip')
-        end
-        
-        function obj = minus(obj,ppobj2)
-            %
-            error('wip')
-        end
-        
-        function obj = ctranspose(obj)
-            %
-            error('wip')
-        end
-        
-        function subsasgn
-            %
-            error('wip')
-        end
-        
         function [obj1, obj2] = bisect(obj,Noverlap)
             %
             if nargin < 2
