@@ -348,7 +348,7 @@ reactJoinedModes = false*ones(Nmodes,1);
 for imode = 1:NmodesReach
     if sum(trans(:,1) == imode) > 1 
         
-        [ac_tmp, bc_tmp, lastTrans, existingReg, newRegArray, reg] = computeInwardFunnel(fileName,sys,reg,regDefl,regBnd,aut,ac_trans,[],imode,options);
+        [ac_tmp, bc_tmp, lastTrans, existingReg, newRegArray, reg] = computeInwardFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,[],imode,options,fileName);
         
         if ~isempty(lastTrans)
             disp('Reactive Join was unsuccessful. ')

@@ -24,49 +24,49 @@ classdef Traject
             obj.pp = ppobj;
         end
         
-        function [x,t] = double(ppobj,t)
+        function [x,t] = double(obj,t)
             %
             if nargin < 2
-                t = getTimeVec(ppobj);
+                t = getTimeVec(obj);
             end
-            x = ppval(t,ppobj.pp);
+            x = ppval(t,obj.pp);
         end
         
-        function [x,t] = downsample(ppobj,sampSkip)
+        function [x,t] = downsample(obj,sampSkip)
             %
-            [x,t] = double(ppobj);
+            [x,t] = double(obj);
             x = downsample(x,sampSkip);
             t = downsample(t,sampSkip);
         end
         
-        function [x,t] = downsampleUniformly(ppobj,sampSkip)
+        function [x,t] = downsampleUniformly(obj,sampSkip)
             %
-            [x,t] = double(ppobj);
+            [x,t] = double(obj);
             [t,indx] = downsampleUniformly(t,sampSkip);
             x = x(:,indx);
         end
         
-        function ppres = inv(ppobj)
+        function obj = inv(obj)
             %
             error('wip')
         end
         
-        function ppres = plus(ppobj1,ppobj2)
+        function obj = plus(obj,ppobj2)
             %
             error('wip')
         end
         
-        function ppres = uminus(ppobj)
+        function obj = uminus(obj)
             %
             error('wip')
         end
         
-        function ppres = minus(ppobj1,ppobj2)
+        function obj = minus(obj,ppobj2)
             %
             error('wip')
         end
         
-        function ppres = ctranspose(ppobj)
+        function obj = ctranspose(obj)
             %
             error('wip')
         end
@@ -76,29 +76,29 @@ classdef Traject
             error('wip')
         end
         
-        function [ppres1, ppres2] = bisect(ppobj,Noverlap)
+        function [obj1, obj2] = bisect(obj,Noverlap)
             %
             if nargin < 2
                 Noverlap = 0;
             end
-            [x,t] = double(ppobj);
+            [x,t] = double(obj);
             t1 = t(1:floor(end/2)+Noverlap);
             x1 = x(:,1:floor(end/2)+Noverlap,:);
             t2 = t(floor(end/2):end);
             x2 = x(:,floor(end/2):end,:);
-            ppres1 = Traject(t1,x1);
-            ppres2 = Traject(t2,x2);
+            obj1 = Traject(t1,x1);
+            obj2 = Traject(t2,x2);
         end
         
-        function ppres = horzcat(ppobj1,ppobj2)
+        function obj = horzcat(obj1,obj2)
             % 
-            t1 = getTimeVec(ppobj1);
-            t2 = getTimeVec(ppobj2);
+            t1 = getTimeVec(obj1);
+            t2 = getTimeVec(obj2);
             if (t1(1) < t2(1)) || (t1(end) > t2(end)), 
                 warning('Time vector of first argument not within the range of that of the second argument. You may get large extrapolation errors!')
             end
-            X = ppval(t1,ppobj1.pp);
-            Y = ppval(t1,ppobj2.pp);
+            X = ppval(t1,obj1.pp);
+            Y = ppval(t1,obj2.pp);
             ndx = ndims(X);  ndy = ndims(Y);
             
             if ndx ~= ndy, error('Dimensions must match!'), end
@@ -116,18 +116,18 @@ classdef Traject
                 tmpZ = [tmpX tmpY];
                 Z = subsasgn(Z,S2,tmpZ);
             end
-            ppres = Traject(t1,Z);
+            obj = Traject(t1,Z);
         end
         
-        function ppres = vertcat(ppobj1,ppobj2)
+        function obj = vertcat(obj1,obj2)
             %
-            t1 = getTimeVec(ppobj1);
-            t2 = getTimeVec(ppobj2);
+            t1 = getTimeVec(obj1);
+            t2 = getTimeVec(obj2);
             if (t1(1) < t2(1)) || (t1(end) > t2(end)),
                 warning('Time vector of first argument not within the range of that of the second argument. You may get large extrapolation errors!')
             end
-            X = ppval(t1,ppobj1.pp);
-            Y = ppval(t1,ppobj2.pp);
+            X = ppval(t1,obj1.pp);
+            Y = ppval(t1,obj2.pp);
             ndx = ndims(X);  ndy = ndims(Y);
             
             if ndx ~= ndy, error('Dimensions must match!'), end
@@ -145,13 +145,13 @@ classdef Traject
                 tmpZ = [tmpX; tmpY];
                 Z = subsasgn(Z,S2,tmpZ);
             end
-            ppres = Traject(t1,Z);
+            obj = Traject(t1,Z);
         end
         
-        function ppres = timecat(ppobj1,ppobj2)
+        function obj = timecat(obj1,obj2)
             %
-            [x1,t1] = double(ppobj1);
-            [x2,t2] = double(ppobj2);
+            [x1,t1] = double(obj1);
+            [x2,t2] = double(obj2);
             if t2(1) < t1(end), error('Resulting time vector must be monotonic when the two input vectors are concatenated.'), end
             ndx1 = ndims(x1); ndx2 = ndims(x2);
             if ndx1 ~= ndx2, error('Dimensions must match!'), end
@@ -180,44 +180,44 @@ classdef Traject
             else
                 z = x;
             end
-            ppres = Traject(t,z);    
+            obj = Traject(t,z);    
         end
         
-        function ppres = rdivide(ppobj1,ppobj2)
+        function obj = rdivide(obj1,obj2)
             %
-            if ppobj2.pp.dim > 1, error('divisor (2nd arg) dimension must be one'); end
-            t1 = getTimeVec(ppobj1);
-            t2 = getTimeVec(ppobj2);
+            if obj2.pp.dim > 1, error('divisor (2nd arg) dimension must be one'); end
+            t1 = getTimeVec(obj1);
+            t2 = getTimeVec(obj2);
             if (t1(1) < t2(1)) || (t1(end) > t2(end)),
                 warning('Time vector of first argument not within the range of that of the second argument. You may get large extrapolation errors!')
             end
-            X = ppval(t1,ppobj1);
-            Y = ppval(t1,ppobj2);
+            X = ppval(t1,obj1);
+            Y = ppval(t1,obj2);
             Z = X./Y;
-            ppres = spline(t1,Z);
+            obj = spline(t1,Z);
         end
         
-        function ppres = times(ppobj1,ppobj2)
+        function obj = times(obj1,obj2)
             %
-            if ppobj2.pp.dim > 1, error('multiplier (2nd arg) dimension must be one'); end
-            t = getTimeVec(ppobj1);
-            X = ppval(t,ppobj1);
-            Y = ppval(t,ppobj2);
+            if obj2.pp.dim > 1, error('multiplier (2nd arg) dimension must be one'); end
+            t = getTimeVec(obj1);
+            X = ppval(t,obj1);
+            Y = ppval(t,obj2);
             Z = X.*Y;
-            ppres = spline(t,Z);
+            obj = spline(t,Z);
         end
         
-        function t = getTimeVec(ppobj)
+        function t = getTimeVec(obj)
             %
-            t = ppobj.pp.breaks;
+            t = obj.pp.breaks;
         end
         
-        function len = length(ppobj)
+        function len = length(obj)
             %
-            len = length(ppobj.pp.breaks);
+            len = length(obj.pp.breaks);
         end
         
-        function plot(ppobj,color,fignum)
+        function plot(obj,color,fignum)
             %
             if nargin == 3 && isempty(color)
                 color = 'k';
@@ -228,7 +228,7 @@ classdef Traject
             if nargin < 2
                 color = 'k';
             end
-            [x0,t] = double(ppobj);
+            [x0,t] = double(obj);
             % TODO: plot using coord transformation matrix
             figure(fignum)
             plot(x0(1,:),x0(2,:),color,'LineWidth',2)

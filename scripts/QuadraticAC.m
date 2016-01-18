@@ -70,14 +70,14 @@ classdef QuadraticAC < PolynomialAC
 %             return;
 %         end
         
-        function E = ellipsoid(ac)
+        function E = ellipsoid(obj)
             % Output an array of ellipsoid objects based on parameters from
             % the atomic controller
-            for i = 1:size(ac,1)
-                for j = 1:size(ac,2)
-                    t = getTimeVec(ac(i,j).x0);
-                    x = ppval(ac(i,j).x0.pp,t);
-                    P = ppval(ac(i,j).P.pp,t);
+            for i = 1:size(obj,1)
+                for j = 1:size(obj,2)
+                    t = getTimeVec(obj(i,j).x0);
+                    x = ppval(obj(i,j).x0.pp,t);
+                    P = ppval(obj(i,j).P.pp,t);
                     for k = 1:size(P,3)
                         Pinv = inv(P(:,:,k));
                         Pinv_sym = (Pinv'+Pinv)/2;  % to ensure it is symmetric
@@ -95,28 +95,28 @@ classdef QuadraticAC < PolynomialAC
         end
         
         % TODO: generalize to arbitrary polynomials
-        function ac = normalizerho(ac)
+        function obj = normalizerho(obj)
             % TODO: create a flag to indicate if already normalized
-            rho = ppval(ac.rho,getTimeVec(ac));
-%             P = ppval(ac.P,getTimeVec(ac));
+            rho = ppval(obj.rho,getTimeVec(obj));
+%             P = ppval(obj.P,getTimeVec(obj));
             if all(rho) == 1.0, return; end
-            ac.P = ac.P./ac.rho;
-            ac.rho = spline(getTimeVec(ac),ones(length(getTimeVec(ac)),1));
+            obj.P = obj.P./obj.rho;
+            obj.rho = spline(getTimeVec(obj),ones(length(getTimeVec(obj)),1));
         end
         
         % TODO: generalize to arbitrary polynomials
-        function Eproj = projection(ac,sys,idx)
+        function Eproj = projection(obj,sys,idx)
             %
-            n = ac.x0.pp.dim;
+            n = obj.x0.pp.dim;
             if ~isempty(sys.H)
                 if nargin > 2
                     % makes sense to assume only one ac in this case
-                    ell = ellipsoid(ac);
+                    ell = ellipsoid(obj);
                     Eproj = projection(ell(idx),[sys.H; zeros(n-length(sys.H),length(sys.H))]);
                 else
-                    for i = 1:length(ac)
+                    for i = 1:length(obj)
                         try
-                            ell = ellipsoid(ac(i));
+                            ell = ellipsoid(obj(i));
                         catch
                             keyboard
                         end
@@ -130,36 +130,30 @@ classdef QuadraticAC < PolynomialAC
             end
         end
         
-%         function newobj = interp(ac,newobj,ts)
+%         function newobj = interp(obj,newobj,ts)
 %             
-%             newobj = ac.interp(ac,newobj,ts);
+%             newobj = obj.interp(obj,newobj,ts);
 %             
 %             for i = 1:Nsteps;
-%                 if any(ac.isCyclic)
+%                 if any(obj.isCyclic)
 %                     ith(i) = 1;
-%                     if ac(i).x(nn) > pi
+%                     if obj(i).x(nn) > pi
 %                         ith(i) = 2;
-%                     elseif ac(i).x(nn) < -pi
+%                     elseif obj(i).x(nn) < -pi
 %                         ith(i) = 3;
 %                     end
 %                 else
 %                     ith(i) = 1;
 %                 end
 %                 
-%                 indx = find(min(abs(ac(i).t - ts{ith(i)})) == abs(ac(i).t - ts{ith(i)}),1,'first');
-%                 ac(i).P = ac(i).P{ith(i)};
+%                 indx = find(min(abs(obj(i).t - ts{ith(i)})) == abs(obj(i).t - ts{ith(i)}),1,'first');
+%                 obj(i).P = obj(i).P{ith(i)};
 %             end
 %         end
         
-        function union
-        end
-        
-        function intersect
-        end
-        
-        function res = isinternal(acobj, X, s, varargin)
+        function res = isinternal(obj, X, s, varargin)
             %
-            res = isinternal_quickInv(acobj.Einv, X, s);
+            res = isinternal_quickInv(obj.Einv, X, s);
 
             if ~isempty(varargin)
                 sys = varargin{1};
@@ -167,14 +161,14 @@ classdef QuadraticAC < PolynomialAC
                 if ~res
                     for i = find(sys.params.isCyclic)'
                         X(i) = X(i) + 2*pi;
-                        res = isinternal_quickInv(acobj.Einv, X, s);
+                        res = isinternal_quickInv(obj.Einv, X, s);
                         X(i) = X(i) - 2*pi;
                     end
                 end
                 if ~res
                     for i = find(sys.params.isCyclic)'
                         X(i) = X(i) - 2*pi;
-                        res = isinternal_quickInv(acobj.Einv, X, s);
+                        res = isinternal_quickInv(obj.Einv, X, s);
                         X(i) = X(i) + 2*pi;
                     end
                 end
@@ -182,7 +176,7 @@ classdef QuadraticAC < PolynomialAC
                 
         end
         
-        function [res, idx, isectArray] = isinside(acobj,regobj,sys)
+        function [res, idx, isectArray] = isinside(obj,regobj,sys)
             % checks for containment by simply checking intersections with
             % any of the boundary hyperplanes.
             [H,K] = double(regobj.p);
@@ -191,8 +185,8 @@ classdef QuadraticAC < PolynomialAC
             if nargout > 1
                 res = true;
                 idx = [];
-                for i = 1:length(acobj.ellipsoid)
-                    tmp = ~intersect(projection(acobj,sys,i),hpp,'u');
+                for i = 1:length(obj.ellipsoid)
+                    tmp = ~intersect(projection(obj,sys,i),hpp,'u');
                     isectArray = [isectArray; tmp];
                     if ~all(tmp)
                         res = false;
@@ -200,7 +194,7 @@ classdef QuadraticAC < PolynomialAC
                     end
                 end
             else
-                tmp = ~intersect(projection(acobj,sys),hpp,'u');
+                tmp = ~intersect(projection(obj,sys),hpp,'u');
                 isectArray = [isectArray; tmp];
                 res = ~all(tmp);
             end
@@ -213,14 +207,14 @@ classdef QuadraticAC < PolynomialAC
             error('wip')
         end
         
-        function acres = merge(acobj1,acobj2)
+        function obj = merge(obj1,obj2)
             %
-            actmp = merge@PolynomialAC(acobj1,acobj2);
-            Pn = timecat(acobj1.P,acobj2.P);
-            acres = QuadraticAC(actmp.x0,actmp.u0,actmp.K,Pn,actmp.rho,actmp.V,actmp.sys);
+            actmp = merge@PolynomialAC(obj1,obj2);
+            Pn = timecat(obj1.P,obj2.P);
+            obj = QuadraticAC(actmp.x0,actmp.u0,actmp.K,Pn,actmp.rho,actmp.V,actmp.sys);
         end
         
-        function plot(ac,sys,fignum,threedflag,color)
+        function plot(obj,sys,fignum,threedflag,color)
             %
             %TODO: treat both 2d and 3d cases
             
@@ -238,7 +232,7 @@ classdef QuadraticAC < PolynomialAC
             Options.width = 3;
             
             if isempty(threedflag)
-                Eproj = projection(ac,sys);
+                Eproj = projection(obj,sys);
                 figure(fignum)
                 if isColorAsOption
                     plot(Eproj,Options)
@@ -247,7 +241,7 @@ classdef QuadraticAC < PolynomialAC
                 end
             else
                 if threedflag
-                    tmp = downsample(ac.ellipsoid,1);
+                    tmp = downsample(obj.ellipsoid,1);
                     figure(fignum)
                     hold on
                     plot(tmp,'r')
@@ -256,7 +250,52 @@ classdef QuadraticAC < PolynomialAC
             drawnow
         end
         
-        function disp(ac)
+        function u = execute(obj,x)
+            %
+            % look up the command input given the state
+            
+            teval = 0.02;
+            
+            % Use a weighted Euclidean distance to resolve the current state of the TVLQR controller.
+            weights = 1 * (~obj.sys.params.isCyclic) + 0.2 * obj.sys.params.isCyclic;
+            
+            ell = ellipsoid(obj);
+            t_trials = getTimeVec(obj.x0);
+            
+            minDelta = inf;
+            
+            for i = 2:1:length(ell)
+                xtmp = double(obj.x0, t_trials(i));
+                % unwrap the heading cyclic coordinate
+                [testMinDist, minIdx] = min([
+                    norm(weights.*(xtmp - (x+obj.sys.params.isCyclic*obj.sys.params.limsNonRegState(1)))) 
+                    norm(weights.*(xtmp - x)) 
+                    norm(weights.*(xtmp - (x+obj.sys.params.isCyclic*obj.sys.params.limsNonRegState(2))))
+                    ]);
+                if testMinDist < minDelta
+                    teval = t_trials(i);
+                    minDelta = testMinDist;
+                end
+            end
+            
+            % select the best-fit parameters
+            K = double(obj.K,teval);
+            x0 = double(obj.x0,teval);
+            u0 = double(obj.u0,teval);
+            
+            K = K(end-length(u0)+1:end,:);
+            
+            u_test = [
+                (K*(x+obj.sys.params.isCyclic*obj.sys.params.limsNonRegState(1) - x0))'
+                (K*(x - x0))'
+                (K*(x+obj.sys.params.isCyclic*obj.sys.params.limsNonRegState(2) - x0))'
+                ]';
+            % u_idx = abs(u_test(end,:)) == min(abs(u_test(end,:)));  
+            u_ctrl = u_test(:,minIdx);
+            u = u0 + u_ctrl(:,1);
+        end
+        
+        function disp(obj)
             fprintf('Quadratic Atomic Controller with parameters\n');
         end
         

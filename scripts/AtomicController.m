@@ -60,33 +60,33 @@ classdef AtomicController
 %             return;
 %         end
         
-        function ac = normalizerho(ac)
+        function obj = normalizerho(obj)
             %
             error('normalizerho: Expecting an overloaded function.')
         end
         
-        function Eproj = projection(ac)
+        function Eproj = projection(obj)
             %
             error('projection: Expecting an overloaded function.')
         end
         
-%         function ac = interp(ac,ts)
+%         function obj = interp(obj,ts)
 %             %
 %             for i = 1:Nsteps;
-%                 if any(ac.isCyclic)
+%                 if any(obj.isCyclic)
 %                     ith(i) = 1;
-%                     if ac(i).x0(nn) > pi
+%                     if obj(i).x0(nn) > pi
 %                         ith(i) = 2;
-%                     elseif ac(i).x0(nn) < -pi
+%                     elseif obj(i).x0(nn) < -pi
 %                         ith(i) = 3;
 %                     end
 %                 else
 %                     ith(i) = 1;
 %                 end
 %                 
-%                 indx = find(min(abs(ac(i).t - ts{ith(i)})) == abs(ac(i).t - ts{ith(i)}),1,'first');
-%                 ac(i).K = ac(i).K{ith(i)}(t(i));
-%                 ac(i).x0 = ac(i).x0(i,:) + isCyclic'*thSgn(ith(i))*2*pi;
+%                 indx = find(min(abs(obj(i).t - ts{ith(i)})) == abs(obj(i).t - ts{ith(i)}),1,'first');
+%                 obj(i).K = obj(i).K{ith(i)}(t(i));
+%                 obj(i).x0 = obj(i).x0(i,:) + isCyclic'*thSgn(ith(i))*2*pi;
 %             end
 %         end
         
@@ -96,7 +96,7 @@ classdef AtomicController
         function intersect
         end
         
-        function res = isinside(ac, X, s)
+        function res = isinside(obj, X, s)
             %
             error('isinternal: Expecting an overloaded function.')
         end
@@ -104,18 +104,18 @@ classdef AtomicController
 %         function sample
 %         end
         
-        function acres = merge(acobj1,acobj2)
+        function obj = merge(obj1,obj2)
             %
-            xn = timecat(acobj1.x0,acobj2.x0);
-            un = timecat(acobj1.u0,acobj2.u0);
-            Kn = timecat(acobj1.K,acobj2.K);
-            acres = AtomicController(xn,un,Kn,acobj1.sys);
+            xn = timecat(obj1.x0,obj2.x0);
+            un = timecat(obj1.u0,obj2.u0);
+            Kn = timecat(obj1.K,obj2.K);
+            acres = AtomicController(xn,un,Kn,obj1.sys);
         end
         
-        function plot(ac,fignum,color)
+        function plot(obj,fignum,color)
             %
             %TODO: treat both 2d and 3d cases
-            Eproj = projection(ac,sys);
+            Eproj = projection(obj,sys);
             figure(fignum)
             plot(Eproj)
         end

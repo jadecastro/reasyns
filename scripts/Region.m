@@ -62,8 +62,8 @@ classdef Region < handle
             end
         end
         
-        function setNumRegions(regobj,val)
-            regobj.numRegions = val;
+        function setNumRegions(obj,val)
+            obj.numRegions = val;
         end
 
         function trueRep(regBnd,regArray)
@@ -77,47 +77,46 @@ classdef Region < handle
             regBnd.p = regiondiff(regBnd.p,pArray);
         end
         
-        function inflate(regobj)
-            % regRes = inflate(regobj,epsilon)
-            % Inflate the regobj by a value of epsilon (negative values of
-            % epsilon result in a deflation of regobj)
-            if regobj.epsilon ~= 0 && ~regobj.inflated
+        function inflate(obj)
+            % regRes = inflate(obj,epsilon)
+            % Inflate the region by a value of epsilon (negative values of epsilon result in a deflation of region)
+            if obj.epsilon ~= 0 && ~obj.inflated
                 x = msspoly('x',2);
-                [H,K] = double(regobj.p);
-                if length(regobj.p) > 1
-                    for i = 1:length(regobj.p)
-                        tmp = polytope(H{i},K{i}+regobj.epsilon);
+                [H,K] = double(obj.p);
+                if length(obj.p) > 1
+                    for i = 1:length(obj.p)
+                        tmp = polytope(H{i},K{i}+obj.epsilon);
                         if ~isempty(double(tmp))
-                            regobj.p(i) = tmp;
+                            obj.p(i) = tmp;
                         end
-                        mssReg = (H{i}*x(1:2)-(K{i}+regobj.epsilon))' + eps*sum(x);
-                        regobj.mssExt{i} = -mssReg;
+                        mssReg = (H{i}*x(1:2)-(K{i}+obj.epsilon))' + eps*sum(x);
+                        obj.mssExt{i} = -mssReg;
                     end
                 else
-                    regobj.p = polytope(H,K+regobj.epsilon);
-                    mssReg = (H*x(1:2)-(K+regobj.epsilon))' + eps*sum(x);
-                    regobj.mssExt = -mssReg;
+                    obj.p = polytope(H,K+obj.epsilon);
+                    mssReg = (H*x(1:2)-(K+obj.epsilon))' + eps*sum(x);
+                    obj.mssExt = -mssReg;
                 end
                 
                 % deflate the boundary 
-                [H,K] = double(regobj.p_bnd);
-                regobj.p_bnd = polytope(H,K-regobj.epsilon);
-                mssReg = (H*x(1:2)-(K-regobj.epsilon))' + eps*sum(x);
-                regobj.mss_bnd = -mssReg;
+                [H,K] = double(obj.p_bnd);
+                obj.p_bnd = polytope(H,K-obj.epsilon);
+                mssReg = (H*x(1:2)-(K-obj.epsilon))' + eps*sum(x);
+                obj.mss_bnd = -mssReg;
                 
-                regobj.v = extreme(regobj.p);
-                %                 regobj.v = [];
-                regobj.inflated = true; % flag as inflated
+                obj.v = extreme(obj.p);
+                %                 obj.v = [];
+                obj.inflated = true; % flag as inflated
             end
         end
         
-        function h = gethyperplane(regobj)
+        function h = gethyperplane(obj)
             %
-            [v,c] = double(regobj.p);
+            [v,c] = double(obj.p);
             h = hyperplane(v',c');
         end
         
-        function mss = getMSSpoly(regobj)
+        function mss = getMSSpoly(obj)
             %
             
         end
@@ -146,7 +145,7 @@ classdef Region < handle
             reg = Region(verts,reg1.calibMatrix);
         end
         
-        function isect = isinside(regobj,sys,q,sampSkip)
+        function isect = isinside(obj,sys,q,sampSkip)
             % check whether or not any of the states values supplied in q do not lie in a given region.
             
             H = sys.params.H;
@@ -162,7 +161,7 @@ classdef Region < handle
             
             for i = 1:size(q,1)
 %                 try
-                isect = isinside(vertcat(regobj.p),H*q(i,1:length(H))');
+                isect = isinside(vertcat(obj.p),H*q(i,1:length(H))');
 %                 catch
 %                     keyboard
 %                 end
@@ -172,16 +171,16 @@ classdef Region < handle
             end
         end
         
-        function regDiff = regdiff(regobj,regArray)
+        function regDiff = regdiff(obj,regArray)
             % 
-            % NB: assumes regobj is convex.
+            % NB: assumes the region is convex.
             polyArr = [];
             for i = 1:length(regArray)
                 for j = 1:length(regArray(i).p)
                     polyArr = [polyArr; regArray(i).p(j)];
                 end
             end
-            pDiff = regiondiff(regobj.p,polyArr);
+            pDiff = regiondiff(obj.p,polyArr);
             vDiff = [];
             for i = 1:length(pDiff)
                 vDiffNew = extreme(pDiff(i));
@@ -208,36 +207,36 @@ classdef Region < handle
                 [a,b] = poly2ccw(vDiff(:,1),vDiff(:,2));
             end
                 
-            regDiff = Region([a b],regobj.calibMatrix);
+            regDiff = Region([a b],obj.calibMatrix);
         end
         
-        function [regSafe] = getReg(regobj,regbnd,aut,imode)
+        function [regSafe] = getReg(obj,regbnd,aut,imode)
             % Safe region for the current imode
             count = 0;
-            for j = 1:length(regobj)
+            for j = 1:length(obj)
                 if aut.q{imode} ~= j
                     count = count+1;
-                    regAvoid(count) = regobj(j);
+                    regAvoid(count) = obj(j);
                 end
             end
             regSafe = regdiff(regbnd,regAvoid);
         end
         
-        function [regSafe] = getRegTrans(regobj,regbnd,aut,itrans)
+        function [regSafe] = getRegTrans(obj,regbnd,aut,itrans)
             % Safe regions for the given itrans
             count = 0;
-            for j = 1:length(regobj)
+            for j = 1:length(obj)
                 if (aut.q{aut.trans{itrans}(1)} ~= j) && (aut.q{aut.trans{itrans}(2)} ~= j)
                     count = count+1;
-                    regAvoid(count) = regobj(j);
+                    regAvoid(count) = obj(j);
                 end
             end
             regSafe = regdiff(regbnd,regAvoid);
         end
         
-        function plot(regobj,varargin)
+        function plot(obj,varargin)
             %
-            plot(regobj.p,varargin{:});
+            plot(obj.p,varargin{:});
         end
         
 %         function subsasgn
@@ -245,16 +244,16 @@ classdef Region < handle
 %             error('wip')
 %         end
   
-        function handleOtherVertexChanges(regobj,src,evt)
+        function handleOtherVertexChanges(obj,src,evt)
             %
             disp(['reconfiguring the child region'])
-            epsilon = regobj.epsilon;
-            regobj.v = evt.AffectedObject.v;
-            regobj.p = evt.AffectedObject.p;
-            regobj.epsilon = epsilon;
-            regobj.inflated = false;
-%             configureRegion(regobj,evt.AffectedObject.v);
-            inflate(regobj);
+            epsilon = obj.epsilon;
+            obj.v = evt.AffectedObject.v;
+            obj.p = evt.AffectedObject.p;
+            obj.epsilon = epsilon;
+            obj.inflated = false;
+%             configureRegion(obj,evt.AffectedObject.v);
+            inflate(obj);
         end
 
     end
@@ -270,15 +269,15 @@ classdef Region < handle
     
     methods (Access = private)
         
-        function configureRegion(regobj,v)
-            regobj.p = polytope(regobj.v);
-            %             regobj.v = extreme(regobj.p);
+        function configureRegion(obj,v)
+            obj.p = polytope(obj.v);
+            %             obj.v = extreme(obj.p);
             
             % polytope returns only a single convex region; we need to find an array
             % of non-convex regions
             numOrigVerts = size(v,1);
             indxNC = [];
-            h = gethyperplane(regobj);
+            h = gethyperplane(obj);
             for i = 1:numOrigVerts
                 if ~any(intersect(ellipsoid(v(i,:)',eye(2)*1e-20),h)), indxNC = [indxNC; i]; end
             end
@@ -296,30 +295,30 @@ classdef Region < handle
                 end
             end
             if ~isempty(p1)
-                trueRep(regobj,p1);
+                trueRep(obj,p1);
             end
             
             % compute an mss object for the polytope
-            [H,K] = double(regobj.p);
+            [H,K] = double(obj.p);
             x = msspoly('x',2);
-            if length(regobj.p) > 1
-                for i = 1:length(regobj.p)
+            if length(obj.p) > 1
+                for i = 1:length(obj.p)
                     mssReg = (H{i}*x(1:2)-K{i})' + eps*sum(x);
-                    regobj.mssExt{i} = -mssReg;
+                    obj.mssExt{i} = -mssReg;
                 end
             else
                 mssReg = (H*x(1:2)-K)' + eps*sum(x);
-                regobj.mssExt = -mssReg;
+                obj.mssExt = -mssReg;
             end
             
             % form a convex hull of the polytope
-            bnd = hull(regobj.p);
-            regobj.p_bnd = bnd;
+            bnd = hull(obj.p);
+            obj.p_bnd = bnd;
             
             % compute an mss object for the convex hull
-            [H,K] = double(regobj.p_bnd);
+            [H,K] = double(obj.p_bnd);
             mssReg = (H*x(1:2)-K)' + eps*sum(x);
-            regobj.mssBnd = -mssReg;
+            obj.mssBnd = -mssReg;
 
         end
         

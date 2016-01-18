@@ -1,4 +1,4 @@
-function [ac_trans, errTrans] = reachOp_new(sysArray,reg,regDefl,regBnd,aut,acIn,iModeToPatch,options)
+function [ac_trans, errTrans] = computeTransitionFunnel(sysArray,reg,regDefl,regBnd,aut,acIn,iModeToPatch,options)
 %
 % Reach operation -- construct transition funnels
 %
@@ -35,9 +35,10 @@ for funindx = 1:maxFunTrials
     for itrans = find(trans(:,1)==iModeToPatch)'
         iModeSuccessor = trans(itrans,2);
         
-        % get system model for this transition
+        % get system model and region pair for this transition
         aut.f{itrans}
         sys = sysArray(aut.f{itrans});
+        regMode = union(reg(aut.q{iModeToPatch}), reg(aut.q{iModeSuccessor}));
         
         if ~isempty(acLast) && length(find(lastTrans)) == 1  % if there is precisely one incoming funnel to join, we may as well select the initial point as the final point in that funnel
             ttmp = getTimeVec(acLast.x0);
@@ -123,7 +124,13 @@ for funindx = 1:maxFunTrials
             disp('Computing funnel....')
             
             try
-                ac = computeAtomicController(u0,x0,sys,options);
+                tmp = acLast.ellipsoid;
+                ellToCompose = tmp(end);
+                
+                rhof = 0.1;   %final rho.  TODO: handle the more general case and get it from containment
+                options.isMaximization = true;
+                [ac, c] = computeAtomicController(u0,x0,sys,regMode,ellToCompose,options,rhof);
+
                 ac_trans = [ac_trans; ac];
                 funFail = false;
                 

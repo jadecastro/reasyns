@@ -1,83 +1,50 @@
 
-function [ac, B] = computeConformingFunnel(u01, x01, sys, regMode, ellToCompose, options)
+function [B] = computeConformingFunnel(u00, x00, u01, x01, sys, ac, regMode, ellToCompose, options)
 %
 % Main function for computing funnels using the control barrier functions approach.
 %
 % Elements adapted from Russ Tedrake's Underactuated Robotics Courseware
 % https://courses.edx.org/courses/MITx/6.832x
 
+d = options.d;  % specify the order of the barrier functions
+
 % Initialize SOS program
 %close all
 clear prog
 prog = spotsosprog;
 
-% x = msspoly('x',3);
+x = msspoly('x',sys.params.n); % instantiate the symbolic variables we will be using in a bit
 
 % load tRed, xRed, and uRed
 %load('/home/jon/Dropbox/Research/LowLevelControllerSynthesis/reasyns/scripts/barrierTestData.mat')
 
-Q = sys.params.ctrloptions.Q;
-R = sys.params.ctrloptions.R;
-Qf = sys.params.ctrloptions.Qf;
-
 [ellq0,ellQ0] = double(ellToCompose);
 
 sampSkip = options.sampSkipFun;
+
 [xRed,~] = downsampleUniformly(x01,10);
 [uRed,tRed] = downsampleUniformly(u01,10);
-
 xtraj = PPTrajectory(foh(tRed,xRed)); % should we be using xred, ured here?
+xtraj = setOutputFrame(xtraj,p.getStateFrame);
 utraj = PPTrajectory(foh(tRed,uRed(2,:)));
+utraj = setOutputFrame(utraj,p.getInputFrame);
+ts = xtraj.getBreaks();
 
 %[x00Red,~] = downsampleUniformly(x00,sampSkip);
 %[u00Red,t00Red] = downsampleUniformly(u00,sampSkip);
 [x00,t00] = double(x00);
 u00 = double(u00);
-
 x00traj = PPTrajectory(foh(t00,x00)); % should we be using xred, ured here?
-u00traj = PPTrajectory(foh(t00,u00(2,:)));
-
-% Declare Dubins car model
-if strfind(func2str(sys.polyMdlFun),'CreateKinematics')
-    p = DubinsPlant();
-    hybridProblem = true;
-elseif strfind(func2str(sys.polyMdlFun),'Holonomic')
-    p = HolonomicPlant();
-    hybridProblem = false;
-end
-
-% Set input limits
-p = setInputLimits(p,-Inf,Inf);
-
-% Do tvlqr
-utraj = setOutputFrame(utraj,p.getInputFrame);
-xtraj = setOutputFrame(xtraj,p.getStateFrame);
-u00traj = setOutputFrame(u00traj,p.getInputFrame);
 x00traj = setOutputFrame(x00traj,p.getStateFrame);
-[c,V] = tvlqr(p,x00traj,u00traj,Q,R,Qf);
-% poly = taylorApprox(feedback(p,c),xtraj,[],3);
-%poly = taylorApprox(feedback(p,c),0,Point(p.getStateFrame(),[finalState';1]),[],6);  % take the Taylor series expansion about the final goal point
-poly = taylorApprox(feedback(p,c),x00traj,[],3);
+u00traj = PPTrajectory(foh(t00,u00(2,:)));
+u00traj = setOutputFrame(u00traj,p.getInputFrame);
 ts00 = x00traj.getBreaks();
 
-ts = xtraj.getBreaks();
+% Compute time-varying LQR controller
+[c,V] = sys.computeTVLQR(x00traj,u00traj);
 
-num_xc = poly.getNumContStates();
-if (isa(V,'Trajectory'))
-    V1 = V.inFrame(poly.getStateFrame);
-    Q = eye(num_xc);
-    V0 = tvlyap(poly,V1,Q,Q);
-else
-    V0 = V;
-end
-
-N = length(ts);
-%N = 5;
-
-poly = poly.inStateFrame(V0.getFrame); % convert system to Lyapunov function coordinates
-
-d = 6;
-
+% Compute the polynomial approximation of the drake plant
+[poly] = sys.getSystemPoly(x00traj,c,V);
 
 % TODO: the following is specific only to the problem at hand... we will need to generalize this
 g_X0 = 1 - (x - ellq0)'*inv(ellQ0)*(x - ellq0);  % intial set
@@ -86,6 +53,9 @@ g_X0 = 1 - (x - ellq0)'*inv(ellQ0)*(x - ellq0);  % intial set
 g_Xdomain = 2^2 - (x(1) + ellq0(1))^2 - (x(2) + ellq0(2))^2; % Conservative domain for finding an initial B
 
 prog = prog.withIndeterminate(x);
+
+N = length(ts);
+%N = 5;
 
 %% Find a feasible initial B within some conservative domain
 % evaluate dynamics and Vtraj at every ts once (for efficiency/clarity)
@@ -403,23 +373,38 @@ if true
         
     end
 end
+
+
+%% Store the funnel
+
+[~,tk] = double(x00);
+
+%TODO: fix this approach for getting Drake data
+if verLessThan('matlab','7.15')
+    zeromatrix = repmat(zeros(length(utraj),sys.params.n),[1,1,length(tk)]);
+else
+    zeromatrix = repmat(zeros(length(utraj),sys.params.n),1,1,length(tk));
+end
+tmp1 = Traject(tk,zeromatrix);
+tmp2 = Traject(c.D.pp);
+K0 = [tmp1; tmp2];
+
+bc = BarrierFunctionAC(x00,u00,K0,B,c,V,sys);
         
 %%
 % Print out B after zeroing out very small coefficient
-xprint = msspoly('x',3); % print in terms of x1 and x2
+xprint = msspoly('x',sys.params.n); % print in terms of x1 and x2
 disp(' ');
 disp('Barrier function:');
 
 for ii = 1:N
-    color = colorArray(floor(ii*size(colorArray,1)/N),:);
     B_sol{ii} = clean(subs(sol.eval(B{ii}),x,xprint),1e-5)
     
     B{ii} = sol.eval(B{ii});
     sol.eval(B{ii})
 %     prog(B{ii})
 
-    % check for sanity- at equilibrium point.  TODO: check more points in
-    % the IC set too
+    % check for sanity- at equilibrium point.  TODO: check more points in the IC set too
     %             idx00 = find(ts(ii) == ts00, 1);
     idx00 = find(abs(ts(ii) - ts00) == min(abs(ts(ii) - ts00)), 1);
     [ellq,ellQ] = double(tmpArray(idx00));

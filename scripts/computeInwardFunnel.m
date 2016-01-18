@@ -1,4 +1,4 @@
-function [ac_inward, bc_inward, errTrans, existingReg, newRegArray, reg] = computeInwardFunnel(fileName,sysArray,reg,regDefl,regBnd,aut,acTrans,acIn,iModeToPatch,options)
+function [ac_inward, bc_inward, errTrans, existingReg, newRegArray, reg] = computeInwardFunnel(sysArray,reg,regDefl,regBnd,aut,acTrans,acIn,iModeToPatch,options,fileName)
 %
 % Compute inward funnels 
 %
@@ -33,23 +33,23 @@ isectReact = false;
 lastTrans = trans(:,2)==iModeToPatch;
 acLast = [acTrans{lastTrans}];
 if ~isempty(acLast)
-    acLast = acLast(1); % NB: for simplicity, only support one incoming transition..
+    acLast = acLast(1); % NB: currently only supporting one incoming transition..
 end
 acNextAll = [];
 for itrans = find(trans(:,1)==iModeToPatch)'
     acNextAll = [acNextAll; acTrans{itrans}];
 end
 
-for find(trans(:,1)==iModeToPatch)'
+for itrans = find(trans(:,1)==iModeToPatch)'
     
     sys = sysArray(aut.f{itrans});  % For now, delay changing the dynamics until the transition reach tube is reached.
     
     acNext = [acTrans{itrans}];
+    regMode = reg(aut.q{iModeToPatch});
     
     % ==========================
     % Verify invariance of the transition funnels up to the edge of the region
-    x = msspoly('x',3); % instantiate the symbolic variables we will be using in a bit
-    
+      
     % 1. Verify the region boundary itself
     % TODO: extract all the indices for which there is an overlap with the region boundary; compute a hull containing the intersection with the boundary
     existingReg = [];
@@ -65,13 +65,13 @@ for find(trans(:,1)==iModeToPatch)'
         end
     end
     
-    idx = idxToChkReactivity{itrans}(1);
-    %idx = 700;  % first- bad
-    %idx = 400;  % second- bad
-    %idx = 1200;  % first- good
-    %idx = 850;  % second- good
-    %idx = 750;  % first (lab)- more friendly
-    %idx = 340;  % second (lab)- more friendly
+    indexToCompose = idxToChkReactivity{itrans}(1);
+    %indexToCompose = 700;  % first- bad
+    %indexToCompose = 400;  % second- bad
+    indexToCompose = 600;  % first- good
+    %indexToCompose = 850;  % second- good
+    %indexToCompose = 750;  % first (lab)- more friendly
+    %indexToCompose = 340;  % second (lab)- more friendly
     
     % plot things
     figure(90), hold on, axis equal
@@ -85,13 +85,13 @@ for find(trans(:,1)==iModeToPatch)'
     % ==========================
     % Now, search for funnels that verify reachability from the initial set verified to be invariant
     while true
-        idx
-        if idx <= 0
+        indexToCompose
+        if indexToCompose <= 0
             funFail = true;
             disp('Cannot verify reachability from the transition funnel! No reactive funnel was created.')
             break
         end
-        qCenter = double(acNext.x0,ttmp(idx));
+        qCenter = double(acNext.x0,ttmp(indexToCompose));
         Qsav = options.Qrand;
         options.Qrand = 1e-3;
         for trial2 = 1:maxTrials2
@@ -169,7 +169,7 @@ for find(trans(:,1)==iModeToPatch)'
         end
         if trial2 == maxTrials2
             funFail = true;
-            idx = idx - funStepSize;
+            indexToCompose = indexToCompose - funStepSize;
             % error('Cannot find a feasible trajectory for this mode. Consider increasing the tree depth.')
         else
             funFail = false;
@@ -183,7 +183,14 @@ for find(trans(:,1)==iModeToPatch)'
                 
                 % [ac,existingRegNew,newRegNew] = computePolytopeAtomicControllerDubins(u0,x0,sys,acNext,reg(aut.q{iModeToPatch}),options.ctrloptions_trans,options.sampSkipFun,xMssExt);
                 x00 = x0;  u00 = u0;
-                [ac, c] = computeAtomicController(u00,x00,sys,options);
+                
+                tmp = acNext.ellipsoid;
+                ellToCompose = tmp(indexToCompose);
+                
+                rhof = 0.1;   %final rho.  TODO: handle the more general case and get it from containment
+                options.isMaximization = true;
+                [ac, c] = computeAtomicController(u00,x00,sys,regMode,ellToCompose,options,rhof);
+                
                 plot(ac.x0,'k',5)
                 rhoi = double(ac.rho,0);
                 [res, isectIdx, isectArray] = isinside(ac,reg(aut.q{trans(itrans,1)}),sys);
@@ -213,7 +220,8 @@ for find(trans(:,1)==iModeToPatch)'
                         
                         % Compute a new atomic controller that minimizes the funnel (in contrast to the original method that maximizes it). 
                         % The minimization is used here to find a suitable initial condition for the CBF.
-                        [acPre] = computeAtomicController(u0,x0,sys,options,rhoi);
+                        options.isMaximization = false;
+                        [acPre] = computeAtomicController(u0,x0,sys,regMode,ellToCompose,options,rhoi);
 
                     end
                     
@@ -221,17 +229,17 @@ for find(trans(:,1)==iModeToPatch)'
                     t01 = t(min(isectIdx):max(isectIdx));
                     x01 = Traject(t01,double(ac.x0,t01));
                     u01 = Traject(t01,double(ac.u0,t01));
-                                        
-                    regMode = reg(aut.q{iModeToPatch});
                     
                     % define the initial set as the end of the prefix funnel
                     if ~isempty(acPre)
-                        ellToCompose = acPre.ellipsoid(end);
+                        tmp = acPre.ellipsoid;
+                        ellToCompose = tmp(end);
                     else
-                        ellToCompose = acNext.ellipsoid(indexToCompose);
+                        tmp = acNext.ellipsoid;
+                        ellToCompose = tmp(indexToCompose);
                     end
                     
-                    [ac, bc] = computeConformingFunnel(u01,x01,sys,regMode,ellToCompose,options);
+                    [bc] = computeConformingFunnel(u00,x00,u01,x01,sys,ac,regMode,ellToCompose,options);
                     
                     % Plot stuff
                     figure(90)
@@ -258,7 +266,7 @@ for find(trans(:,1)==iModeToPatch)'
                 disp(ME.message)
                 disp('something went wrong with the funnel computation... attempting to find a more conservative initial set, and restarting reachability analysis.')
                 keyboard
-                idx = idx - funStepSize;
+                indexToCompose = indexToCompose - funStepSize;
                 errTrans = trans(:,2)==iModeToPatch;
             end
             
@@ -308,7 +316,7 @@ for find(trans(:,1)==iModeToPatch)'
     if isempty(errTrans) && ~funFail  % if a funnel was generated that passes the test, 
         
         % Create a new region based on the last unverified index of the next funnel.
-        idxLast = idx + funStepSize;
+        idxLast = indexToCompose + funStepSize;
         
         % add to the set of inward funnels
         ac_inward = [ac_inward; ac];

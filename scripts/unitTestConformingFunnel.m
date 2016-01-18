@@ -20,11 +20,19 @@ errTrans = [];
 newRegArray = [];
 bc = [];
 
-idx = 750;  % index of an transition funnel at which to attempt to 'lasso' its cross-section with an inward-facing funnel (i.e. compose the two)
+regMode = reg(aut.q{iModeToPatch});
+indexToCompose = 600;  % index of an transition funnel at which to attempt to 'lasso' its cross-section with an inward-facing funnel (i.e. compose the two)
 
 % [ac,existingRegNew,newRegNew] = computePolytopeAtomicController(u0,x0,sys,acNext,reg(aut.q{iModeToPatch}),options.ctrloptions_trans,options.sampSkipFun,xMssExt);
 x00 = x0;  u00 = u0;
-[ac, c] = computeAtomicController(u00,x00,sys,regMode,ellToCompose,options);
+
+tmp = acNext.ellipsoid;
+ellToCompose = tmp(indexToCompose);
+
+rhof = 0.1;   %final rho.  TODO: handle the more general case and get it from containment
+options.isMaximization = true;
+[ac, c] = computeAtomicController(u00,x00,sys,regMode,ellToCompose,options,rhof);
+
 plot(ac.x0,'k',5)
 rhoi = double(ac.rho,0);
 [res, isectIdx, isectArray] = isinside(ac,reg(aut.q{trans(itrans,1)}),sys);
@@ -53,6 +61,7 @@ if ~res
         
         % Compute a new atomic controller that minimizes the funnel (in contrast to the original method that maximizes it). 
         % The minimization is used here to find a suitable initial condition for the CBF.
+        options.isMaximization = false;
         [acPre] = computeAtomicController(u0,x0,sys,regMode,ellToCompose,options,rhoi);
         
     end
@@ -66,12 +75,14 @@ if ~res
     
     % define the initial set as the end of the prefix funnel
     if ~isempty(acPre)
-        ellToCompose = acPre.ellipsoid(end);
+        tmp = acPre.ellipsoid;
+        ellToCompose = tmp(end);
     else
-        ellToCompose = acNext.ellipsoid(indexToCompose);
+        tmp = acNext.ellipsoid;
+        ellToCompose = tmp(indexToCompose);
     end
-
-    [ac, bc] = computeConformingFunnel(u01,x01,sys,regMode,ellToCompose,options);
+    
+    [bc] = computeConformingFunnel(u00,x00,u01,x01,sys,ac,regMode,ellToCompose,options);
 
     % Plot stuff
     figure(90)
@@ -96,7 +107,7 @@ if ~funFail
     plot(ac.x0,'k',3)
     
     % Create a new region based on the last unverified index of the next funnel.
-    idxLast = idx + funStepSize;
+    idxLast = indexToCompose + funStepSize;
     
     % add to the set of inward funnels
     ac_inward = [ac_inward; ac];
@@ -126,8 +137,8 @@ if ~funFail
     % plot it!
     plot(newReg,'m')
     
-    newRegVert = extreme(newReg);
-    newRegArray = [newRegArray; newReg];
+    %newRegVert = extreme(newReg);
+    %newRegArray = [newRegArray; newReg];
     
     % save the barriers
     bc_inward = [bc_inward; bc];

@@ -27,79 +27,55 @@ classdef PolynomialAC < AtomicController
             obj.V = V;
         end
         
-        function ac = normalizerho(ac)
+        function obj = normalizerho(obj)
             %
             error('wip.')
         end
         
         % TODO: generalize to arbitrary polynomials
-        function Eproj = projection(ac)
+        function Eproj = projection(obj)
             %
             error('Work in progress.')
         end
         
-%         function newobj = interp(ac,newobj,ts)
+%         function newobj = interp(obj,newobj,ts)
 %             
-%             newobj = ac.interp(ac,newobj,ts);
+%             newobj = obj.interp(obj,newobj,ts);
 %             
 %             for i = 1:Nsteps;
-%                 if any(ac.isCyclic)
+%                 if any(obj.isCyclic)
 %                     ith(i) = 1;
-%                     if ac(i).x(nn) > pi
+%                     if obj(i).x(nn) > pi
 %                         ith(i) = 2;
-%                     elseif ac(i).x(nn) < -pi
+%                     elseif obj(i).x(nn) < -pi
 %                         ith(i) = 3;
 %                     end
 %                 else
 %                     ith(i) = 1;
 %                 end
 %                 
-%                 indx = find(min(abs(ac(i).t - ts{ith(i)})) == abs(ac(i).t - ts{ith(i)}),1,'first');
-%                 ac(i).rho = ac(i).rho{ith(i)};
-%                 ac(i).V = ac(i).V{ith(i)}(t(i));
+%                 indx = find(min(abs(obj(i).t - ts{ith(i)})) == abs(obj(i).t - ts{ith(i)}),1,'first');
+%                 obj(i).rho = obj(i).rho{ith(i)};
+%                 obj(i).V = obj(i).V{ith(i)}(t(i));
 %             end
 %         end
         
-        function union
-            %
-            error('Work in progress.')
-        end
         
-        function intersect
+        function obj = merge(obj1,obj2)
             %
-            error('Work in progress.')
-        end
-        
-        function res = isinside(ac, X, s)
-            %
-            error('Work in progress.')
-        end
-        
-%         function sample
-%             %
-%             error('Work in progress.')
-%         end
-        
-        function append
-            %
-            error('Work in progress.')
-        end
-        
-        function acres = merge(acobj1,acobj2)
-            %
-            actmp = merge@AtomicController(acobj1,acobj2);
-            rhon = timecat(acobj1.rho,acobj2.rho);
-            t = getTimeVec(actmp.x0);  t1 = getTimeVec(acobj1.x0);  t2 = getTimeVec(acobj2.x0);
+            actmp = merge@AtomicController(obj1,obj2);
+            rhon = timecat(obj1.rho,obj2.rho);
+            t = getTimeVec(actmp.x0);  t1 = getTimeVec(obj1.x0);  t2 = getTimeVec(obj2.x0);
             [~,indx1] = intersect(t1,t);
             [~,indx2] = intersect(t2,setdiff(t,t1));
-            Vn = [acobj1.V(indx1) acobj2.V(indx2)];
-            acres = PolynomialAC(actmp.x0,actmp.u0,actmp.K,rhon,Vn,actmp.sys);
+            Vn = [obj1.V(indx1) obj2.V(indx2)];
+            obj = PolynomialAC(actmp.x0,actmp.u0,actmp.K,rhon,Vn,actmp.sys);
         end
         
-        function plot(ac,fignum,color)
+        function plot(obj,fignum,color)
             %
             %TODO: treat both 2d and 3d cases
-            Eproj = projection(ac);
+            Eproj = projection(obj);
             figure(fignum)
             plot(Eproj)
         end

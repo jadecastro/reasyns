@@ -18,8 +18,8 @@ newVert(:,3) = offset + sqrt(2)*[cos(angles(2)) -sin(angles(2));sin(angles(2)) c
 newVert(:,4) = offset + sqrt(2)*[cos(angles(2)) -sin(angles(2));sin(angles(2)) cos(angles(2))]*[-const(2); const(1)];
 
 newVertT = newVert';
-newRegTmp = region(newVertT);
-% newRegTmp = region(newVertT,0.06);
+newRegTmp = Region(newVertT);
+% newRegTmp = Region(newVertT,0.06);
 newVertT = newRegTmp.v;
 
 % newReg = intersect(newRegTmp,reg(aut.q{iModeToPatch}));

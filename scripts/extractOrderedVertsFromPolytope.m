@@ -6,7 +6,7 @@ for i = 1:length(p)
     vNew = extreme(p(i));
     
     % inflate the regions a very slight amount
-    regTmp = region(vNew,0.01);
+    regTmp = Region(vNew,0.01);
     vNew = extreme(regTmp.p);
     
     amean = mean(vNew(:,1));  bmean = mean(vNew(:,2));
