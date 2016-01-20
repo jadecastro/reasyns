@@ -201,7 +201,7 @@ classdef Traject
             [x0,t] = double(obj);
             % TODO: plot using coord transformation matrix
             figure(fignum)
-            plot(x0(1,:),x0(2,:),color,'LineWidth',2)
+             plot(x0(1,:),x0(2,:),'LineWidth',2)
             drawnow
         end
     end

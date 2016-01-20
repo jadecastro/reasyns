@@ -124,11 +124,15 @@ for funindx = 1:maxFunTrials
             disp('Computing funnel....')
             
             try
-                tmp = acLast.ellipsoid;
-                ellToCompose = tmp(end);
-                
+                if ~isempty(acLast)
+                    tmp = acLast.ellipsoid;
+                    ellToCompose = tmp(end);
+                else
+                    ellToCompose = [];
+                end
                 rhof = 0.1;   %final rho.  TODO: handle the more general case and get it from containment
                 options.isMaximization = true;
+                
                 [ac, c] = computeAtomicController(u0,x0,sys,regMode,ellToCompose,options,rhof);
 
                 ac_trans = [ac_trans; ac];

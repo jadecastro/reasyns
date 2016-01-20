@@ -4,7 +4,7 @@ classdef BarrierFunctionAC < PolynomialAC
     properties
         % quadratically-parameterized funnel properties
         c;
-        V;
+        V0;
     end
     
     properties(SetAccess = private) 
@@ -12,11 +12,15 @@ classdef BarrierFunctionAC < PolynomialAC
     end
     
     methods
-        function obj = BarrierFunctionAC(x0,u0,K,B,c,V,sys)
+        function obj = BarrierFunctionAC(x0,u0,K,B,c,V0,sys)
             % Constructor
             
-            obj = obj@PolynomialAC(x0,u0,K,0,B,c,V,sys);
+            t = x0.getTimeVec();
+            rho0 = Traject(t,zeros(length(t),1));
             
+            obj = obj@PolynomialAC(x0,u0,K,rho0,B,sys);
+            obj.c = c;
+            obj.V0 = V0;
         end
         
         function res = isinternal(obj, X, s, varargin)
@@ -54,20 +58,19 @@ classdef BarrierFunctionAC < PolynomialAC
         function obj = merge(obj1,obj2)
             %
             actmp = merge@PolynomialAC(obj1,obj2);
-            Pn = timecat(obj1.P,obj2.P);
-            obj = QuadraticAC(actmp.x0,actmp.u0,actmp.K,Pn,actmp.rho,actmp.V,actmp.sys);
+            error('not implemented')
         end
         
-        function plot(obj,x0,sys,fignum)
+        function plot(obj,x0,fignum)
             %
             %TODO: treat both 2d and 3d cases
             
             figure(fignum)
-            N = length(obj.B);
+            N = length(obj.V);
             
             [uRed,tRed] = downsampleUniformly(x0,10);
             colorArray = colormap('cool');
-            x = msspoly('x',sys.params.n);
+            x = msspoly('x',obj.sys.params.n);
             
             for ii = 1:N
                 color = colorArray(floor(ii*size(colorArray,1)/N),:);
@@ -77,12 +80,12 @@ classdef BarrierFunctionAC < PolynomialAC
                 % check for sanity- check equilibrium point.  TODO: check more points in
                 % the IC set too
                 
-                x0 = double(x0,tRed(ii));
+                x00 = x0.double(tRed(ii));
                 
                 % 0-level set of B
                 [X,Y] = meshgrid(linspace(-3,2,100),linspace(-2,2,100));
-                Th = x0(sys.params.n)*ones(size(X));
-                gs_B = msubs(obj.B{ii},x,[X(:),Y(:),Th(:)]');
+                Th = x00(obj.sys.params.n)*ones(size(X));
+                gs_B = msubs(obj.V{ii},x,[X(:),Y(:),Th(:)]');
                 [~,H] = contour(X,Y,reshape(double(gs_B),100,100),[0 0],'LineColor',color,'LineWidth',3);
                 %set(H,'LineColor',color)
                 hold on
@@ -106,7 +109,7 @@ classdef BarrierFunctionAC < PolynomialAC
             
             minDelta = inf;
             
-            for i = 1:1:length(obj.B)
+            for i = 1:1:length(t_trials)
                 xtmp = double(obj.x0, t_trials(i));
                 % unwrap the heading cyclic coordinate
                 [testMinDist, minIdx] = min([
@@ -140,7 +143,7 @@ classdef BarrierFunctionAC < PolynomialAC
             u_pre = u0 + u_ctrl(:,1);
             
             % Compute the polynomial approximation of the drake plant
-            [poly] = obj.sys.getSystemPoly(x0pp, c, V);
+            [poly] = obj.sys.getSystemPoly(x0pp, obj.c, obj.V0);
             
             fs = poly.getPolyDynamics(t_trials(minIdx));
             if (poly.getNumInputs > 0)   % zero all inputs

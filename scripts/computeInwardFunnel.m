@@ -21,6 +21,7 @@ ac_inward = [];
 bc_inward = [];
 errTrans = [];
 newRegArray = [];
+ac = [];
 bc = [];
 
 % ==========================
@@ -68,8 +69,11 @@ for itrans = find(trans(:,1)==iModeToPatch)'
     indexToCompose = idxToChkReactivity{itrans}(1);
     %indexToCompose = 700;  % first- bad
     %indexToCompose = 400;  % second- bad
-    indexToCompose = 600;  % first- good
-    %indexToCompose = 850;  % second- good
+    if itrans == 4
+        indexToCompose = 850;  % first- good
+    else
+        indexToCompose = 50;  % second- good
+    end
     %indexToCompose = 750;  % first (lab)- more friendly
     %indexToCompose = 340;  % second (lab)- more friendly
     
@@ -83,7 +87,7 @@ for itrans = find(trans(:,1)==iModeToPatch)'
 %     plot(acLast,sys,3)
     
     % ==========================
-    % Now, search for funnels that verify reachability from the initial set verified to be invariant
+    % Now, search for funnels that verify reachability from the initial set which are invariant to the region 
     while true
         indexToCompose
         if indexToCompose <= 0
@@ -99,8 +103,9 @@ for itrans = find(trans(:,1)==iModeToPatch)'
                 initState = getCenterRand_new(sys,reg(aut.q{iModeToPatch}),[],options,qCenter);
                 break
             catch ME
-                disp(ME.message)
-                disp('something went wrong with the initial state generation... recomputing')
+                rethrow(ME)
+%                 disp(ME.message)
+%                 disp('something went wrong with the initial state generation... recomputing')
             end
         end
         if trial2 == maxTrials2
@@ -248,7 +253,7 @@ for itrans = find(trans(:,1)==iModeToPatch)'
                     plot(reg(1),'r')
                     plot(reg(2),'g')
                     
-                    plotBarriers(ac,bc)
+                    bc.plot(ac.x0,90)
                     
                     % pause
                     % plot(acNext,sys,90,[],[0,0,1])
@@ -257,6 +262,7 @@ for itrans = find(trans(:,1)==iModeToPatch)'
                     plot(ac.x0,'k',90)
 
                 end
+                
                 funFail = false;
                 
                 % TODO: check if inside the polytopes
@@ -279,7 +285,7 @@ for itrans = find(trans(:,1)==iModeToPatch)'
         
         if ~funFail && isempty(errTrans)
             
-            plot(ac.x0,'k',3)
+            %plot(ac.x0,'k',3)
             
             %                 % check for coverage
             %                 ellArray = ac.ellipsoid;
@@ -360,14 +366,14 @@ for itrans = find(trans(:,1)==iModeToPatch)'
     % plot it!
     plot(newReg,'m')
     
-    newRegVert = extreme(newReg);
-    newRegArray = [newRegArray; newReg];
+    %newRegVert = extreme(newReg);
+    %newRegArray = [newRegArray; newReg];
     
     % update the region file
-    addNewRegionToFile(newRegVert, aut, reg, fileName)    
+    %addNewRegionToFile(newRegVert, aut, reg, trans, itrans, fileName)    
     
     % update the abstraction via the specification
-    modifySpecForNewRegion(aut, trans, itrans, fileName)
+    %modifySpecForNewRegion(aut, trans, itrans, fileName)
     
     % save the barriers
     bc_inward = [bc_inward; bc];

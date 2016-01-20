@@ -46,7 +46,7 @@ classdef SystemDynamics
             Qf = obj.params.ctrloptions.Qf;
             
             % Declare system model
-            p = obj.drakeplant;
+            p = obj.drakeplant();
             
             % Set input limits
             p = setInputLimits(p,-Inf,Inf);

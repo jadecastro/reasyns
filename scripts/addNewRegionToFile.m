@@ -1,5 +1,5 @@
 
-function addNewRegionToFile(newRegVert, aut, reg, fileName)
+function addNewRegionToFile(newRegVert, aut, reg, trans, itrans, fileName)
 
 pix2m = 1;
 % calibMatrix =   [ 33.50049738,  -0.89279945,  66.48435372,
@@ -26,7 +26,7 @@ vertsToWrite = vertsToWrite';
 
 % compose the string
 alphabet = {'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
-regName = [alphabet{aut.q{iModeToPatch}},'_',alphabet{aut.q{trans(itrans,2)}}];
+regName = [alphabet{aut.q{trans(itrans,1)}},'_',alphabet{aut.q{trans(itrans,2)}}];
 decompRegName = [];
 newStr = [',    {"name":"',regName,'","color":[255,0,0],"holeList":[],"height":0,"points":[['];
 for idx = 1:size(vertsToWrite,1)-1

@@ -109,7 +109,7 @@ classdef AtomicController
             xn = timecat(obj1.x0,obj2.x0);
             un = timecat(obj1.u0,obj2.u0);
             Kn = timecat(obj1.K,obj2.K);
-            acres = AtomicController(xn,un,Kn,obj1.sys);
+            obj = AtomicController(xn,un,Kn,obj1.sys);
         end
         
         function plot(obj,fignum,color)

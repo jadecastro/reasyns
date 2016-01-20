@@ -19,9 +19,9 @@ classdef PolynomialAC < AtomicController
             if tlen ~= length(getTimeVec(rho)) % || ~all(t == getTimeVec(V))
                 warning('One or more time vectors have dimensions that don''t match')
             end
-            if length(V) ~= tlen
-                error('Length of V must match that of t.')
-            end
+%             if length(V) ~= tlen
+%                 error('Length of V must match that of t.')
+%             end
             
             obj.rho = rho;
             obj.V = V;

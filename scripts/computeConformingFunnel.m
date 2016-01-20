@@ -1,5 +1,5 @@
 
-function [B] = computeConformingFunnel(u00, x00, u01, x01, sys, ac, regMode, ellToCompose, options)
+function [bc] = computeConformingFunnel(u0, x0, u01, x01, sys, ac, regMode, ellToCompose, options)
 %
 % Main function for computing funnels using the control barrier functions approach.
 %
@@ -25,23 +25,23 @@ sampSkip = options.sampSkipFun;
 [xRed,~] = downsampleUniformly(x01,10);
 [uRed,tRed] = downsampleUniformly(u01,10);
 xtraj = PPTrajectory(foh(tRed,xRed)); % should we be using xred, ured here?
-xtraj = setOutputFrame(xtraj,p.getStateFrame);
+xtraj = setOutputFrame(xtraj,sys.drakeplant.getStateFrame);
 utraj = PPTrajectory(foh(tRed,uRed(2,:)));
-utraj = setOutputFrame(utraj,p.getInputFrame);
+utraj = setOutputFrame(utraj,sys.drakeplant.getInputFrame);
 ts = xtraj.getBreaks();
 
 %[x00Red,~] = downsampleUniformly(x00,sampSkip);
 %[u00Red,t00Red] = downsampleUniformly(u00,sampSkip);
-[x00,t00] = double(x00);
-u00 = double(u00);
+[x00,t00] = double(x0);
+u00 = double(u0);
 x00traj = PPTrajectory(foh(t00,x00)); % should we be using xred, ured here?
-x00traj = setOutputFrame(x00traj,p.getStateFrame);
+x00traj = setOutputFrame(x00traj,sys.drakeplant.getStateFrame);
 u00traj = PPTrajectory(foh(t00,u00(2,:)));
-u00traj = setOutputFrame(u00traj,p.getInputFrame);
+u00traj = setOutputFrame(u00traj,sys.drakeplant.getInputFrame);
 ts00 = x00traj.getBreaks();
 
 % Compute time-varying LQR controller
-[c,V] = sys.computeTVLQR(x00traj,u00traj);
+[c,V] = sys.computeTVLQR(u00traj,x00traj);
 
 % Compute the polynomial approximation of the drake plant
 [poly] = sys.getSystemPoly(x00traj,c,V);
@@ -168,6 +168,8 @@ if true
         N = length(ts);
         
         for ii = 1:N
+            
+            disp([' Time step #:  ',num2str(ii),'/',num2str(N)])
             
             clear prog
             prog = spotsosprog;
@@ -377,7 +379,7 @@ end
 
 %% Store the funnel
 
-[~,tk] = double(x00);
+tk = tRed;
 
 %TODO: fix this approach for getting Drake data
 if verLessThan('matlab','7.15')
@@ -389,7 +391,8 @@ tmp1 = Traject(tk,zeromatrix);
 tmp2 = Traject(c.D.pp);
 K0 = [tmp1; tmp2];
 
-bc = BarrierFunctionAC(x00,u00,K0,B,c,V,sys);
+% use the downsampled versions
+bc = BarrierFunctionAC(Traject(tRed,xRed),Traject(tRed,uRed),K0,B,c,V,sys);
         
 %%
 % Print out B after zeroing out very small coefficient
