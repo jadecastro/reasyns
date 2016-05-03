@@ -1,6 +1,9 @@
-function [indexTransVect] = findTransitionsWithNonRepeatingRegions(aut,trialState)
+function [indexTransVect, indexPostVect] = findTransitionsWithNonRepeatingRegions(aut,trialState)
 
 trans = vertcat(aut.trans{:});
+
+indexPostVect = [];
+indexTransVect = [];
 
 indexTransVectFull = find(trans(:,1)==trialState)';
 if ~isempty(indexTransVectFull)
@@ -10,8 +13,6 @@ if ~isempty(indexTransVectFull)
     [~,indexOfPostIndexVect] = setdiff(vertcat(aut.label{indexUniquePostVect}),aut.label{vertcat(aut.state{:}) == trialState}); % sliminate any transitions leading to the same region
     [~,indexOfTransVect] = intersect(trans(indexTransVectFull,2),vertcat(aut.state{indexUniquePostVect(indexOfPostIndexVect)}));
     indexTransVect = indexTransVectFull(indexOfTransVect);
-else
-    indexTransVect = [];
 end
 %indexPostVect = trans(indexTransVect,2);
 

@@ -64,7 +64,7 @@ for i = 1:maxNodes
         for ii = 1:length(nodeXU.t), tsum = tsum + length(nodeXU.t{ii}); end
         tmp = tsum - length(nodeXU.t{i-1}) + 1;
         for k = 1:sampleSkipColl:length(t)
-            %isect1(k) = checkIntersection3(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,Xk(k,:),Hout,n,isCyclic,'allPts',ac,reg,sys);
+            %isect1(k) = checkIntersection(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,Xk(k,:),Hout,n,isCyclic,'allPts',ac,reg,sys);
 %             isect2(k) = checkIntersection4(ellBndInv11,Xk(k,:),Hout,n,isCyclic);
             isect2(k) = true;
          
@@ -156,11 +156,11 @@ for i = 1:maxNodes
     qReachLB = addReachableNode(sys,qNew,sys.umin(1),stepSize,options);
     qReachUB = addReachableNode(sys,qNew,sys.umax(1),stepSize,options);
     newNodeCount = 0;
-    if ~checkIntersection3(vBound,vObs1,vObs2,[],[],[],[],qReachLB,'finalPt',[],reg,sys);
+    if ~checkIntersection(vBound,vObs1,vObs2,[],[],[],[],qReachLB,'finalPt',[],reg,sys);
         newNodeCount = newNodeCount + 1;
         nodeReach = [nodeReach; [newI qReachLB]];
     end
-    if ~checkIntersection3(vBound,vObs1,vObs2,[],[],[],[],qReachUB,'finalPt',[],reg,sys);
+    if ~checkIntersection(vBound,vObs1,vObs2,[],[],[],[],qReachUB,'finalPt',[],reg,sys);
         newNodeCount = newNodeCount + 1;
         nodeReach = [nodeReach; [newI qReachUB]];
     end

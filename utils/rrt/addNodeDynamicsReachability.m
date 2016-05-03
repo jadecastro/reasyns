@@ -89,7 +89,7 @@ for i = 1:maxTrials %while isect
                 
                 % Test whether the path from qNear to qNew is in free space
                 % isect = double(any(qNew < min(vBound)+radius) || any(qNew > max(vBound)-radius));
-                isect = checkIntersection3(vBound,vObs1,vObs2,[],[],[],[],Xk,'finalPt',[],reg,sys);
+                isect = checkIntersection(vBound,vObs1,vObs2,[],[],[],[],Xk,'finalPt',[],reg,sys);
                 
                 if ~isect, break, end
             end

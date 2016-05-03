@@ -82,11 +82,11 @@ for indexTrans = indexTransVect'
     indexToCompose = idxToChkReactivity{indexTrans}(1);
     
     % DEBUGGING 
-%     if indexTrans == 4
-%         indexToCompose = 200;  % first- good
-%     else
-%         indexToCompose = 200;  % second- good
-%     end
+    if indexTrans == 4
+        indexToCompose = 20;  % first- good
+    else
+        indexToCompose = 20;  % second- good
+    end
     %indexToCompose = 700;  % first- bad
     %indexToCompose = 400;  % second- bad
     %     if indexTrans == 4

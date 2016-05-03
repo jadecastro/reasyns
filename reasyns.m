@@ -100,7 +100,7 @@ for indexToGo = 1:NmodesReach
             reachIncomplete = true;
             % while reachIncomplete
             
-            indexTransVect = findTransitionsWithNonRepeatingRegions(aut,statePre);
+            [indexTransVect, indexPostVect] = findTransitionsWithNonRepeatingRegions(aut,statePre);
                 
             for indexTrans = indexTransVect'
                 statePost = trans(indexTrans,2);
