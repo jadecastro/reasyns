@@ -177,9 +177,6 @@ for indexToGo = 1:NmodesReach
     end
 end
 toc
-fprintf(fid,'%f : Finished Reach operation for all modes. Now performing Join operation.\n',toc)
-
-save test
 
 
 %%
@@ -226,10 +223,6 @@ for statePost = horzcat(aut.state{:})
         end
     end
 end
-toc
-fprintf(fid,'%f : Finished Join operation for all modes. Now performing Reactive Join operation.\n',toc);
-
-save test_joined
 
 %%
 reactJoinedStates = false*ones(Nmodes,1);
