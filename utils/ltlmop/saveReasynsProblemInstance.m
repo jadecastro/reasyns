@@ -22,7 +22,7 @@ for i = 1:length(ac_trans)
 end
 
 eval(['save ',filename,' sys aut ac_inward_py ac_trans_py'])
-
+eval(['save matlab_',filename,' sys aut ac_inward ac_trans'])
 end
 
 function ac_py = storeQuadraticAtomicControllerAsStruct(ac)
