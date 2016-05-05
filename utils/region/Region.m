@@ -203,7 +203,7 @@ classdef Region < handle
             for i = 1:length(pDiff)
                 vDiffNew = extreme(pDiff(i));
                 if i > 1
-                    if verLessThan('matlab','7.15')
+                    if true %verLessThan('matlab','7.15')
                         P1.x = vDiff(:,1); P1.y = vDiff(:,2);
                         P2.x = vDiffNew(:,1); P2.y = vDiffNew(:,2);
                         P3 = PolygonClip(P1,P2,3);
@@ -216,7 +216,7 @@ classdef Region < handle
                     vDiff = vDiffNew;
                 end
             end
-            if verLessThan('matlab','7.15') % use the DIY version
+            if true %verLessThan('matlab','7.15') % use the DIY version
                 a = vDiff(:,1); b = vDiff(:,2);
                 amean=mean(vDiff(:,1));  bmean=mean(vDiff(:,2));
                 [~, indx] = sort(atan2(a-amean,b-bmean));

@@ -54,7 +54,7 @@ poly = taylorApprox(feedback(p,c),xtraj,[],3);
 
 %% Perform the funnel computation
 
-Vtraj = sampledFiniteTimeVerification(poly,tRed,Qf,rho_if,V,verifOptions);
+Vtraj = verificationWithRhoBoundaryCondition(poly,tRed,Qf,rho_if,V,verifOptions);
 % Vtraj = sampledFiniteTimeVerification(poly,xtraj.getBreaks(),Qf,V,options,xMssExt);
 disp('done');
 
