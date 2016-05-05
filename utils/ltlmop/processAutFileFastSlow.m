@@ -67,7 +67,11 @@ for idx = 1:length(A)
         % if a state in the list has the same region label with the same rank as an existing state, map this new state to the existing one.
         %         succVal
         if ~isempty(succVal)
-            [mbrTrue,idxRank] = ismember([currReg rankVal],rankAndNext,'rows');
+            try
+                [mbrTrue,idxRank] = ismember([currReg rankVal],rankAndNext,'rows');
+            catch
+                mbrTrue = 0; idxRank = 0;
+            end
             if mbrTrue
                 currTmp(end) = savedCurr(idxRank);
             else

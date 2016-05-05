@@ -14,7 +14,7 @@ for i = 1:length(p)
     [~, indx] = sort(atan2(vNew(:,1)-amean,vNew(:,2)-bmean));
     vNew = flipud(vNew(indx,:));
     if i > 1
-        if verLessThan('matlab','7.15')
+        if true %verLessThan('matlab','7.15')
             P2.x = vNew(:,1)-0.01;  P2.y = vNew(:,2);  P2.hole = 0;
             
             P3 = PolygonClip(P1,P2,3);
@@ -25,14 +25,14 @@ for i = 1:length(p)
             v = [a b];
         end
     else
-        if verLessThan('matlab','7.15')
+        if true %verLessThan('matlab','7.15')
             P1.x = vNew(:,1);  P1.y = vNew(:,2);  P1.hole = 0;
         else
             v = vNew;
         end
     end
 end
-if verLessThan('matlab','7.15')
+if true %verLessThan('matlab','7.15')
     %                 figure(1000)
     %                 for j = 1:length(P3)
     %                     hold on

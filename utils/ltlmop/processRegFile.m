@@ -135,7 +135,7 @@ end
 % check that we have unique region names and that each region has a nonzero intersection with other regions.
 disp('Checking the loaded regions...')
 for k = 1:length(reg)
-    regInfl(k) = Region(reg(k).name,reg(k).v,reg(k).calibMatrix, 0.001);
+    regInfl(k) = Region(reg(k).name,reg(k).v,1, 0.01);
 end
 
 for i = 1:length(reg)

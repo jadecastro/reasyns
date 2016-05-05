@@ -4,7 +4,7 @@
 % Refer to: DeCastro and Kress-Gazit, HSCC 2016 for details.
 %
 
-filePath = '/home/jon/Dropbox/Repos/LTLMoP/src/examples/box_pushing';
+filePath = 'C:\Users\jad455.CORNELL\LTLMoP\src\examples\box_pushing';
 configAndProblemDomainName = 'box_pushing';
 
 % Model parameters
