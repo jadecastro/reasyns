@@ -1,4 +1,4 @@
-function reasyns(sys, filePath, configAndProblemDomainName, options)
+function synthesizeAtomicControllers(sys, filePath, configAndProblemDomainName, options)
 %
 % ReaSyNS - REActive SYnthesis for Nonlinear Systems
 %
