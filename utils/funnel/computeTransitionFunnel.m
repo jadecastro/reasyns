@@ -36,15 +36,7 @@ for funindx = 1:maxFunTrials
     
     i = 1;
     %         while true  % will only increment i if atomic controller generation has succeeded.
-    
-    % Find the successor mode(s) and flag the special case where we
-    % have only one outgoing transition from the successor
-    %         nextTrans = trans(:,1)==iModeSuccessor;
-    %         acNext = [];
-    %         if length(nextTrans) == 1
-    %             acNext = [acTrans{nextTrans}];
-    %         end
-    
+
     % Get the system model and region pair for this transition
     aut.f{itrans}
     sys = sysArray(aut.f{itrans});
@@ -95,7 +87,6 @@ for funindx = 1:maxFunTrials
     
     regSafeSG = reg.getRegTrans(regBnd,aut,itrans);
     %         regSafeG = getReg(reg,regBnd,aut,iModeSuccessor);
-    
     %                 ellTransS = ellipsoid(ac_trans(itrans,1));
     
     trial2 = 1;

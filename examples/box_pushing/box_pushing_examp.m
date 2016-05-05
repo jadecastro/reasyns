@@ -4,7 +4,7 @@
 % Refer to: DeCastro and Kress-Gazit, HSCC 2016 for details.
 %
 
-filePath = 'C:\Users\jad455.CORNELL\LTLMoP\src\examples\box_pushing';
+filePath = [examplesPath,'/box_pushing'];
 configAndProblemDomainName = 'box_pushing';
 
 % Model parameters
@@ -48,14 +48,14 @@ options.TstepTraj = 0.02;
 options.maxTrajLength = 200/options.TstepTraj; 
 options.TstepRRT = 0.2;
 
-options.rhof = 1.0;
+options.rhof = .5;
 
 % Downsampling
 options.sampSkipColl = 5;  % skipped samples in collision check -- higher value speed up collision checks but may miss parts of the trajectory
 options.sampSkipFun = 200;  % skipped samples in funnel computation
 options.sampSkipValid = 5;  % skipped samples in misbehavior check
 
-options.maxFunTrials = 40;  % number of tries before giving up
+options.maxFunTrials = 40;  % number of tries before aborting the current funnel
 options.maxTrials1 = 30; % set to a high value
 options.maxTrials2 = 5;
 options.maxTrials3 = 2;  % set to a low value because funFail takes care of final point interations.
