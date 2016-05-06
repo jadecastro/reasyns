@@ -236,9 +236,11 @@ for state = horzcat(aut.state{:})
             ac_tmp(i).setTransition(state);
         end
         for i = 1:length(bc_tmp)
-            bc_tmp(i).setTransition(state);
+            if ~isempty(bc_tmp{i})
+                bc_tmp{i}.setTransition(state);
+            end
         end
-
+        
         if ~isempty(lastTrans)
             disp('Reactive Join was unsuccessful. ')
             joinIncomplete = true;
@@ -247,12 +249,11 @@ for state = horzcat(aut.state{:})
             disp('Reactive Join was successful.')
             joinIncomplete = false;
             joinedStates(state) = false;
-            tmp = find(trans(:,2)==state)';
-            j=0;
-            % i = find(trans(:,1)==state)';
+
+            ac_react{state} = [];  bc_react{state} = [];
             for j = 1:length(ac_tmp)
-                ac_react{state}(j) = ac_tmp(j);
-                bc_react{state}(j) = bc_tmp(j);
+                ac_react{state} = [ac_react{state} ac_tmp{j}];
+                bc_react{state} = [bc_react{state} bc_tmp{j}];
             end
             
             ac_inward{state} = [ac_inward{state}; ac_react{state}];
