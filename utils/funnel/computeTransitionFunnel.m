@@ -23,7 +23,8 @@ acLast = [];
 xTest = [];
 
 for itrans = 1:length(aut.trans)
-    if iModeToPatch == aut.trans{itrans}(1) && iModeSuccessor == aut.trans{itrans}(2), break; end
+%     if iModeToPatch == aut.trans{itrans}(1) && iModeSuccessor == aut.trans{itrans}(2), break; end
+    if iModeToPatch == aut.trans{itrans}(1) && ~isempty(intersect(iModeSuccessor,aut.trans{itrans}(2))), break; end
 end
 
 % ==========================

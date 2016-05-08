@@ -2,6 +2,7 @@
 function [reg,regDefl,regBnd] = processRegFile(fpath,fname,options,varargin)
 % Load the regions from a .regions file in the required LTLMoP format.
 
+debug = true;
 
 if nargin > 3
     pix2m = varargin{1};
@@ -115,20 +116,24 @@ for i = 1:length(regData)
         vert(4,:) = regData{i}.position + [0 regData{i}.size(2)];
         
     elseif regData{i}.type == 'poly'
-        numPoints = regData{i}.points;
+        numPoints = size(regData{i}.points,1);
         vert = repmat(regData{i}.position,numPoints,1) + regData{i}.points;
         
     else
         error('Unrecognized region type.')
     end
         
-    if regData{i}.name == 'boundary'
+    if strmatch(regData{i}.name,'boundary')
         regBnd = Region(regData{i}.name, vert, calibMatrix);  % TODO: deprecate regBnd
     else
         reg(idx)     = Region(regData{i}.name, vert, calibMatrix);
         regDefl(idx) = Region(regData{i}.name, vert, calibMatrix, -options.deflationAmount);  
         idx = idx+1;
     end
+end
+
+if debug
+    figure, plot(reg)
 end
 
 % Perform a sanity check on the loaded regions: 

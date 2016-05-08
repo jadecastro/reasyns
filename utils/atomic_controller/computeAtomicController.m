@@ -56,11 +56,11 @@ if ~debug
         end
         
         [~,~,H] = sys.getRegNonRegStates([],centerTest,[]);
+                    
+        ballTest = ellipsoid(centerTest,inv(sys.sysparams.Qf));
         ballTestProj = projection(ballTest,H(1:2,:)');
         
         if ~intersect(ballTestProj,hpp,'u')  % if contained within the region, check that it is also contained within the funnel.
-            
-            ballTest = ellipsoid(centerTest,inv(sys.sysparams.Qf));
             
             isContained = ac.funnelContainsEllipsoid(sys,ballTest,100);
             
