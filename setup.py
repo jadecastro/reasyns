@@ -2,12 +2,9 @@
 
 import os, sys, time
 import subprocess
-import compileall
 import urllib
 import zipfile
 import tarfile
-import shutil
-import re, glob
 from sys import platform as _platform
 import platform
 
@@ -51,29 +48,6 @@ def checkIfArchiveExistsAndQuery(dir_name,filenames,root_dir):
         flag_for_download = True if res.lower() == "y" else False
 
     return flag_for_download
-
-def runProgramWithLiveOutput(wd, program, args=None, shell=False):
-    if os.name == "nt":
-        err_types = (OSError, WindowsError)
-    else:
-        err_types = OSError
-
-    if args is None:
-        args = []
-
-    print "-> Running command '{} {}'...".format(program, " ".join(args))
-    try:
-        p = subprocess.Popen([program] + args, cwd=wd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=shell)
-    except err_types as (errno, strerror):
-        print "ERROR: " + strerror
-        return
-
-    while p.returncode is None:
-        output = p.stdout.readline() # Blocking :(
-        print output.strip()
-
-        # Check the status of the process
-        p.poll()
 
 if __name__ == "__main__":
     # Make sure we are not running on a network drive on Windows
@@ -171,10 +145,10 @@ if __name__ == "__main__":
 
             if _platform in ['win32','cygwin']:
                 if platform.machine().endswith('64'):
-                    urllib.urlretrieve("https://github.com/RobotLocomotion/drake/releases/download/v0.9.11/drake-v0.9.11-129-g20a1c65-win32.zip", \
-                        os.path.join(lib_dir, "drake.zip"))
-                else:
                     urllib.urlretrieve("https://github.com/RobotLocomotion/drake/releases/download/v0.9.11/drake-v0.9.11-win64.zip", \
+					os.path.join(lib_dir, "drake.zip"))
+                else:
+                    urllib.urlretrieve("https://github.com/RobotLocomotion/drake/releases/download/v0.9.11/drake-v0.9.11-129-g20a1c65-win32.zip", \
                         os.path.join(lib_dir, "drake.zip"))
             elif _platform in ['linux','linux2']:
                 urllib.urlretrieve("https://github.com/RobotLocomotion/drake/releases/download/v0.9.11/drake-v0.9.11-linux.tar.gz", \
@@ -240,7 +214,8 @@ if __name__ == "__main__":
                 with tarfile.open(os.path.join(lib_dir, "mosek.tar.bz2"), "r:bz2") as mosek_tar:
                     mosek_tar.extractall(lib_dir)
             else:
-                runProgramWithLiveOutput(mosek_dir, sys.executable, ["-u", os.path.join(lib_dir, "mosek.msi")], shell=False)
+				os.system('msiexec /i %s /qn' % os.path.join(lib_dir, "mosek.msi"))
+				#subprocess.call('msiexec /i %s /qn' % os.path.join(lib_dir, "mosek.msi"), shell=True)
 
             mosek_dir = climbUpDirectoryTree(os.path.join(find('mosekopt.m',root_dir)),4)
 
