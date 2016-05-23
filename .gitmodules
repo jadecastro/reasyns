@@ -1,3 +1,0 @@
-[submodule "drake"]
-	path = drake
-	url = https://github.com/RobotLocomotion/drake.git
