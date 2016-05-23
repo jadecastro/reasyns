@@ -194,7 +194,7 @@ for indexTrans = indexTransVect'
                 
                 noFinalEllipsoidFunnelViolation = true;
                 if ~debug
-                    ballTest = ellipsoid(double(x0,ttmp(end)),inv(sys.sysparams.Qf));
+                    ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof*inv(sys.sysparams.Qf));
                     if ~isempty(acAcceptCriterion) % any transition funnels have been already computed for any of the successors and only one outgoing transition from the successor
                         noFinalEllipsoidFunnelViolation = acAcceptCriterion.funnelContainsEllipsoid(ballTest,sys,100);
                     end
@@ -205,6 +205,8 @@ for indexTrans = indexTransVect'
                     break,
                 end
                 disp('Trajectory incompatible with constraints; recomputing...')
+                if ~noInvarViolation,                disp('... trajectory not contained in the region'); end
+                if ~noFinalPointViolation,           disp('... final point not contained within the goal region'); end
             catch ME
                 %  rethrow(ME)
                 disp('something went wrong with the trajectory computation... recomputing')

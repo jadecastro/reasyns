@@ -95,6 +95,7 @@ for funindx = 1:maxFunTrials
         
         disp('Computing final point....')
         try
+            
             finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == iModeSuccessor}),[]); %,vReg{aut.label{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
             goalOutput = sys.state2SEconfig([],finalState,[]);
             goalOutput = goalOutput(1:2);
@@ -121,7 +122,7 @@ for funindx = 1:maxFunTrials
             noFinalPointViolation = isinside(regTrans.goal,sys,double(x0,ttmp(end))');
             
             noFinalEllipsoidFunnelViolation = true;
-            ballTest = ellipsoid(double(x0,ttmp(end)),inv(sys.sysparams.Qf));
+            ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof*inv(sys.sysparams.Qf));
             %                 if ~isempty(acNext) % any transition funnels have been already computed for any of the successors and only one outgoing transition from the successor
             %                     noFinalEllipsoidFunnelViolation = acNext.funnelContainsEllipsoid(sys,ballTest,100);
             %                 end
@@ -138,6 +139,10 @@ for funindx = 1:maxFunTrials
                 break,
             end
             disp('Trajectory incompatible with constraints; recomputing...')
+            if ~noInvarViolation,                disp('... trajectory not contained in the region'); end
+            if ~noFinalPointViolation,           disp('... final point not contained within the goal region'); end
+            if ~noFinalEllipsoidFunnelViolation, disp('... final ellipse not contained within the successor funnel'); end
+            if ~noFinalEllipsoidRegionViolation, disp('... final ellipse not contained within the goal region'); end
         catch ME
             %  rethrow(ME)
             disp('something went wrong with the trajectory computation... recomputing')

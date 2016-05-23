@@ -40,7 +40,6 @@ sysGlob = sys;
 
 figure(500)
 plot(xyPath(end,1),xyPath(end,2),'o')
-
 % [t,Xk] = ode45(@(tt,X) sys.dynamics(tt,X,sys.sysparams,xyPath,gotopt), t, X0, odeOptions);
 [t,Xk] = ode45(@(tt,X) sys.dynamicsWaypointSteering(tt,X,xyPath,gotopt), t, X0, odeOptions);
 
@@ -73,34 +72,34 @@ end
 % TODO: Instead of acceptance radius, make this dependent on the prescribed sets in the algorithm!
 % dist2LastPt = sqrt((X - xyPath(end,1)).^2 + (Y - xyPath(end,2)).^2);
 
-% dist2LastPt = sqrt(sum((outputk - repmat(xyPath(end,:),size(outputk,1),1)).^2,2));
-% 
-% %indx = find(abs(dist2LastPt) < abs(distAccept),1,'first');
-% dist2LastPt(size(Xk,1)+1) = inf;
-% indx = size(Xk,1);
-% if trimTraj
-%     for k = 1:size(Xk,1)
-%         if (abs(dist2LastPt(k+1)) > abs(dist2LastPt(k)) && dist2LastPt(k) < sys.sysparams.closeEnough) || k == forcedEndIndx
-%             indx = k;
-%             break
-%         end
-%     end
-% else
-%     indx = size(Xk,1);
-%     for k = 1:size(Xk,1)
-%         if abs(dist2LastPt(k)) > 1e6
-%             indx = k-1;
-%             break
-%         end
-%     end
-% end
-% 
-% 
-% if ~isempty(indx)
-%     t(indx+1:end) = [];
-%     Xk(indx+1:end,:) = [];
-%     Uk(indx+1:end,:) = [];
-% end
+dist2LastPt = sqrt(sum((outputk - repmat(xyPath(end,:),size(outputk,1),1)).^2,2));
+
+%indx = find(abs(dist2LastPt) < abs(distAccept),1,'first');
+dist2LastPt(size(Xk,1)+1) = inf;
+indx = size(Xk,1);
+if trimTraj
+    for k = 1:size(Xk,1)
+        if (abs(dist2LastPt(k+1)) > abs(dist2LastPt(k)) && dist2LastPt(k) < sys.sysparams.closeEnough) || k == forcedEndIndx
+            indx = k;
+            break
+        end
+    end
+else
+    indx = size(Xk,1);
+    for k = 1:size(Xk,1)
+        if abs(dist2LastPt(k)) > 1e6
+            indx = k-1;
+            break
+        end
+    end
+end
+
+
+if ~isempty(indx)
+    t(indx+1:end) = [];
+    Xk(indx+1:end,:) = [];
+    Uk(indx+1:end,:) = [];
+end
 
 u0 = Traject(t',Uk');
 x0 = Traject(t',Xk');
@@ -121,10 +120,10 @@ desXR = xyPathGlob(end,1);  desYR = xyPathGlob(end,2);
 euclidDist2NextPt = sqrt((y(1) - desXR)^2 + (y(2) - desYR)^2);
 
 % If robot is within acceptance radius, index to next waypoint
-value = abs(euclidDist2NextPt) - abs(sysGlob.sysparams.closeEnough);
+value = double(abs(euclidDist2NextPt) - sysGlob.sysparams.closeEnough);
 
 isterminal = 1; % stop the integration
-direction = []; % negative direction
+direction = 0; % negative direction
 
 end
 
