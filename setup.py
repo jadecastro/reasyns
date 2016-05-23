@@ -72,21 +72,22 @@ if __name__ == "__main__":
     # -----------------
     print "\n-> Setting up SeDuMi..."
 
-    skip_sedumi, preinstalled_sedumi_path = checkForExistingDirectoriesAndQuery('SeDuMi','sedumi.m',root_dir,1)
+    # There could be several sedumi installations - single out the one we need by name
+    skip_sedumi, preinstalled_sedumi_path = checkForExistingDirectoriesAndQuery('SeDuMi','install_sedumi.m',os.path.join(lib_dir,'SeDuMi_1_3'),1)
 
     if skip_sedumi:
         sedumi_dir = preinstalled_sedumi_path
     else:
         if checkIfArchiveExistsAndQuery('SeDuMi',['sedumi.zip'],lib_dir):
             print ">>> Downloading SeDuMi..."
-            urllib.urlretrieve("http://sedumi.ie.lehigh.edu/sedumi/files/sedumi-downloads/SeDuMi_1_3.zip", \
+            urllib.urlretrieve("https://github.com/sqlp/sedumi/archive/master.zip", \
                 os.path.join(lib_dir, "sedumi.zip"))
 
         print ">>> Unzipping SeDuMi..."
         with zipfile.ZipFile(os.path.join(lib_dir, "sedumi.zip")) as sedumi_zip:
             sedumi_zip.extractall(lib_dir)
 
-        sedumi_dir = climbUpDirectoryTree(os.path.join(find('sedumi.m',root_dir)),1)
+        sedumi_dir = climbUpDirectoryTree(os.path.join(find('install_sedumi.m',lib_dir)),1)
 
     # -----------------
     #    Ellipsoids 
@@ -256,6 +257,7 @@ if __name__ == "__main__":
 
     with open(os.path.join(root_dir,'reasyns_init.m'),'w') as matlab_path_file:
         matlab_path_file.write("%% This is an automatically-generated file.  See setup.py in the top-level directory. \n\n")
+        matlab_path_file.write("restoredefaultpath\n\n")
         matlab_path_file.write("warning off\n\n")
         matlab_path_file.write("addpath(genpath('"+str(os.path.abspath(root_dir))+"'));\n")
         matlab_path_file.write("rmpath(genpath('"+str(os.path.abspath(os.path.join(drake_dir,'drake','examples')))+"'));\n")
