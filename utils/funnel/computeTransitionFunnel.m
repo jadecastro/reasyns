@@ -5,7 +5,7 @@ function [ac_trans, errTrans] = computeTransitionFunnel(sysArray,reg,regDefl,reg
 
 global ME
 
-debug = true;
+debug = false;
 
 maxFunnelsTrans = options.maxFunnelsTrans;
 maxFunTrials = options.maxFunTrials;
@@ -122,7 +122,7 @@ for funindx = 1:maxFunTrials
             noFinalPointViolation = isinside(regTrans.goal,sys,double(x0,ttmp(end))');
             
             noFinalEllipsoidFunnelViolation = true;
-            ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof*inv(sys.sysparams.Qf));
+            ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof^2*inv(sys.sysparams.Qf));
             %                 if ~isempty(acNext) % any transition funnels have been already computed for any of the successors and only one outgoing transition from the successor
             %                     noFinalEllipsoidFunnelViolation = acNext.funnelContainsEllipsoid(sys,ballTest,100);
             %                 end
@@ -132,6 +132,9 @@ for funindx = 1:maxFunTrials
             
             [~,~,H] = sys.getRegNonRegStates([],double(x0,ttmp(end)),[]);
             ballTestProj = projection(ballTest,H(1:2,:)');
+            
+            figure(500), plot(ballTestProj,'g',5)
+            
             noFinalEllipsoidRegionViolation = ~any(intersect(ballTestProj,hpp,'u'));
             
             if noInvarViolation && noFinalPointViolation && noFinalEllipsoidFunnelViolation && noFinalEllipsoidRegionViolation ...
@@ -170,8 +173,6 @@ for funindx = 1:maxFunTrials
             
             [ac, c] = computeAtomicController(u0,x0,sys,regTrans,ellToCompose,options,rhof);
             ac = ac.setTransition(iModeToPatch,iModeSuccessor);
-
-            ac_trans = [ac_trans; ac];
             
             funFail = false;
             
@@ -188,8 +189,9 @@ for funindx = 1:maxFunTrials
         
         % verify that the funnel we obtained meets the containment criteria
         % TODO: create the isinside method
-        if ~debug
-            if ~isinside(ac,regSafeSG,options.sampSkipValid) || max(rho_d) < 1e-6
+        if ~isinside(ac,[regTrans.init; regTrans.goal],sys,options.sampSkipValid)
+            disp('... computed funnel does not lie in the union of the designated regions'); 
+            if ~debug
                 funFail = true;
             end
         end
@@ -200,6 +202,9 @@ for funindx = 1:maxFunTrials
         % Optional: plot the failed result
         %             plot(ac.x0,'k',5)
     else
+        
+        ac_trans = [ac_trans; ac];
+        
         plot(ac.x0,'k',3)
         
         disp(['Iteration #',num2str(i),' / ',num2str(maxFunnelsTrans(iModeToPatch))])

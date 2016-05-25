@@ -148,7 +148,7 @@ for funindx = 1:maxFunTrials
                     noFinalPointViolation = isinside(regTrans.goal,sys,double(x0,ttmp(end))');
                     
                     noFinalEllipsoidFunnelViolation = true;
-                    ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof*inv(sys.sysparams.Qf));
+                    ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof^2*inv(sys.sysparams.Qf));
                     if ~debug
                         if ~isempty(acNext(jpost)) % any transition funnels have been already computed for any of the successors and only one outgoing transition from the successor
                             noFinalEllipsoidFunnelViolation = acNext(jpost).funnelContainsEllipsoid(sys,ballTest,100);
@@ -160,6 +160,9 @@ for funindx = 1:maxFunTrials
                     
                     [~,~,H] = sys.getRegNonRegStates([],double(x0,ttmp(end)),[]);
                     ballTestProj = projection(ballTest,H(1:2,:)');
+                    
+                    figure(500), plot(ballTestProj,'g',5)
+                    
                     noFinalEllipsoidRegionViolation = ~any(intersect(ballTestProj,hpp,'u'));
                     
                     if noInvarViolation && noFinalPointViolation && noFinalEllipsoidFunnelViolation && noFinalEllipsoidRegionViolation ...
@@ -199,9 +202,8 @@ for funindx = 1:maxFunTrials
                     rhof = options.rhof;   %final rho.  TODO: handle the more general case and get it from containment
                     options.isMaximization = true;
                     
-                    [ac, controller] = computeAtomicController(u0,x0,sys,regTrans,ellToCompose,options,rhof);
+                    [ac, c] = computeAtomicController(u0,x0,sys,regTrans,ellToCompose,options,rhof);
                     
-                    ac_inward = [ac_inward; ac];
                     funFail = false;
                     
                     % TODO: check if inside the polytopes
@@ -216,6 +218,14 @@ for funindx = 1:maxFunTrials
                     break
                 end
                 
+                % verify that the funnel we obtained meets the containment criteria
+                % TODO: create the isinside method
+                if ~isinside(ac,regTrans.init,sys,options.sampSkipValid)
+                    disp('... computed funnel does not lie in the designated region');
+                    if ~debug
+                        funFail = true;
+                    end
+                end
             end
             
             if funFail     % Need to repeat this iteration
@@ -224,7 +234,8 @@ for funindx = 1:maxFunTrials
                 %             plot(ac.x0,'k',5)
                 break
             end
-            
+
+            ac_inward = [ac_inward; ac];
             plot(ac.x0,'k',3)
             
             disp(['Iteration #',num2str(i),' / ',num2str(maxFunnelsTrans(indexState))])

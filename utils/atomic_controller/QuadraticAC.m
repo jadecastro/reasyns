@@ -4,6 +4,7 @@ classdef QuadraticAC < PolynomialAC
     properties
         % quadratically-parameterized funnel properties
         P;
+        ell;
     end
     
     properties(SetAccess = private) 
@@ -30,6 +31,7 @@ classdef QuadraticAC < PolynomialAC
                 obj.Einv(i).P = ppval(obj.P.pp,t(i));
                 obj.Einv(i).x = ppval(obj.x0.pp,t(i));
             end
+            obj.ell = obj.ellipsoid();
         end
         
         function E = ellipsoid(obj)
@@ -78,17 +80,12 @@ classdef QuadraticAC < PolynomialAC
             
             if nargin > 2
                 % makes sense to assume only one ac in this case
-                ell = ellipsoid(obj);
-                [c,~] = double(ell(idx));
+                [c,~] = double(obj.ell(idx));
                 [~,~,H] = sys.getRegNonRegStates([],c,[]);
-                Eproj = projection(ell(idx),H(1:2,:)');
+                Eproj = projection(obj.ell(idx),H(1:2,:)');
             else
                 for i = 1:length(obj)
-                    try
-                        ell = ellipsoid(obj(i));
-                    catch
-                        keyboard
-                    end
+                    ell = obj(i).ell;
                     for j = 1:length(ell)
                         [c,~] = double(ell(j));
                         [~,~,H] = sys.getRegNonRegStates([],c,[]);
@@ -126,29 +123,61 @@ classdef QuadraticAC < PolynomialAC
                 
         end
         
-        function [res, idx, isectArray] = isinside(obj,regobj,sys)  % (TODO: 'isinside' is a misnomer- either fix or rename it)
+        function [res, idx, isectArray] = isinside(obj,regobj,sys,varargin)  % (TODO: 'isinside' is a misnomer- either fix or rename it)
             % Checks for containment of a funnel within a polytope by simply checking intersections with
             % any of the boundary hyperplanes.  Returns 'true' if none of
             % the ellipsoids in the atomiccontroller intersect with the
             % boundary of the region and 'false' otherwise.
             
-            [H,K] = double(regobj.p);
-            hpp = hyperplane(H',K');
+            if length(regobj) > 2, error('Region arrays greater than two not supported.'); end
+            if nargin < 4, sampSkip = 1; else, sampSkip = varargin{1}; end
+                        
             isectArray = [];
-            if nargout > 1
-                res = true;
+            for k = 1:length(regobj)
+                [H,K] = double(regobj(k).p);
+                hpp{k} = hyperplane(H',K');
+            end
+            
+            res = true;
+            if nargout > 1 || length(regobj) > 1
                 idx = [];
-                for i = 1:length(obj.ellipsoid)
-                    tmp = ~intersect(projection(obj,sys,i),hpp,'u');
+                for i = 1:sampSkip:length(obj.ell)
+                    for k = 1:length(regobj)
+                        tmp{k} = ~intersect(obj.projection(sys,i),hpp{k},'u');
+                    end
+                    
+                    if length(regobj) == 1, tmp = tmp{1}; end
+                    
                     isectArray = [isectArray; tmp];
-                    if ~all(tmp)
-                        res = false;
-                        idx = [idx; i];
+                    
+                    if length(regobj) == 1
+                        if ~all(tmp)
+                            res = false;
+                            idx = [idx; i];
+                        end
+                    elseif length(regobj) == 2
+                        % Given two regions which are adjacent, and each convex, and an ellipse centered in one of the two regions,
+                        % an intersection of either zero or precisely one hyperplane for each region implies that the ellipse is inside the union of the two regions.
+                        ~tmp{1}
+                        ~tmp{2}
+                        res1 = sum(vertcat(~tmp{1}));
+                        res2 = sum(vertcat(~tmp{2}));
+                        if ~((res1 == 0 || res2 == 0) || (res1 == 1 && res2 == 1)),
+                            res = false;
+                            if nargout < 2, break; end
+                            idx = [idx; i];
+                        end
                     end
                 end
             else
-                tmp = ~intersect(projection(obj,sys),hpp,'u');
+                for k = 1:length(regobj)
+                    tmp{k} = ~intersect(obj.projection(sys),hpp{k},'u');
+                end
+                
+                if length(regobj) == 1, tmp = tmp{1}; end
+                
                 isectArray = [isectArray; tmp];
+                
                 res = ~all(tmp);
             end
             
@@ -228,7 +257,7 @@ classdef QuadraticAC < PolynomialAC
                 end
             else
                 if threedflag
-                    tmp = downsample(obj.ellipsoid,1);
+                    tmp = downsample(obj.ell,1);
                     figure(fignum)
                     hold on
                     plot(tmp,'r')

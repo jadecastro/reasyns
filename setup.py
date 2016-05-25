@@ -265,9 +265,9 @@ if __name__ == "__main__":
         matlab_path_file.write("rmpath(genpath('"+str(os.path.abspath(os.path.join(mpt_dir,'solvers','SeDuMi_1_3')))+"'));\n\n")
         matlab_path_file.write("run('"+str(os.path.abspath(os.path.join(drake_dir,'drake','addpath_drake')))+"');\n")
         matlab_path_file.write("run('"+str(os.path.abspath(os.path.join(drake_dir,'externals','spotless','spotless','spot_install')))+"');\n\n")
-        #matlab_path_file.write("cd('"+str(os.path.abspath(sedumi_dir))+"');\n")
-        #matlab_path_file.write("install_sedumi;\n")
-        #matlab_path_file.write("cd('"+str(os.path.abspath(root_dir))+"');\n\n")
+        matlab_path_file.write("cd('"+str(os.path.abspath(sedumi_dir))+"');\n")
+        matlab_path_file.write("install_sedumi;\n")
+        matlab_path_file.write("cd('"+str(os.path.abspath(root_dir))+"');\n\n")
         matlab_path_file.write("examplesPath = '"+str(os.path.abspath(os.path.join(root_dir,'examples')))+"';\n\n")
         matlab_path_file.write("warning on\n")
 

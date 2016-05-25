@@ -194,7 +194,7 @@ for indexTrans = indexTransVect'
                 
                 noFinalEllipsoidFunnelViolation = true;
                 if ~debug
-                    ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof*inv(sys.sysparams.Qf));
+                    ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof^2*inv(sys.sysparams.Qf));
                     if ~isempty(acAcceptCriterion) % any transition funnels have been already computed for any of the successors and only one outgoing transition from the successor
                         noFinalEllipsoidFunnelViolation = acAcceptCriterion.funnelContainsEllipsoid(ballTest,sys,100);
                     end
