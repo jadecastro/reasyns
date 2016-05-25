@@ -39,29 +39,55 @@ for funindx = 1:maxFunTrials
     %acLast = [acTrans{lastTrans}];
     
     indexTransPostVect = [];
-    indexTransPreVect = [];
+    candidateIndexTransPreVect = [];
     for indexTrans = 1:length(trans)
-        if ~isempty(acTrans{indexTrans})
+        if ~isempty(acTrans{indexTrans})            
+            if aut.label{acTrans{indexTrans}.pre} == aut.label{indexState}
+                indexTransPostVect = [indexTransPostVect; indexTrans];
+            end
+        end
+    end
+    for indexTrans = 1:length(trans)
+        if ~isempty(acTrans{indexTrans})            
             for postState = acTrans{indexTrans}.post
-                if aut.label{acTrans{indexTrans}.pre} == aut.label{indexState}
-                    indexTransPostVect = [indexTransPostVect; indexTrans];
-                end
                 if aut.label{postState} == aut.label{indexState}
-                    indexTransPreVect = [indexTransPreVect; indexTrans];
+                    candidateIndexTransPreVect = [candidateIndexTransPreVect; indexTrans];
                 end
             end
         end
     end
+    
+    % does there exist a path to any of the candidateIndexTransPostVect?
+    for j = 1:length(indexTransPostVect)
+        indexTransPreVect{j} = [];
+        tmpPre = trans(indexTransPostVect(j),1);
+        for k = 1:10
+            for indexTrans = 1:length(trans)
+                if ismember(trans(indexTrans,2),tmpPre) && (aut.label{trans(indexTrans,1)} == aut.label{indexState})  % a region-preserving transition has been found
+                    tmpPre = [tmpPre; trans(indexTrans,1)];
+                    [foundTransition, i] = intersect(trans(candidateIndexTransPreVect,2),tmpPre);
+                    if ~isempty(foundTransition)
+                        indexTransPreVect{j} = [indexTransPreVect{j}; candidateIndexTransPreVect(i)];
+                    end
+                end
+            end
+        end
+        indexTransPreVect{j} = unique(indexTransPreVect{j});
+    end
+    
     if isempty(indexTransPreVect), funFail = false; return; end
 
     acNext = [acTrans{indexTransPostVect}];
-    acLast = [acTrans{indexTransPreVect}];
     
-    for jpost = 1:length(acNext)
+    for jpost = 1:length(indexTransPostVect)
         indexTransPost = indexTransPostVect(jpost);
         
-        for jpre = 1:length(acLast)
-            indexTransPre = indexTransPreVect(jpre);
+        if isempty(indexTransPreVect{jpost}), funFail = false; return; end
+        
+        for jpre = 1:length(indexTransPreVect{jpost})
+            indexTransPre = indexTransPreVect{jpost}(jpre);
+            
+            acLast = acTrans{indexTransPre};
             
             sys = sysArray(aut.f{vertcat(aut.state{:}) == aut.trans{indexTransPost}(1)}); % Assign the dynamics according to the transition to be taken.
             
@@ -173,7 +199,7 @@ for funindx = 1:maxFunTrials
                     rhof = options.rhof;   %final rho.  TODO: handle the more general case and get it from containment
                     options.isMaximization = true;
                     
-                    [ac, c] = computeAtomicController(u0,x0,sys,regTrans,ellToCompose,options,rhof);
+                    [ac, controller] = computeAtomicController(u0,x0,sys,regTrans,ellToCompose,options,rhof);
                     
                     ac_inward = [ac_inward; ac];
                     funFail = false;

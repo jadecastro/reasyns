@@ -89,6 +89,7 @@ for idx = 1:length(A)
         regPairsNonUnique = [regPairsNonUnique; currReg, nextReg];
     end
 end
+
 if ~all(testCurrState(2:end) - testCurrState(1:end-1))
     error('the state vector must be sorted and always increasing!')
 end
