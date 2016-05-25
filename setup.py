@@ -23,7 +23,7 @@ def climbUpDirectoryTree(filepath,recursion_depth):
 
     return resultant_path
 
-def checkForExistingDirectoriesAndQuery(dir_name,file_trigger,root_dir,recursion_depth):
+def checkForExistingDirectoriesAndPrompt(dir_name,file_trigger,root_dir,recursion_depth):
     filepath = find(file_trigger,root_dir)
 
     preinstalled_path = climbUpDirectoryTree(filepath,recursion_depth)
@@ -40,7 +40,7 @@ def checkForExistingDirectoriesAndQuery(dir_name,file_trigger,root_dir,recursion
 
     return skip, preinstalled_path
 
-def checkIfArchiveExistsAndQuery(dir_name,filenames,root_dir):
+def checkIfArchiveExistsAndPrompt(dir_name,filenames,root_dir):
     # TODO: OS-specific checks
     flag_for_download = True
     if any([os.path.exists(os.path.join(root_dir, a)) for a in filenames]):
@@ -73,12 +73,12 @@ if __name__ == "__main__":
     print "\n-> Setting up SeDuMi..."
 
     # There could be several sedumi installations - single out the one we need by name
-    skip_sedumi, preinstalled_sedumi_path = checkForExistingDirectoriesAndQuery('SeDuMi','install_sedumi.m',lib_dir,1)
+    skip_sedumi, preinstalled_sedumi_path = checkForExistingDirectoriesAndPrompt('SeDuMi','install_sedumi.m',lib_dir,1)
 
     if skip_sedumi:
         sedumi_dir = preinstalled_sedumi_path
     else:
-        if checkIfArchiveExistsAndQuery('SeDuMi',['sedumi.zip'],lib_dir):
+        if checkIfArchiveExistsAndPrompt('SeDuMi',['sedumi.zip'],lib_dir):
             print ">>> Downloading SeDuMi..."
             urllib.urlretrieve("https://github.com/sqlp/sedumi/archive/master.zip", \
                 os.path.join(lib_dir, "sedumi.zip"))
@@ -94,12 +94,12 @@ if __name__ == "__main__":
     # -----------------
     print "\n-> Setting up Ellipsoids..."
 
-    skip_ellipsoids, preinstalled_ellipsoids_path = checkForExistingDirectoriesAndQuery('Ellipsoids','ellipsoids_init.m',root_dir,1)
+    skip_ellipsoids, preinstalled_ellipsoids_path = checkForExistingDirectoriesAndPrompt('Ellipsoids','ellipsoids_init.m',root_dir,1)
 
     if skip_ellipsoids:
         ellipsoids_dir = preinstalled_ellipsoids_path
     else:
-        if checkIfArchiveExistsAndQuery('Ellipsoids',['ellipsoids.zip'],lib_dir):
+        if checkIfArchiveExistsAndPrompt('Ellipsoids',['ellipsoids.zip'],lib_dir):
             print ">>> Downloading Ellipsoids..."
             urllib.urlretrieve("https://github.com/SystemAnalysisDpt-CMC-MSU/ellipsoids/releases/download/v1.1.3/elltbx_1_1_3_full.zip", \
                 os.path.join(lib_dir, "ellipsoids.zip"))
@@ -115,12 +115,12 @@ if __name__ == "__main__":
     # -----------------
     print "\n-> Setting up MPT..."
 
-    skip_mpt, preinstalled_mpt_path = checkForExistingDirectoriesAndQuery('MPT','mpt_init.m',root_dir,1)
+    skip_mpt, preinstalled_mpt_path = checkForExistingDirectoriesAndPrompt('MPT','mpt_init.m',root_dir,1)
 
     if skip_mpt:
         mpt_dir = preinstalled_mpt_path
     else:
-        if checkIfArchiveExistsAndQuery('MPT',['mpt.zip'],lib_dir):        
+        if checkIfArchiveExistsAndPrompt('MPT',['mpt.zip'],lib_dir):        
             print ">>> Downloading MPT..."
             urllib.urlretrieve("http://people.ee.ethz.ch/~mpt/2/downloads/mpt_ver263.zip", \
                 os.path.join(lib_dir, "mpt.zip"))
@@ -136,12 +136,12 @@ if __name__ == "__main__":
     # -----------------
     print "\n-> Setting up Drake..."
 
-    skip_drake, preinstalled_drake_path = checkForExistingDirectoriesAndQuery('Drake','balanceQuadForm.m',root_dir,3)
+    skip_drake, preinstalled_drake_path = checkForExistingDirectoriesAndPrompt('Drake','balanceQuadForm.m',root_dir,3)
 
     if skip_drake:
         drake_dir = preinstalled_drake_path
     else:
-        if checkIfArchiveExistsAndQuery('Drake',['drake.zip','drake.tar.gz'],lib_dir):
+        if checkIfArchiveExistsAndPrompt('Drake',['drake.zip','drake.tar.gz'],lib_dir):
             print ">>> Downloading Drake..."
 
             if _platform in ['win32','cygwin']:
@@ -186,12 +186,12 @@ if __name__ == "__main__":
 
     if not skip_mosek:
 
-        skip_mosek, preinstalled_mosek_path = checkForExistingDirectoriesAndQuery('Mosek','mosekopt.py',root_dir,4)
+        skip_mosek, preinstalled_mosek_path = checkForExistingDirectoriesAndPrompt('Mosek','mosekopt.py',root_dir,4)
 
         if skip_mosek:
             mosek_dir = preinstalled_mosek_path
         else:
-            if checkIfArchiveExistsAndQuery('Mosek',['mosek.msi','mosek.tar.bz2'],lib_dir):
+            if checkIfArchiveExistsAndPrompt('Mosek',['mosek.msi','mosek.tar.bz2'],lib_dir):
                 print ">>> Downloading Mosek..."
 
                 if _platform in ['win32','cygwin']:
@@ -235,12 +235,12 @@ if __name__ == "__main__":
 
     if not skip_ltlmop:
 
-        skip_ltlmop, preinstalled_ltlmop_path = checkForExistingDirectoriesAndQuery('LTLMoP','specEditor.py',root_dir,1)
+        skip_ltlmop, preinstalled_ltlmop_path = checkForExistingDirectoriesAndPrompt('LTLMoP','specEditor.py',root_dir,1)
         
         if skip_ltlmop:
             ltlmop_dir = preinstalled_ltlmop_path
         else:
-            if checkIfArchiveExistsAndQuery('LTLMoP',['ltlmop.zip'],lib_dir):
+            if checkIfArchiveExistsAndPrompt('LTLMoP',['ltlmop.zip'],lib_dir):
                 print ">>> Downloading LTLMoP..."
                 urllib.urlretrieve("https://github.com/jadecastro/LTLMoP/archive/reasyns_fast.zip", os.path.join(lib_dir, "ltlmop.zip"))
 

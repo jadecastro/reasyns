@@ -101,8 +101,25 @@ for indexToGo = 1:NmodesReach
             % while reachIncomplete
             
             [indexTransVect, indexPostVect] = findTransitionsWithNonRepeatingRegions(aut,statePre);
-                
-            for indexTrans = indexTransVect'
+            indexTransVect = indexTransVect';
+            
+            % remove any transitions, for whose region pairs, a funnel has already been created. 
+            newIndexTransVect = indexTransVect;
+            for i = 1:length(ac_trans)
+                if ~isempty(ac_trans{i})
+                    preState = ac_trans{i}.pre;
+                    for postState = ac_trans{i}.post
+                        for indexTrans = indexTransVect'
+                            if (aut.label{preState} == aut.label{aut.trans{indexTrans}(1)} && aut.label{postState} == aut.label{aut.trans{indexTrans}(2)})
+                                newIndexTransVect = setdiff(newIndexTransVect,indexTrans);
+                            end
+                        end
+                    end
+                end
+            end
+            
+            lastTrans = [];
+            for indexTrans = newIndexTransVect'
                 statePost = trans(indexTrans,2);
                 
                 [ac_tmp,lastTrans] = computeTransitionFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,statePre,statePost,options);
@@ -224,40 +241,53 @@ for statePost = horzcat(aut.state{:})
     end
 end
 
+
+%% Prompt the user to continue generating additional inward funnels
+
+doInwardReactive = false;
+userResponse = [];
+while ~isstr(userResponse) || ~all(ismember(lower(userResponse),['y','n']))
+    userResponse = input('Funnel generation completed.  Continue generating additional reactive inward funnels? [y/N]: ','s');
+    if isempty(userResponse), userResponse = 'n'; end
+end
+if lower(userResponse) == 'y', doInwardReactive = true; end
+
+
 %%
-reactJoinedStates = false*ones(Nmodes,1);
-
-for state = horzcat(aut.state{:})
-    if sum(trans(:,1) == state) > 1 
-        
-        [ac_tmp, bc_tmp, lastTrans, existingReg, newRegArray, reg] = computeInwardReactiveFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,[],state,options,fileName);
-        
-        for i = 1:length(ac_tmp)
-            ac_tmp(i).setTransition(state);
-        end
-        for i = 1:length(bc_tmp)
-            if ~isempty(bc_tmp{i})
-                bc_tmp{i}.setTransition(state);
+if doInwardReactive
+    reactJoinedStates = false*ones(Nmodes,1);
+    
+    for state = horzcat(aut.state{:})
+        if sum(trans(:,1) == state) > 1
+            
+            [ac_tmp, bc_tmp, lastTrans, existingReg, newRegArray, reg] = computeInwardReactiveFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,[],state,options,fileName);
+            
+            for i = 1:length(ac_tmp)
+                ac_tmp(i).setTransition(state);
             end
-        end
-        
-        if ~isempty(lastTrans)
-            disp('Reactive Join was unsuccessful. ')
-            joinIncomplete = true;
-            joinedStates(state) = false;
-        else
-            disp('Reactive Join was successful.')
-            joinIncomplete = false;
-            joinedStates(state) = false;
-
-            ac_react{state} = [];  bc_react{state} = [];
-            for j = 1:length(ac_tmp)
-                ac_react{state} = [ac_react{state} ac_tmp{j}];
-                bc_react{state} = [bc_react{state} bc_tmp{j}];
+            for i = 1:length(bc_tmp)
+                bc_tmp(i).setTransition(state);
             end
             
-            ac_inward{state} = [ac_inward{state}; ac_react{state}];
-
+            if ~isempty(lastTrans)
+                disp('Reactive Join was unsuccessful. ')
+                joinIncomplete = true;
+                joinedStates(state) = false;
+            else
+                disp('Reactive Join was successful.')
+                joinIncomplete = false;
+                joinedStates(state) = false;
+                tmp = find(trans(:,2)==state)';
+                j=0;
+                % i = find(trans(:,1)==state)';
+                for j = 1:length(ac_tmp)
+                    ac_react{state}(j) = ac_tmp(j);
+                    bc_react{state}(j) = bc_tmp(j);
+                end
+                
+                ac_inward{state} = [ac_inward{state}; ac_react{state}];
+                
+            end
         end
     end
 end
