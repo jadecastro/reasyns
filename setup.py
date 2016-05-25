@@ -73,7 +73,7 @@ if __name__ == "__main__":
     print "\n-> Setting up SeDuMi..."
 
     # There could be several sedumi installations - single out the one we need by name
-    skip_sedumi, preinstalled_sedumi_path = checkForExistingDirectoriesAndQuery('SeDuMi','install_sedumi.m',os.path.join(lib_dir,'SeDuMi_1_3'),1)
+    skip_sedumi, preinstalled_sedumi_path = checkForExistingDirectoriesAndQuery('SeDuMi','install_sedumi.m',lib_dir,1)
 
     if skip_sedumi:
         sedumi_dir = preinstalled_sedumi_path
@@ -265,9 +265,9 @@ if __name__ == "__main__":
         matlab_path_file.write("rmpath(genpath('"+str(os.path.abspath(os.path.join(mpt_dir,'solvers','SeDuMi_1_3')))+"'));\n\n")
         matlab_path_file.write("run('"+str(os.path.abspath(os.path.join(drake_dir,'drake','addpath_drake')))+"');\n")
         matlab_path_file.write("run('"+str(os.path.abspath(os.path.join(drake_dir,'externals','spotless','spotless','spot_install')))+"');\n\n")
-        matlab_path_file.write("cd('"+str(os.path.abspath(sedumi_dir))+"');\n")
-        matlab_path_file.write("install_sedumi(true);\n")
-        matlab_path_file.write("cd('"+str(os.path.abspath(root_dir))+"');\n\n")
+        #matlab_path_file.write("cd('"+str(os.path.abspath(sedumi_dir))+"');\n")
+        #matlab_path_file.write("install_sedumi;\n")
+        #matlab_path_file.write("cd('"+str(os.path.abspath(root_dir))+"');\n\n")
         matlab_path_file.write("examplesPath = '"+str(os.path.abspath(os.path.join(root_dir,'examples')))+"';\n\n")
         matlab_path_file.write("warning on\n")
 

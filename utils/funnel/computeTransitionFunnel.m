@@ -47,7 +47,7 @@ for funindx = 1:maxFunTrials
     
     for j = 1:length(acTrans)
         if ~isempty(acTrans{j})
-            if any(acTrans{j}.post == iModeToPatch)
+            if any(vertcat(aut.label{acTrans{j}.post}) == aut.label{iModeToPatch})
                 acLast = [acLast; acTrans{j}];
             end
         end

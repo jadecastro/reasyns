@@ -1,5 +1,7 @@
 
-function [aut, transTmp, transTmpNew, transTmpNewWithoutSelfLoops, transWithoutSelfLoops] = processAutFileFastSlow(autfname,reg)
+function [aut] = processAutFileFastSlow(autfname,reg)
+% function [aut, transTmp, transTmpNew, transTmpNewWithoutSelfLoops, transWithoutSelfLoops] = processAutFileFastSlow(autfname,reg)
+
 % Return an automaton structure from data that is read in from an aut file.
 
 disp('Loading the aut file...')
@@ -64,26 +66,26 @@ for idx = 1:length(A)
         nextTmpIdx = nextTmpIdx+1;
         nextTmp{nextTmpIdx} = succVal;
     
-        % if a state in the list has the same region label with the same rank as an existing state, map this new state to the existing one.
-        %         succVal
-        if ~isempty(succVal)
-            try
-                [mbrTrue,idxRank] = ismember([currReg rankVal],rankAndNext,'rows');
-            catch
-                mbrTrue = 0; idxRank = 0;
-            end
-            if mbrTrue
-                currTmp(end) = savedCurr(idxRank);
-            else
-                rankAndNext = [rankAndNext; currReg rankVal];
-                savedCurr = [savedCurr; stateVal];
-            end
-            if currReg == 1
-%                 [currReg nextReg]
-            end
-        else
-            currTmp(end) = NaN;  % mark states where the system can force a violation of the environment safety conditions as 'NaN'   
-        end
+%         % if a state in the list has the same region label with the same rank as an existing state, map this new state to the existing one.
+%         %         succVal
+%         if ~isempty(succVal)
+%             try
+%                 [mbrTrue,idxRank] = ismember([currReg rankVal],rankAndNext,'rows');
+%             catch
+%                 mbrTrue = 0; idxRank = 0;
+%             end
+%             if mbrTrue
+%                 currTmp(end) = savedCurr(idxRank);
+%             else
+%                 rankAndNext = [rankAndNext; currReg rankVal];
+%                 savedCurr = [savedCurr; stateVal];
+%             end
+%             if currReg == 1
+% %                 [currReg nextReg]
+%             end
+%         else
+%             currTmp(end) = NaN;  % mark states where the system can force a violation of the environment safety conditions as 'NaN'   
+%         end
         regPairsNonUnique = [regPairsNonUnique; currReg, nextReg];
     end
 end
@@ -91,7 +93,35 @@ if ~all(testCurrState(2:end) - testCurrState(1:end-1))
     error('the state vector must be sorted and always increasing!')
 end
 
-% map the list of next states to the reduced set and construct the aut structure
+% % map the list of next states to the reduced set and construct the aut structure
+% clear aut
+% count = 0;
+% transTmp = [];
+% for idx = 1:length(currTmp)
+% % for idx = unique(currTmp)'+1
+%     aut.state{idx} = idx;
+%     aut.label{idx} = regPairsNonUnique(idx,1);
+%     tmpnxt = [];
+%     for j = nextTmp{idx}
+%         tmpnxt = [tmpnxt; currTmp(j+1)];
+%         %             j
+%         %             nextTmp{idx}(j)
+%     end
+%     nextTmp{idx} = tmpnxt';
+%     nextTmp{idx} = unique(nextTmp{idx});
+%     for j = nextTmp{idx}
+%         if ~isnan(j)
+%             count = count+1;
+%             aut.trans{count} = [(currTmp(idx)+1) (j+1)];
+%             transTmp = [transTmp; regPairsNonUnique(currTmp(idx)+1,1) regPairsNonUnique(j+1,1)];
+%         end
+%         if regPairsNonUnique(currTmp(idx)+1,1) == 1 && ~isnan(j)
+%             [regPairsNonUnique(currTmp(idx)+1,1) regPairsNonUnique(j+1,1)]  % display some of the results, in terms of the regions, as a sanity check
+%         end
+%     end
+% end
+
+% Do not flatten the states
 clear aut
 count = 0;
 transTmp = [];
@@ -102,12 +132,7 @@ for idx = 1:length(currTmp)
     tmpnxt = [];
     for j = nextTmp{idx}
         tmpnxt = [tmpnxt; currTmp(j+1)];
-        %             j
-        %             nextTmp{idx}(j)
-    end
-    nextTmp{idx} = tmpnxt';
-    nextTmp{idx} = unique(nextTmp{idx});
-    for j = nextTmp{idx}
+
         if ~isnan(j)
             count = count+1;
             aut.trans{count} = [(currTmp(idx)+1) (j+1)];
@@ -120,27 +145,27 @@ for idx = 1:length(currTmp)
 end
 
 % make sure all transitions are unique
-tmp = [];
-for idx = 1:length(aut.trans), tmp = [tmp; aut.trans{idx}]; end
-tmp = unique(tmp,'rows');
-aut.trans = [];
-transWithoutSelfLoops = [];
-transTmpNew = [];
-transTmpNewWithoutSelfLoops = [];
-for idx = 1:size(tmp,1)
-    aut.trans{idx} = tmp(idx,:);
-    transTmpNew = [transTmpNew; regPairsNonUnique(aut.trans{idx},1)'];
-    
-    % modify the transitions and state designations removing duplicate region transitions, regardless of rank  
-%     regPairsNonUnique(transWithoutSelfLoops(regPairsNonUnique(transWithoutSelfLoops(:,2))==1,1))
-
-    
-    % create a preview of the transitions without self-loops
-    if aut.label{aut.trans{idx}(1)} ~= aut.label{aut.trans{idx}(2)}
-        transWithoutSelfLoops = [transWithoutSelfLoops; aut.trans{idx}];
-        transTmpNewWithoutSelfLoops = [transTmpNewWithoutSelfLoops; regPairsNonUnique(aut.trans{idx},1)'];
-    end
-end
+% tmp = [];
+% for idx = 1:length(aut.trans), tmp = [tmp; aut.trans{idx}]; end
+% tmp = unique(tmp,'rows');
+% aut.trans = [];
+% transWithoutSelfLoops = [];
+% transTmpNew = [];
+% transTmpNewWithoutSelfLoops = [];
+% for idx = 1:size(tmp,1)
+%     aut.trans{idx} = tmp(idx,:);
+%     transTmpNew = [transTmpNew; regPairsNonUnique(aut.trans{idx},1)'];
+%     
+%     % modify the transitions and state designations removing duplicate region transitions, regardless of rank  
+% %     regPairsNonUnique(transWithoutSelfLoops(regPairsNonUnique(transWithoutSelfLoops(:,2))==1,1))
+% 
+%     
+%     % create a preview of the transitions without self-loops
+%     if aut.label{aut.trans{idx}(1)} ~= aut.label{aut.trans{idx}(2)}
+%         transWithoutSelfLoops = [transWithoutSelfLoops; aut.trans{idx}];
+%         transTmpNewWithoutSelfLoops = [transTmpNewWithoutSelfLoops; regPairsNonUnique(aut.trans{idx},1)'];
+%     end
+% end
 
 % aut.trans = [];
 % for idx = 1:length(transWithoutSelfLoops), aut.trans{idx} = transWithoutSelfLoops(idx,:); end

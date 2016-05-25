@@ -26,7 +26,7 @@ regTrans.goal = regTrans.init;
 regTrans.union = union(regTrans.init, regTrans.goal);
 
 % ==========================
-% Compute transition funnels
+% Compute inward funnels
 
 funFail = true;
 
@@ -39,18 +39,22 @@ for funindx = 1:maxFunTrials
     %acLast = [acTrans{lastTrans}];
     
     indexTransPostVect = [];
-    for j = find(trans(:,1)==indexState)'
-        if ~isempty(acTrans{j}), indexTransPostVect = [indexTransPostVect; j]; end
-    end
-    
-    acNext = [acTrans{indexTransPostVect}];
-    
     indexTransPreVect = [];
-    for j = find(trans(:,2)==indexState)'
-        if ~isempty(acTrans{j}), indexTransPreVect = [indexTransPreVect; j]; end
+    for indexTrans = 1:length(trans)
+        if ~isempty(acTrans{indexTrans})
+            for postState = acTrans{indexTrans}.post
+                if aut.label{acTrans{indexTrans}.pre} == aut.label{indexState}
+                    indexTransPostVect = [indexTransPostVect; indexTrans];
+                end
+                if aut.label{postState} == aut.label{indexState}
+                    indexTransPreVect = [indexTransPreVect; indexTrans];
+                end
+            end
+        end
     end
     if isempty(indexTransPreVect), funFail = false; return; end
-    
+
+    acNext = [acTrans{indexTransPostVect}];
     acLast = [acTrans{indexTransPreVect}];
     
     for jpost = 1:length(acNext)
@@ -94,14 +98,14 @@ for funindx = 1:maxFunTrials
                 
                 disp('Computing final point....')
                 try
-                    qCenter = double(acNext.x0,0);  % in the vicinity of the first point of the funnel
+                    qCenter = double(acNext(jpost).x0,0);  % in the vicinity of the first point of the funnel
                     %                 finalState = getCenterRand_new(sys,regDefl(aut.label{indexState}),acNext,options,qCenter) %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
-                    finalState = double(acNext.x0,0)' %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
+                    finalState = double(acNext(jpost).x0,0)' %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
                     goalOutput = sys.state2SEconfig([],finalState,[]);
                     goalOutput = goalOutput(1:2);
                     
                     stepSize = options.TstepRRT;
-                    [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.init.v},[],[],[],[],initState,finalState,stepSize,sys,regTrans.init,acNext,options);
+                    [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.init.v},[],[],[],[],initState,finalState,stepSize,sys,regTrans.init,acNext(jpost),options);
                                     %                 [path] = buildCtrlSpaceRRT(regBnd.v,{reg(aut.label{indexState}).v},{reg(aut.label{indexState}).v},acTrans{indexTransPre}.ellipsoid,[],[],[],initState,finalState,stepSize,sys,regBnd,acNext,options);
                     disp('Computing nominal trajectory....')
                     
@@ -120,8 +124,8 @@ for funindx = 1:maxFunTrials
                     noFinalEllipsoidFunnelViolation = true;
                     ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof*inv(sys.sysparams.Qf));
                     if ~debug
-                        if ~isempty(acNext) % any transition funnels have been already computed for any of the successors and only one outgoing transition from the successor
-                            noFinalEllipsoidFunnelViolation = acNext.funnelContainsEllipsoid(sys,ballTest,100);
+                        if ~isempty(acNext(jpost)) % any transition funnels have been already computed for any of the successors and only one outgoing transition from the successor
+                            noFinalEllipsoidFunnelViolation = acNext(jpost).funnelContainsEllipsoid(sys,ballTest,100);
                         end
                     end
                     
