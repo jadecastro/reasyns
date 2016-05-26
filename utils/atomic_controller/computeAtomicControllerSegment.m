@@ -10,6 +10,7 @@ verifOptions.rho0_tau = 2; % Determine initial guess for rho
 verifOptions.max_iterations = 5; % Maximum number of iterations to run for
 verifOptions.stability = false;
 verifOptions.max = options.isMaximization;
+verifOptions.plot_rho = false;
 
 sampSkip = options.sampSkipFun;
 
@@ -122,9 +123,7 @@ ac = ac.normalizerho;
 % fnplt(xtraj,[1 2]);
 % axis equal
 
-figure(5)
-hold on
-plot(ac,sys,5)
+plot(ac,sys,1)
 
 
 %% Run tests to make sure simulated trajectories stay inside computed funnel

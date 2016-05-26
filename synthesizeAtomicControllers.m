@@ -48,11 +48,20 @@ else
     error('Please install either MOSEK or SeDuMi and try again.');
 end
 
-figure(5)
+figure(1)
+clf
 plot(reg)
 axis equal
+hold on
+
+figure(5)
+clf
+plot(reg)
+axis equal
+hold on
 
 figure(500)
+clf
 plot(reg)
 hold on
 plot(regDefl)
@@ -132,13 +141,13 @@ for indexToGo = 1:NmodesReach
             end
             
             if ~isempty(lastTrans)
-                disp('Transition funnel computation was unsuccessful. Repeating.')
+                disp(['Transition funnel computation was unsuccessful for State ',num2str(statePre),'. Repeating.'])
                 reachIncomplete = true;
                 joinedStates(statePre) = false;
                 patchedStates(statePre) = false;
                 counter = counter+1;
             else
-                disp('Transition funnel computation was successful.')
+                disp(['Transition funnel computation was successful for State ',num2str(statePre),'.'])
                 counter = 0;
                 reachIncomplete = false;
                 joinedStates(statePre) = false;
@@ -167,9 +176,9 @@ for indexToGo = 1:NmodesReach
                 
             end
 
-            patchedStates'
-            joinedStates'
-            statePre
+%             patchedStates'
+%             joinedStates'
+%             statePre
             % end
             toc
             
@@ -178,7 +187,7 @@ for indexToGo = 1:NmodesReach
                 if ~isempty([ac_trans{lastTrans}]) && counter > 10
                     counter = 0;
                     iPreStateToPatch = trans(lastTrans,1);
-                    iPreStateToPatch
+%                     iPreStateToPatch
                 end
                 disp(['... Failed to create a transition funnel for State ',num2str(statePre),'. '])
                 toc
@@ -188,7 +197,7 @@ for indexToGo = 1:NmodesReach
         end
         
         if all(patchedStates(1:indexToGo))
-            disp(['finished ',num2str(indexToGo)]);
+%             disp(['finished ',num2str(indexToGo)]);
             break
         end
     end
@@ -225,11 +234,11 @@ for statePost = horzcat(aut.state{:})
             end
             
             if ~isempty(lastTrans)
-                disp('Inward joining funnel computation was unsuccessful. Repeating.')
+                disp(['Inward joining funnel computation was unsuccessful for State ',num2str(statePost),'. Repeating.'])
                 joinIncomplete = true;
                 joinedStates(indexState) = false;
             else
-                disp('Inward joining funnel computation was successful.')
+                disp(['Inward joining funnel computation was successful for State ',num2str(statePost),'.'])
                 joinIncomplete = false;
                 joinedStates(indexState) = true;
                 ac_inward{indexState} = [ac_inward{indexState}; ac_tmp];
@@ -239,7 +248,7 @@ for statePost = horzcat(aut.state{:})
             if ~joinedStates(indexState)
                 disp(['... Failed to create inward joining funnels for State ',num2str(statePost),'.'])
                 toc
-                fprintf(fid,'%f : Failed to create inward joining funnels for state %d.\n',toc,statePost);
+                fprintf(fid,'%f : Failed to create inward joining funnels for State %d.\n',toc,statePost);
                 break
             else
                 toc
@@ -282,11 +291,11 @@ if doInwardReactive
             end
             
             if ~isempty(lastTrans)
-                disp('Computation of inward reactive funnels was unsuccessful. ')
+                disp(['Computation of inward reactive funnels was unsuccessful for State ',num2str(state),'. '])
                 joinIncomplete = true;
                 joinedStates(state) = false;
             else
-                disp('Computation of inward reactive funnels was successful.')
+                disp(['Computation of inward reactive funnels was successful for State ',num2str(state),'.'])
                 joinIncomplete = false;
                 joinedStates(state) = false;
                 tmp = find(trans(:,2)==state)';

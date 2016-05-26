@@ -82,7 +82,7 @@ for funindx = 1:maxFunTrials
             end
         end
     end
-    initState
+%     initState
     initOutput = sys.state2SEconfig([],initState,[]);
     initOutput = initOutput(1:2);
     
@@ -100,7 +100,7 @@ for funindx = 1:maxFunTrials
             goalOutput = sys.state2SEconfig([],finalState,[]);
             goalOutput = goalOutput(1:2);
             
-            finalState
+%             finalState
             path = [initState; finalState];
             type = 'state';
             disp('Computing nominal trajectory....')
@@ -205,9 +205,10 @@ for funindx = 1:maxFunTrials
         
         ac_trans = [ac_trans; ac];
         
-        plot(ac.x0,'k',3)
+        plot(ac,sys,5)
+        %plot(ac.x0,'k',3)
         
-        disp(['Iteration #',num2str(i),' / ',num2str(maxFunnelsTrans(iModeToPatch))])
+%         disp(['Iteration #',num2str(i),' / ',num2str(maxFunnelsTrans(iModeToPatch))])
 
     end
         

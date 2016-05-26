@@ -135,9 +135,11 @@ end
 
 
 if (max(m)>0)
-  figure(40);fnplt(foh(ts,rho')); 
-  figure(50);plot(ts(1:end-1),m); drawnow;
-  error('Drake:PolynomialTrajectorySystem:InfeasibleRho','infeasible rho. increase options.rho0_tau');
+    if options.plot_rho
+        figure(40);fnplt(foh(ts,rho'));
+        figure(50);plot(ts(1:end-1),m); drawnow;
+    end
+    error('Drake:PolynomialTrajectorySystem:InfeasibleRho','infeasible rho. increase options.rho0_tau');
 end
 
 V_0=V;

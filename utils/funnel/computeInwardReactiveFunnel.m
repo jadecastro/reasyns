@@ -143,7 +143,7 @@ for indexTrans = indexTransPostVect'
     while funFail && (trial1 <= maxTrials1)
         trial1 = trial1 + 1;
         
-        indexToCompose
+        disp(['  Attempting to compose outgoing transition funnel Index ',num2str(indexToCompose)])
         if indexToCompose <= 0
             funFail = true;
             disp('Cannot generate reactive funnels because I have exhausted all the level sets in the transition funnel without success.')
@@ -175,7 +175,7 @@ for indexTrans = indexTransPostVect'
             funFail = true;
         end
         
-        initState
+%         initState
         %initOutput = sys.state2SEconfig([],initState,[]);
         %initOutput = initOutput(1:2);
         
@@ -205,7 +205,7 @@ for indexTrans = indexTransPostVect'
                     finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == indexState}),acInward,qCenter); %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
                     acAcceptCriterion = acInward;
                 end
-                finalState
+%                 finalState
                 goalOutput = sys.state2SEconfig([],finalState,[]);
                 goalOutput = goalOutput(1:2);
 
@@ -386,6 +386,8 @@ for indexTrans = indexTransPostVect'
             % If the computation hasn't failed up to this point, keep the results
             ac = [ac; acNew];
             bc = [bc; bcNew];
+            
+            plot(acNew,sys,5)
             
             if ~containsLevelSet
                 funFail = true;

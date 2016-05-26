@@ -126,7 +126,7 @@ for funindx = 1:maxFunTrials
                 try
                     qCenter = double(acNext(jpost).x0,0);  % in the vicinity of the first point of the funnel
                     %                 finalState = getCenterRand_new(sys,regDefl(aut.label{indexState}),acNext,options,qCenter) %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
-                    finalState = double(acNext(jpost).x0,0)' %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
+                    finalState = double(acNext(jpost).x0,0)'; %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
                     goalOutput = sys.state2SEconfig([],finalState,[]);
                     goalOutput = goalOutput(1:2);
                     
@@ -236,9 +236,11 @@ for funindx = 1:maxFunTrials
             end
 
             ac_inward = [ac_inward; ac];
-            plot(ac.x0,'k',3)
             
-            disp(['Iteration #',num2str(i),' / ',num2str(maxFunnelsTrans(indexState))])
+            plot(ac,sys,5)
+            %plot(ac.x0,'k',3)
+            
+%             disp(['Iteration #',num2str(i),' / ',num2str(maxFunnelsTrans(indexState))])
         end
     end
     

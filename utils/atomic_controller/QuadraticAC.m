@@ -158,8 +158,8 @@ classdef QuadraticAC < PolynomialAC
                     elseif length(regobj) == 2
                         % Given two regions which are adjacent, and each convex, and an ellipse centered in one of the two regions,
                         % an intersection of either zero or precisely one hyperplane for each region implies that the ellipse is inside the union of the two regions.
-                        ~nonIntersectingPlanes{1}
-                        ~nonIntersectingPlanes{2}
+%                         ~nonIntersectingPlanes{1}
+%                         ~nonIntersectingPlanes{2}
                         res1 = sum(vertcat(~nonIntersectingPlanes{1}));
                         res2 = sum(vertcat(~nonIntersectingPlanes{2}));
                         if ~((res1 == 0 || res2 == 0) || (res1 == 1 && res2 == 1)),
@@ -176,7 +176,7 @@ classdef QuadraticAC < PolynomialAC
                 
                 if length(regobj) == 1, nonIntersectingPlanes = nonIntersectingPlanes{1}; end
                 
-                nonIntersectingPlanes
+%                 nonIntersectingPlanes
                 isectArray = [isectArray; nonIntersectingPlanes];
                 
                 res = all(nonIntersectingPlanes);

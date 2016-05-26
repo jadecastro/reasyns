@@ -10,9 +10,11 @@ The toolbox takes in controller/workspace information in the same format as requ
 Installation
 ============
 
-This package requires MATLAB 2012b or later (setup requires python 2.7 or later).  Run the setup script `python setup.py` inside the project directory.
+This package requires MATLAB 2012b or later (setup requires python 2.7 or later). 
 
-The following dependencies will be automatically installed within the `\lib` folder in the project directory and an initialization script, `reasyns_init.m`, is created.  If any of the dependencies exist, then the installation can be skipped, and the script simply creates `reasyns_init.m`.
+Installation is done by running the setup `python setup.py` inside the project directory.
+
+The following dependencies will be automatically installed within the `\lib` folder in the project directory and an initialization script, `reasyns_init.m`, will be created.  If any of the dependencies exist, then the installation can be skipped, and the script will then simply create `reasyns_init.m`.
 
 1) SeDuMi (version 1.3 tested):
      http://sedumi.ie.lehigh.edu/?page_id=58
@@ -43,7 +45,7 @@ Note that each example in the `/examples` directory requires a region file (`.re
 
 System models are encoded in the format of "Drake System" objects, of which there are several examples included within Drake.  The `DubinsCar.m` class located in the `/models` folder contains one such example.
 
-The controllers are saved as `.mat` files contained within a folder called `<example path>/reasyns_controllers`.  To use a controller, simply input the name of the desired `.mat` file as an argument in the MotionControllerHandler field.  Refer to the `box_pushing.config` example for specifics.
+The controllers are saved within `.mat` files contained within a folder called `<example path>/reasyns_controllers`.  To use a controller, simply input the name of the desired `.mat` file as an argument in the MotionControllerHandler field.  Refer to the `box_pushing.config` example for specifics.
 
 Finally, execution of the controller requires [this branch](https://github.com/jadecastro/LTLMoP/tree/reasyns_fast) of LTLMoP.  From the `LTLMoP/src` folder, LTLMoP can be called by typing `python specEditor.py <path/to/your/example>`.
 
