@@ -96,7 +96,7 @@ for indexToGo = 1:NmodesReach
     
 
             %% Reach Operation
-            fprintf(fid,'%f : Attempting to patch and join mode %d.\n',toc,statePre);
+            fprintf(fid,'%f : Attempting to compute transition funnels for State %d.\n',toc,statePre);
             reachIncomplete = true;
             % while reachIncomplete
             
@@ -132,13 +132,13 @@ for indexToGo = 1:NmodesReach
             end
             
             if ~isempty(lastTrans)
-                disp('Reach was unsuccessful. Repeating the Reach.')
+                disp('Transition funnel computation was unsuccessful. Repeating.')
                 reachIncomplete = true;
                 joinedStates(statePre) = false;
                 patchedStates(statePre) = false;
                 counter = counter+1;
             else
-                disp('Reach was successful.')
+                disp('Transition funnel computation was successful.')
                 counter = 0;
                 reachIncomplete = false;
                 joinedStates(statePre) = false;
@@ -180,9 +180,9 @@ for indexToGo = 1:NmodesReach
                     iPreStateToPatch = trans(lastTrans,1);
                     iPreStateToPatch
                 end
-                disp(['... Failed to perform Reach for mode ',num2str(statePre),'. Need to re-patch.'])
+                disp(['... Failed to create a transition funnel for State ',num2str(statePre),'. '])
                 toc
-                fprintf(fid,'%f : Failed to perform Reach for mode %d. Re-performing the Reach operation\n',toc,statePre);
+                fprintf(fid,'%f : Failed to create a transition funnel for State  %d. Re-computing the transition funnel.\n',toc,statePre);
                 break
             end
         end
@@ -199,44 +199,56 @@ toc
 %%
 indexState = 0;
 for statePost = horzcat(aut.state{:})
-    indexState = indexState + 1;
-    for iJoinTry = 1:10  % max number of tries
-        disp(['... Attempting to join mode ',num2str(statePost)])
-        toc
-        fprintf(fid,'%f : Attempting to join mode %d.\n',toc,statePost);
-        
-        % Join Operation
-        
-        [ac_tmp,lastTrans] = computeInwardJoiningFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,statePost,options);
-        
-        for i = 1:length(ac_tmp)
-            ac_tmp(i).setTransition(statePost);
+    
+    foundAc = false;
+    for indexTrans = 1:length(aut.trans)
+        if ~isempty(ac_trans{indexTrans})
+            if any(ac_trans{indexTrans}.pre == statePost), foundAc = true; break; end
         end
-        
-        if ~isempty(lastTrans)
-            disp('Join was unsuccessful. Repeating.')
-            joinIncomplete = true;
-            joinedStates(indexState) = false;
-        else
-            disp('Join was successful.')
-            joinIncomplete = false;
-            joinedStates(indexState) = true;
-            ac_inward{indexState} = [ac_inward{indexState}; ac_tmp];
-        end
-        
-        
-        if ~joinedStates(indexState)
-            disp(['... Failed to join mode ',num2str(statePost),'. Need to re-patch.'])
+    end
+    
+    if ~foundAc
+        indexState = indexState + 1;
+        joinedStates(indexState) = 1;
+    else
+        for iJoinTry = 1:10  % max number of tries
+            disp(['... Attempting to create inward joining funnels for State ',num2str(statePost)])
             toc
-            fprintf(fid,'%f : Failed to join mode %d. Re-performing the Reach operation\n',toc,statePost);
-            break
-        else
-            toc
-            fprintf(fid,'%f : Successfully joined mode %d.\n',toc,statePost);
-        end
-        
-        if all(joinedStates(1:indexState))
-            break
+            fprintf(fid,'%f : Attempting to create inward joining funnels for State %d.\n',toc,statePost);
+            
+            % Join Operation
+            
+            [ac_tmp,lastTrans] = computeInwardJoiningFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,statePost,options);
+            
+            for i = 1:length(ac_tmp)
+                ac_tmp(i).setTransition(statePost);
+            end
+            
+            if ~isempty(lastTrans)
+                disp('Inward joining funnel computation was unsuccessful. Repeating.')
+                joinIncomplete = true;
+                joinedStates(indexState) = false;
+            else
+                disp('Inward joining funnel computation was successful.')
+                joinIncomplete = false;
+                joinedStates(indexState) = true;
+                ac_inward{indexState} = [ac_inward{indexState}; ac_tmp];
+            end
+            
+            
+            if ~joinedStates(indexState)
+                disp(['... Failed to create inward joining funnels for State ',num2str(statePost),'.'])
+                toc
+                fprintf(fid,'%f : Failed to create inward joining funnels for state %d.\n',toc,statePost);
+                break
+            else
+                toc
+                fprintf(fid,'%f : Successfully computed inward joining funnels for State %d.\n',toc,statePost);
+            end
+            
+            if all(joinedStates(1:indexState))
+                break
+            end
         end
     end
 end
@@ -247,7 +259,7 @@ end
 doInwardReactive = false;
 userResponse = [];
 while ~isstr(userResponse) || ~all(ismember(lower(userResponse),['y','n']))
-    userResponse = input('Funnel generation completed.  Continue generating additional reactive inward funnels? [y/N]: ','s');
+    userResponse = input('Transition and inward joining funnel generation completed.  Create reactive inward funnels? [y/N]: ','s');
     if isempty(userResponse), userResponse = 'n'; end
 end
 if lower(userResponse) == 'y', doInwardReactive = true; end
@@ -270,11 +282,11 @@ if doInwardReactive
             end
             
             if ~isempty(lastTrans)
-                disp('Reactive Join was unsuccessful. ')
+                disp('Computation of inward reactive funnels was unsuccessful. ')
                 joinIncomplete = true;
                 joinedStates(state) = false;
             else
-                disp('Reactive Join was successful.')
+                disp('Computation of inward reactive funnels was successful.')
                 joinIncomplete = false;
                 joinedStates(state) = false;
                 tmp = find(trans(:,2)==state)';
