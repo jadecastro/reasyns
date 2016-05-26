@@ -51,8 +51,9 @@ axis equal
 QinvBallTest = inv(sys.sysparams.Qf);
 
 for i = 1:maxNodes
-    i
-    plotNewNode(node,edge,'r') % uncomment to plot- will slow things down
+    disp(['RRT iteration: ',num2str(i)]);
+    
+%     plotNewNode(node,edge,'k') % uncomment to plot- will slow things down
     plotNewReachNode(node,nodeReach,newNodeCount,'g') % uncomment to plot- will slow things down
     
     % Test whether any elements in V are in the goal region (TODO: for now-- must be at least two points in the vector)
@@ -75,10 +76,10 @@ for i = 1:maxNodes
                 end
             end
             if isect2(k)
-                disp('found an intersection with the goal set!')
+%                 disp('found an intersection with the goal set!')
 %                 keyboard
             else
-                disp('no intersection.')
+%                 disp('no intersection.')
             end
             %isectBnd = checkIntersection4(ellBndInv11,Xk,Hout,n,isCyclic)  % isect == true --> for all m,n there is some n for which the point is outside for all m, where ell{m,n}.
             %isectC = checkIntersection4(tmpEllCInv11,Xk,Hout,n,isCyclic)  % isect == true --> for all m,n there is some n for which the point is outside for all m, where ell{m,n}.
@@ -103,8 +104,7 @@ for i = 1:maxNodes
 
     %     if ~isect,
     if inGoalSet,
-        disp('terminating RRT: intersection with goal set.')
-        plotNewNode(node,edge,'r')
+%         plotNewNode(node,edge,'r')
         
         % Move backward from qGoal to qInit via edges to find the path
         path.node = [];
@@ -130,16 +130,17 @@ for i = 1:maxNodes
         path.u = [tmpu; path.u];
         length(path.t)
         if length(path.node) > 3
+            disp('terminating RRT: intersection with goal set.')
             return
         else
-            disp('nevermind... continuing.')
+%             disp('nevermind... continuing.')
         end
     end
     
     % If not, go fish
     [qNew,t,Xk,Uk,nearI,nodeReach] = addNodeDynamicsReachability(vBound,vObs1,vObs2,qGoal,node,nodeReach,gaussWeight,M,stepSize,ac,reg,sys,options);
     if isempty(t) || isempty(qNew)
-        disp('add node failed.')
+%         disp('add node failed.')
         break
     end
     
@@ -165,11 +166,11 @@ for i = 1:maxNodes
         nodeReach = [nodeReach; [newI qReachUB]];
     end
     if isempty(nodeReach)
-        disp('No nodes left in the reachability graph! Cannot expand the tree.')
+%         disp('No nodes left in the reachability graph! Cannot expand the tree.')
         break
     end
 end
-disp('cannot construct RRT.')
+disp('failed to construct RRT.')
 
 end
 

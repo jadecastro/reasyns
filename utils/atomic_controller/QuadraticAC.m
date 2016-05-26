@@ -143,25 +143,25 @@ classdef QuadraticAC < PolynomialAC
                 idx = [];
                 for i = 1:sampSkip:length(obj.ell)
                     for k = 1:length(regobj)
-                        tmp{k} = ~intersect(obj.projection(sys,i),hpp{k},'u');
+                        nonIntersectingPlanes{k} = ~intersect(obj.projection(sys,i),hpp{k},'u');
                     end
                     
-                    if length(regobj) == 1, tmp = tmp{1}; end
+                    if length(regobj) == 1, nonIntersectingPlanes = nonIntersectingPlanes{1}; end
                     
-                    isectArray = [isectArray; tmp];
+                    isectArray = [isectArray; nonIntersectingPlanes];
                     
                     if length(regobj) == 1
-                        if ~all(tmp)
+                        if ~all(nonIntersectingPlanes)
                             res = false;
                             idx = [idx; i];
                         end
                     elseif length(regobj) == 2
                         % Given two regions which are adjacent, and each convex, and an ellipse centered in one of the two regions,
                         % an intersection of either zero or precisely one hyperplane for each region implies that the ellipse is inside the union of the two regions.
-                        ~tmp{1}
-                        ~tmp{2}
-                        res1 = sum(vertcat(~tmp{1}));
-                        res2 = sum(vertcat(~tmp{2}));
+                        ~nonIntersectingPlanes{1}
+                        ~nonIntersectingPlanes{2}
+                        res1 = sum(vertcat(~nonIntersectingPlanes{1}));
+                        res2 = sum(vertcat(~nonIntersectingPlanes{2}));
                         if ~((res1 == 0 || res2 == 0) || (res1 == 1 && res2 == 1)),
                             res = false;
                             if nargout < 2, break; end
@@ -171,14 +171,15 @@ classdef QuadraticAC < PolynomialAC
                 end
             else
                 for k = 1:length(regobj)
-                    tmp{k} = ~intersect(obj.projection(sys),hpp{k},'u');
+                    nonIntersectingPlanes{k} = ~intersect(obj.projection(sys),hpp{k},'u');
                 end
                 
-                if length(regobj) == 1, tmp = tmp{1}; end
+                if length(regobj) == 1, nonIntersectingPlanes = nonIntersectingPlanes{1}; end
                 
-                isectArray = [isectArray; tmp];
+                nonIntersectingPlanes
+                isectArray = [isectArray; nonIntersectingPlanes];
                 
-                res = ~all(tmp);
+                res = all(nonIntersectingPlanes);
             end
             
         end

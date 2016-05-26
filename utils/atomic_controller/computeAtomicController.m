@@ -148,10 +148,10 @@ catch ME
             
             sys.sysparams.Qf = double(ac2.P,t0(1));
             
-            tmp = projection(ac2,sys);
-            figure(figidx)
-            plot(tmp(1),'r')
-            hold on
+%             tmp = projection(ac2,sys);
+%             figure(figidx)
+%             plot(tmp(1),'r')
+%             hold on
             %             Qf = getMaximalQ(funnelI2,Xk2(1+Noverlap,:));
             %keyboard
             
@@ -162,10 +162,10 @@ catch ME
             
             sys.sysparams.Qf = double(ac1.P,t0(1));
             
-            tmp = projection(ac1,sys);
-            figure(figidx)
-            plot(tmp(end),'b')
-            hold on
+%             tmp = projection(ac1,sys);
+%             figure(figidx)
+%             plot(tmp(end),'b')
+%             hold on
             
             %collect into one atomiccontroller
             ac = merge(ac1,ac2); 

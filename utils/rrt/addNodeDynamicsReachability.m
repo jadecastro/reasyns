@@ -16,16 +16,16 @@ trialMat = repmat([0 2*pi -2*pi],n,1).*repmat(isCyclic,1,3);
 
 for i = 1:maxTrials %while isect
     try
-        i
+        if mod(i,10) == 0, disp(['  RRT sample iteration: ',num2str(i)]); end
         % Bias the sampling toward qGoal
         if rand < gaussWeight
             qRand = randn(1,n)*chol(M) + qGoal;
         else
             qRand = [min(vBound) -pi] + [(max(vBound) - min(vBound)) 2*pi].*rand(1,n);
         end
-        figure(3)
-        hold on
-        plot(qRand(1),qRand(2),'m.')
+%         figure(3)
+%         hold on
+%         plot(qRand(1),qRand(2),'m.')
         
         % Set qNear as the nearest coordinate in V (in configuration space) to qRand
         for j = 1:size(node,1)
@@ -82,6 +82,7 @@ for i = 1:maxTrials %while isect
                 %                     Uk(indxRem,:) = [];
                 %                 end
                 
+                figure(3)
                 plot(Xk(:,1),Xk(:,2),'k')
                 drawnow
                 
@@ -96,7 +97,7 @@ for i = 1:maxTrials %while isect
         end
     catch ME
         disp(ME.message)
-        disp('trajectory too small; retrying')
+%         disp('trajectory too small; retrying')
 %         keyboard
     end
     

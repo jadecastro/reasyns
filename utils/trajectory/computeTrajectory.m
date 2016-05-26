@@ -38,8 +38,8 @@ gotopt = 1;         % Initialize waypoint index
 xyPathGlob = xyPath;
 sysGlob = sys;
 
-figure(500)
-plot(xyPath(end,1),xyPath(end,2),'o')
+%figure(500)
+%plot(xyPath(end,1),xyPath(end,2),'o')
 % [t,Xk] = ode45(@(tt,X) sys.dynamics(tt,X,sys.sysparams,xyPath,gotopt), t, X0, odeOptions);
 [t,Xk] = ode45(@(tt,X) sys.dynamicsWaypointSteering(tt,X,xyPath,gotopt), t, X0, odeOptions);
 

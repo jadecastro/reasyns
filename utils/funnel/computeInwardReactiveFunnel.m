@@ -1,11 +1,11 @@
-function [ac_inward, bc_inward, errTrans, existingReg, newRegArray, reg] = computeInwardReactiveFunnel(sysArray,reg,regDefl,regBnd,aut,acTrans,acIn,iModeToPatch,options,fileName)
+function [ac_inward, bc_inward, errTrans, existingReg, newRegArray, reg] = computeInwardReactiveFunnel(sysArray,reg,regDefl,regBnd,aut,acTrans,acIn,indexState,options,fileName)
 % Construct inward-facing reactive funnels for all outgoing transitions
 % from a given state.
 %
 
 global ME
 
-debug = true;
+debug = false;
 
 maxFunnelsTrans = options.maxFunnelsTrans;
 maxFunTrials = options.maxFunTrials;
@@ -13,12 +13,11 @@ maxTrajLength = options.maxTrajLength;
 maxTrials1 = options.maxTrials1;
 maxTrials2 = options.maxTrials2;
 trans = vertcat(aut.trans{:});
-options
 
-IsectInAll{iModeToPatch} = 0;%zeros(1,size(qCover{iModeToPatch},1));
+IsectInAll{indexState} = 0;%zeros(1,size(qCover{indexState},1));
 
 % Avoid regions for starting region
-% regSafeS = getReg(reg,regBnd,aut,iModeToPatch);
+% regSafeS = getReg(reg,regBnd,aut,indexState);
 
 ac_inward = [];
 bc_inward = [];
@@ -33,33 +32,63 @@ xTest = [];
 % ==========================
 % Compute inward funnels
 
-funFail = true;
-
 containsLevelSet = false;
 
-lastTrans = trans(:,2)==iModeToPatch;
-acLast = [acTrans{lastTrans}];
-if ~isempty(acLast)
-    acLast = acLast(1); % NB: currently only supporting one incoming transition..
-end
+acLast = [];
 acNextAll = [];
-indexTransVect = [];
-for indexTrans = find(trans(:,1)==iModeToPatch)'
-    acNextAll = [acNextAll; acTrans{indexTrans}];
-    if ~isempty(acTrans{indexTrans}), indexTransVect = [indexTransVect; indexTrans]; end
+indexTransPostVect = [];
+candidateIndexTransPreVect = [];
+for indexTrans = 1:length(trans)
+    if ~isempty(acTrans{indexTrans})
+        if aut.label{acTrans{indexTrans}.pre} == aut.label{indexState}
+            acNextAll = [acNextAll; acTrans{indexTrans}];
+            indexTransPostVect = [indexTransPostVect; indexTrans];
+        end
+    end
+end
+for indexTrans = 1:length(trans)
+    if ~isempty(acTrans{indexTrans})
+        for postState = acTrans{indexTrans}.post
+            if aut.label{postState} == aut.label{indexState}
+                acLast = [acLast; acTrans{indexTrans}];
+                candidateIndexTransPreVect = [candidateIndexTransPreVect; indexTrans];
+            end
+        end
+    end
+end
+
+% does there exist a path to any of the candidateIndexTransPostVect?
+for j = 1:length(indexTransPostVect)
+    indexTransPreVect{j} = [];
+    tmpPre = trans(indexTransPostVect(j),1);
+    for k = 1:10
+        for indexTrans = 1:length(trans)
+            if ismember(trans(indexTrans,2),tmpPre) && (aut.label{trans(indexTrans,1)} == aut.label{indexState})  % a region-preserving transition has been found
+                tmpPre = [tmpPre; trans(indexTrans,1)];
+                [foundTransition, i] = intersect(trans(candidateIndexTransPreVect,2),tmpPre);
+                if ~isempty(foundTransition)
+                    indexTransPreVect{j} = [indexTransPreVect{j}; candidateIndexTransPreVect(i)];
+                end
+            end
+        end
+    end
+    indexTransPreVect{j} = unique(indexTransPreVect{j});
 end
 
 count = 0;
 
 % Loop over all successor modes
-for indexTrans = indexTransVect'
+for indexTrans = indexTransPostVect'
     count = count+1;
     
     sys = sysArray(aut.f{indexTrans});  % For now, delay changing the dynamics until the transition reach tube is reached.
     
     acNext = [acTrans{indexTrans}];
-    regMode.init = reg(aut.label{vertcat(aut.state{:}) == iModeToPatch});
+    regMode.init = reg(aut.label{vertcat(aut.state{:}) == indexState});
     regGoal = reg(aut.label{vertcat(aut.state{:}) == acNext.post});
+    
+    indexTransPre = indexTransPreVect{count}(1);  % choose the first one if more than one option to choose from
+    acLast = acTrans{indexTransPre};
     
     % ==========================
     % Verify invariance of the transition funnels up to the edge of the region
@@ -73,7 +102,7 @@ for indexTrans = indexTransVect'
     ttmp = acNext.x0.getTimeVec();
     idxToChkReactivity{indexTrans} = 1;
     for j = length(ttmp):-funStepSize:20
-        if isinside(reg(aut.label{vertcat(aut.state{:}) == iModeToPatch}),sys,double(acNext.x0,ttmp(j))')
+        if isinside(reg(aut.label{vertcat(aut.state{:}) == indexState}),sys,double(acNext.x0,ttmp(j))')
             idxToChkReactivity{indexTrans} = j:-funStepSize:20;  % you can adjust the step amount smaller to improve the "tightness" of the resulting new region to the true unverified set.
             break
         end
@@ -103,13 +132,14 @@ for indexTrans = indexTransVect'
     plot(acNext,sys,90)
     
     figure(3), hold on, axis equal
-    plot(reg(aut.label{vertcat(aut.state{:}) == iModeToPatch}),'r')
+    plot(reg(aut.label{vertcat(aut.state{:}) == indexState}),'r')
 %     plot(acLast,sys,3)
     
     % ==========================
     % Now, search for funnels that verify reachability from the initial set which are invariant to the region 
     % We do this until containment is reached, failing upon reaching maxTrials1 iterations.
     trial1 = 0;
+    funFail = true;
     while funFail && (trial1 <= maxTrials1)
         trial1 = trial1 + 1;
         
@@ -119,6 +149,7 @@ for indexTrans = indexTransVect'
             disp('Cannot generate reactive funnels because I have exhausted all the level sets in the transition funnel without success.')
             break
         end
+        ttmp = acNext.x0.getTimeVec();
         qCenter = double(acNext.x0,ttmp(indexToCompose));
         initState = [];
         for trial2 = 1:maxTrials2
@@ -127,11 +158,11 @@ for indexTrans = indexTransVect'
                     Qsav = sys.sysparams.Qrand;
                     sys.sysparams.Qrand = 1e-3*eye(sys.sysparams.n);
                     
-                    initState = getCenterRand(sys,reg(aut.label{vertcat(aut.state{:}) == iModeToPatch}),[],qCenter);
+                    initState = getCenterRand(sys,reg(aut.label{vertcat(aut.state{:}) == indexState}),[],qCenter);
                     
                     sys.sysparams.Qrand = Qsav;
                 else % relax the restriction on the random point computation
-                    initState = getCenterRand(sys,reg(aut.label{vertcat(aut.state{:}) == iModeToPatch}),[],qCenter);
+                    initState = getCenterRand(sys,reg(aut.label{vertcat(aut.state{:}) == indexState}),[],qCenter);
                 end
                 break
             catch ME
@@ -159,19 +190,19 @@ for indexTrans = indexTransVect'
                         acNextFirst = acNextAll(1);
                         ttmpFirst = acNextFirst.x0.getTimeVec();
                         qCenter = double(acNextFirst.x0,ttmpFirst(1));  % in the vicinity of the first point of the funnel
-                        finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == iModeToPatch}),acNextAll,qCenter); %,vReg{aut.label{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
+                        finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == indexState}),acNextAll,qCenter); %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
                         acAcceptCriterion = acNextAll;
                     else
                         ttmpLast = acLast.x0.getTimeVec();
                         qCenter = double(acLast.x0,ttmpLast(end));  % in the vicinity of the last point of the funnel
-                        finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == iModeToPatch}),acLast,qCenter); %,vReg{aut.label{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
+                        finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == indexState}),acLast,qCenter); %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
                         acAcceptCriterion = acLast;
                     end
                 else  % make use of the provided inward funnels as our goal funnel
-                    acInward = acIn{iModeToPatch}(1);  % get the first one in the set.
+                    acInward = acIn{indexState}(1);  % get the first one in the set.
                     ttmpLast = acInward.x0.getTimeVec();
                     qCenter = double(acInward.x0,ttmpLast(1));  % in the vicinity of the first point of the funnel
-                    finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == iModeToPatch}),acInward,qCenter); %,vReg{aut.label{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
+                    finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == indexState}),acInward,qCenter); %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
                     acAcceptCriterion = acInward;
                 end
                 finalState
@@ -196,7 +227,7 @@ for indexTrans = indexTransVect'
                 if ~debug
                     ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof^2*inv(sys.sysparams.Qf));
                     if ~isempty(acAcceptCriterion) % any transition funnels have been already computed for any of the successors and only one outgoing transition from the successor
-                        noFinalEllipsoidFunnelViolation = acAcceptCriterion.funnelContainsEllipsoid(ballTest,sys,100);
+                        noFinalEllipsoidFunnelViolation = acAcceptCriterion.funnelContainsEllipsoid(sys,ballTest,100);
                     end
                 end
                 
@@ -205,10 +236,11 @@ for indexTrans = indexTransVect'
                     break,
                 end
                 disp('Trajectory incompatible with constraints; recomputing...')
-                if ~noInvarViolation,                disp('... trajectory not contained in the region'); end
-                if ~noFinalPointViolation,           disp('... final point not contained within the goal region'); end
+                if ~noInvarViolation,                       disp('... trajectory not contained in the region'); end
+                if ~noFinalEllipsoidFunnelViolation,        disp('... final ellipse not contained within the successor funnel'); end
             catch ME
                 %  rethrow(ME)
+                disp(ME)
                 disp('something went wrong with the trajectory computation... recomputing')
                 funFail = true;
             end
@@ -226,7 +258,7 @@ for indexTrans = indexTransVect'
             
             try
                 
-                % [ac,existingRegNew,newRegNew] = computePolytopeAtomicControllerDubins(u0,x0,sys,acNext,reg(aut.label{iModeToPatch}),options.ctrloptions_trans,options.sampSkipFun,xMssExt);
+                % [ac,existingRegNew,newRegNew] = computePolytopeAtomicControllerDubins(u0,x0,sys,acNext,reg(aut.label{indexState}),options.ctrloptions_trans,options.sampSkipFun,xMssExt);
                 x00 = x0;  u00 = u0;
                 
                 tmp = acNext.ellipsoid;
@@ -235,10 +267,21 @@ for indexTrans = indexTransVect'
                 rhof = options.rhof;   %final rho.  TODO: handle the more general case and get it from containment
                 options.isMaximization = true;
                 [acNew, cNew, isectIdx] = computeAtomicController(u00,x00,sys,regMode,ellToCompose,options,rhof);
-                acNew.setTransition(iModeToPatch);
+                acNew.setTransition(indexState);
                 
                 plot(acNew.x0,'k',5)
                 rhoi = double(acNew.rho,0);
+                
+                % verify that the funnel we obtained meets the containment criteria
+                % TODO: move this into computeAtomicController
+                if ~isinside(acNew,regMode.init,sys,options.sampSkipValid)
+                    disp('... computed funnel does not lie in the designated region');
+                    if ~debug
+                        funFail = true;
+                    end
+                else
+                    funFail = false;
+                end
                 
                 if ~isempty(isectIdx)
                     
@@ -270,7 +313,7 @@ for indexTrans = indexTransVect'
                             % The minimization is used here to find a suitable initial condition for the CBF.
                             options.isMaximization = false;
                             [acPre] = computeAtomicController(u0,x0,sys,regMode,ellToCompose,options,rhoi);
-                            acPre.setTransition(iModeToPatch);
+                            acPre.setTransition(indexState);
                             
                         end
                         
@@ -289,7 +332,7 @@ for indexTrans = indexTransVect'
                         end
                         
                         [bcNew] = computeConformingFunnel(u00,x00,u01,x01,sys,acNew,regMode.init,ellToCompose,options);
-                        bcNew.setTransition(iModeToPatch);
+                        bcNew.setTransition(indexState);
                         
                         % Plot stuff
                         figure(90)
@@ -306,15 +349,13 @@ for indexTrans = indexTransVect'
                         plot(acNext.x0,'k',90)
                         plot(acNew.x0,'k',90)
                         
+                        funFail = false;
+                        
                     else
                         funfail = true;
                         disp('computation of inward funnels failed.')
-                        break
                     end
-
                 end
-                
-                funFail = false;
                 
                 % TODO: check if inside the polytopes
                 
@@ -324,7 +365,7 @@ for indexTrans = indexTransVect'
                 disp('something went wrong with the funnel computation... attempting to find a more conservative initial set, and restarting reachability analysis.')
                 keyboard
                 indexToCompose = indexToCompose - funStepSize;
-                errTrans = trans(:,2)==iModeToPatch;
+                errTrans = trans(:,2)==indexState;
             end
             
         end
@@ -374,7 +415,7 @@ for indexTrans = indexTransVect'
     end
     [newRegConvHullIdx] = convhull(newRegVert(:,1),newRegVert(:,2));
     newReg = Region([regMode.init.name,'_',regGoal.name],newRegVert(newRegConvHullIdx,:));
-    newReg = intersect(newReg,reg(aut.label{vertcat(aut.state{:}) == iModeToPatch}));
+    newReg = intersect(newReg,reg(aut.label{vertcat(aut.state{:}) == indexState}));
     
     % Subtract the underapproximated reactive funnel
     %     newRegVert = [];
@@ -387,7 +428,7 @@ for indexTrans = indexTransVect'
     
     [newRegConvHullIdx] = convhull(newRegVert(:,1),newRegVert(:,2));
     subReg = Region([regMode.init.name,'_',regGoal.name],newRegVert(newRegConvHullIdx,:));
-    subReg = intersect(subReg,reg(aut.label{vertcat(aut.state{:}) == iModeToPatch}));
+    subReg = intersect(subReg,reg(aut.label{vertcat(aut.state{:}) == indexState}));
     
     newReg = regiondiff(newReg.p,subReg.p);
     
