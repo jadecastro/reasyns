@@ -41,13 +41,13 @@ for funindx = 1:maxFunTrials
     % Get the system model and region pair for this transition
     aut.f{itrans}
     sys = sysArray(aut.f{itrans});
-    regTrans.init = reg(aut.label{vertcat(aut.state{:}) == iModeToPatch});
-    regTrans.goal = reg(aut.label{vertcat(aut.state{:}) == iModeSuccessor});
+    regTrans.init = reg(aut.label{vertcat(aut.state{:}) == repmat(iModeToPatch,length(aut.state),1)});
+    regTrans.goal = reg(aut.label{vertcat(aut.state{:}) == repmat(iModeSuccessor,length(aut.state),1)});
     regTrans.union = union(regTrans.init, regTrans.goal);
     
     for j = 1:length(acTrans)
         if ~isempty(acTrans{j})
-            if any(vertcat(aut.label{acTrans{j}.post}) == aut.label{iModeToPatch})
+            if any(vertcat(aut.label{acTrans{j}.post}) == repmat(aut.label{iModeToPatch},length(acTrans{j}.post),1))
                 acLast = [acLast; acTrans{j}];
             end
         end
@@ -60,7 +60,7 @@ for funindx = 1:maxFunTrials
         sys.sysparams.Qrand = 1e-4*eye(sys.sysparams.n);
         for trial2 = 1:maxTrials2
             try
-                initState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == iModeToPatch}),[],qCenter);
+                initState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == repmat(iModeToPatch,length(aut.state),1)}),[],qCenter);
                 break
             catch ME
                 disp(ME.message)
@@ -74,7 +74,7 @@ for funindx = 1:maxFunTrials
     else
         for trial2 = 1:maxTrials2
             try
-                initState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == iModeToPatch}),[]);
+                initState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == repmat(iModeToPatch,length(aut.state),1)}),[]);
                 break
             catch ME
                 disp(ME.message)
@@ -96,7 +96,7 @@ for funindx = 1:maxFunTrials
         disp('Computing final point....')
         try
             
-            finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == iModeSuccessor}),[]); %,vReg{aut.label{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
+            finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == repmat(iModeSuccessor,length(aut.state),1)}),[]); %,vReg{aut.label{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
             goalOutput = sys.state2SEconfig([],finalState,[]);
             goalOutput = goalOutput(1:2);
             
