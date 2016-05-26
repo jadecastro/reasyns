@@ -10,7 +10,9 @@ The toolbox takes in controller/workspace information in the same format as requ
 Installation
 ============
 
-This package requires MATLAB 2012b or later and installation of the following dependencies.  It may be convenient to install these within the provided `\lib` folder in the project directory, to make the path set-up easier.
+This package requires MATLAB 2012b or later (setup requires python 2.7 or later).  Run the setup script `python setup.py` inside the project directory.
+
+The following dependencies will be automatically installed within the `\lib` folder in the project directory and an initialization script, `reasyns_init.m`, is created.  If any of the dependencies exist, then the installation can be skipped, and the script simply creates `reasyns_init.m`.
 
 1) SeDuMi (version 1.3 tested):
      http://sedumi.ie.lehigh.edu/?page_id=58
@@ -29,14 +31,13 @@ This package requires MATLAB 2012b or later and installation of the following de
      A license for Mosek can requested free of charge for academic users or purchased for non-academic users.
      If Mosek is not installed, then SeDuMi is used instead as the optimization engine.
      
-Notes: 
-- The source version of Drake is included here as a submodule; note that you may need to run `git submodule init && git submodule update` to fetch the source, then follow [these instructions](http://drake.mit.edu/installation.html) to compile it on your machine.  You may also opt to download a [precompiled release](https://github.com/RobotLocomotion/drake/releases).  If you do, be sure to reflect these changes in `reasynsPath.m`.
+Note: 
 - MPT and Ellipsoids come bundled with their own versions of SeDuMi, which do not work with Drake or reasyns. The paths are removed within `reasynsPath.m` (if you've installed these toolboxes in any other location, be sure to change their paths within `reasynsPath.m`).
 
 Running an Example
 ===================
 
-To run an example, first set up the path, `reasynsPath.m`, then load an example into the workspace. Next, load the parameters and system model (for the included example, this may be done by running `box_pushing.m`), and then run the synthesis engine `synthesizeAtomicControllers(sys, filePath, configAndProblemDomainName, options)`. 
+To run an example, first set up the path, `reasyns_init.m`, then load an example into the workspace. Next, load the parameters and system model (for the included example, this may be done by running `box_pushing.m`), and then run the synthesis engine `synthesizeAtomicControllers(sys, filePath, configAndProblemDomainName, options)`. 
 
 Note that each example in the `/examples` directory requires a region file (`.regions`), a configuration file (`.config`), and an automaton file (`.aut`).  These are of the same format as those generated using LTLMoP (refer to [this tutorial](https://github.com/VerifiableRobotics/LTLMoP/wiki/Tutorial) for information on getting started). 
 
