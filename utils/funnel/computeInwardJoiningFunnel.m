@@ -79,6 +79,12 @@ for funindx = 1:maxFunTrials
 
     acNext = [acTrans{indexTransPostVect}];
     
+    figure(3)
+    clf
+    hold on, axis equal
+    plot(reg(aut.label{vertcat(aut.state{:}) == indexState}),'r')
+    plot(acNext,sys,3)
+    
     for jpost = 1:length(indexTransPostVect)
         indexTransPost = indexTransPostVect(jpost);
         

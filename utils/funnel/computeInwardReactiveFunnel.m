@@ -126,13 +126,11 @@ for indexTrans = indexTransPostVect'
     %indexToCompose = 750;  % first (lab)- more friendly
     %indexToCompose = 340;  % second (lab)- more friendly
     
-    % plot things
-    figure(90), hold on, axis equal
-    %plot(reg)
-    plot(acNext,sys,90)
-    
-    figure(3), hold on, axis equal
+    figure(3)
+    clf
+    hold on, axis equal
     plot(reg(aut.label{vertcat(aut.state{:}) == indexState}),'r')
+    plot(acNext,sys,3)
 %     plot(acLast,sys,3)
     
     % ==========================
@@ -335,19 +333,19 @@ for indexTrans = indexTransPostVect'
                         bcNew.setTransition(indexState);
                         
                         % Plot stuff
-                        figure(90)
-                        axis equal
-                        hold on
-                        plot(reg(1),'r')
-                        plot(reg(2),'g')
+%                         figure(90)
+%                         axis equal
+%                         hold on
+%                         plot(reg(1),'r')
+%                         plot(reg(2),'g')
                         
-                        bcNew.plot(acNew.x0,90)
+                        bcNew.plot(acNew.x0,5)
                         
                         % pause
                         % plot(acNext,sys,90,[],[0,0,1])
                         % plot(acPost,sys,90,[],[0,1,0])
-                        plot(acNext.x0,'k',90)
-                        plot(acNew.x0,'k',90)
+                        plot(acNext.x0,'k',5)
+                        plot(acNew.x0,'k',5)
                         
                         funFail = false;
                         
@@ -363,7 +361,7 @@ for indexTrans = indexTransPostVect'
                 %                     rethrow(ME)
                 disp(ME.message)
                 disp('something went wrong with the funnel computation... attempting to find a more conservative initial set, and restarting reachability analysis.')
-                keyboard
+%                 keyboard
                 indexToCompose = indexToCompose - funStepSize;
                 errTrans = trans(:,2)==indexState;
             end

@@ -117,6 +117,8 @@ for indexToGo = 1:NmodesReach
             for i = 1:length(ac_trans)
                 if ~isempty(ac_trans{i})
                     preState = ac_trans{i}.pre;
+                    preState
+                    ac_trans{i}.post
                     for postState = ac_trans{i}.post
                         for indexTrans = indexTransVect'
                             if (aut.label{preState} == aut.label{aut.trans{indexTrans}(1)} && aut.label{postState} == aut.label{aut.trans{indexTrans}(2)})
@@ -128,16 +130,18 @@ for indexToGo = 1:NmodesReach
             end
             
             lastTrans = [];
-            for indexTrans = newIndexTransVect'
-                statePost = trans(indexTrans,2);
-                
-                [ac_tmp,lastTrans] = computeTransitionFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,statePre,statePost,options);
-                
-                statePostVect = vertcat(aut.state{vertcat(aut.label{indexPostVect}) == vertcat(aut.label{vertcat(aut.state{:}) == statePre})});
-                for i = 1:length(ac_tmp)
-                    ac_tmp(i).setTransition(statePre,statePostVect);
+            if ~isempty(newIndexTransVect)
+                for indexTrans = newIndexTransVect'
+                    statePost = trans(indexTrans,2);
+                    
+                    [ac_tmp,lastTrans] = computeTransitionFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,statePre,statePost,options);
+                    
+                    statePostVect = vertcat(aut.state{vertcat(aut.label{indexPostVect}) == vertcat(aut.label{vertcat(aut.state{:}) == statePre})});
+                    for i = 1:length(ac_tmp)
+                        ac_tmp(i).setTransition(statePre,statePostVect);
+                    end
+                    ac_trans{indexTrans} = ac_tmp;
                 end
-                ac_trans{indexTrans} = ac_tmp;
             end
             
             if ~isempty(lastTrans)
@@ -283,11 +287,16 @@ if doInwardReactive
             
             [ac_tmp, bc_tmp, lastTrans, existingReg, newRegArray, reg] = computeInwardReactiveFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,[],state,options,fileName);
             
+            
             for i = 1:length(ac_tmp)
-                ac_tmp(i).setTransition(state);
+                if ~isempty(ac_tmp{i})
+                    ac_tmp{i}.setTransition(state);
+                end
             end
             for i = 1:length(bc_tmp)
-                bc_tmp(i).setTransition(state);
+                if ~isempty(bc_tmp{i})
+                    bc_tmp{i}.setTransition(state);
+                end
             end
             
             if ~isempty(lastTrans)
@@ -302,8 +311,10 @@ if doInwardReactive
                 j=0;
                 % i = find(trans(:,1)==state)';
                 for j = 1:length(ac_tmp)
-                    ac_react{state}(j) = ac_tmp(j);
-                    bc_react{state}(j) = bc_tmp(j);
+                    if ~isempty(ac_tmp{j})
+                        ac_react{state}(j) = ac_tmp{j};
+                        bc_react{state}(j) = bc_tmp{j};
+                    end
                 end
                 
                 ac_inward{state} = [ac_inward{state}; ac_react{state}];
