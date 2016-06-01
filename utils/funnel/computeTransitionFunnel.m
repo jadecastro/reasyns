@@ -86,7 +86,7 @@ for funindx = 1:maxFunTrials
     initOutput = sys.state2SEconfig([],initState,[]);
     initOutput = initOutput(1:2);
     
-    regSafeSG = reg.getRegTrans(regBnd,aut,itrans);
+%     regSafeSG = reg.getRegTrans(regBnd,aut,itrans);
     %         regSafeG = getReg(reg,regBnd,aut,iModeSuccessor);
     %                 ellTransS = ellipsoid(ac_trans(itrans,1));
     

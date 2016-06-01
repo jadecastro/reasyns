@@ -224,7 +224,7 @@ classdef Region < handle
             else
                 [a,b] = poly2ccw(vDiff(:,1),vDiff(:,2));
             end
-                
+            
             regDiff = Region('Diffed_',[a b],obj.calibMatrix);
         end
         

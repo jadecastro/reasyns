@@ -140,7 +140,7 @@ for idx = 1:length(currTmp)
             transTmp = [transTmp; regPairsNonUnique(currTmp(idx)+1,1) regPairsNonUnique(j+1,1)];
         end
         if regPairsNonUnique(currTmp(idx)+1,1) == 1 && ~isnan(j)
-            [regPairsNonUnique(currTmp(idx)+1,1) regPairsNonUnique(j+1,1)]  % display some of the results, in terms of the regions, as a sanity check
+%             [regPairsNonUnique(currTmp(idx)+1,1) regPairsNonUnique(j+1,1)]  % display some of the results, in terms of the regions, as a sanity check
         end
     end
 end
