@@ -83,7 +83,6 @@ for funindx = 1:maxFunTrials
     clf
     hold on, axis equal
     plot(reg(aut.label{vertcat(aut.state{:}) == indexState}),'r')
-    plot(acNext,sys,3)
     
     for jpost = 1:length(indexTransPostVect)
         indexTransPost = indexTransPostVect(jpost);
@@ -96,6 +95,8 @@ for funindx = 1:maxFunTrials
             acLast = acTrans{indexTransPre};
             
             sys = sysArray(aut.f{vertcat(aut.state{:}) == aut.trans{indexTransPost}(1)}); % Assign the dynamics according to the transition to be taken.
+            plot(acLast,sys,3)
+            %plot(acNext,sys,3)
             
             regSafeSG = getRegTrans(reg,regBnd,aut,indexTransPre);
             %         regSafeG = getReg(reg,regBnd,aut,iModeSuccessor);
