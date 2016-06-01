@@ -283,6 +283,9 @@ if doInwardReactive
     reactJoinedStates = false*ones(Nmodes,1);
     
     for state = horzcat(aut.state{:})
+        ac_react{state} = [];
+        bc_react{state} = [];
+        
         if sum(trans(:,1) == state) > 1
             
             [ac_tmp, bc_tmp, lastTrans, existingReg, newRegArray, reg] = computeInwardReactiveFunnel(sys,reg,regDefl,regBnd,aut,ac_trans,[],state,options,fileName);
@@ -312,13 +315,21 @@ if doInwardReactive
                 % i = find(trans(:,1)==state)';
                 for j = 1:length(ac_tmp)
                     if ~isempty(ac_tmp{j})
-                        ac_react{state}(j) = ac_tmp{j};
-                        bc_react{state}(j) = bc_tmp{j};
+                        ac_react{state} = [ac_react{state}; ac_tmp{j}];
+                    end
+                    if ~isempty(bc_tmp{j})
+                        bc_react{state} = [bc_react{state}; bc_tmp{j}];
                     end
                 end
                 
-                ac_inward{state} = [ac_inward{state}; ac_react{state}];
-                
+                ac_inward{state} = ac_inward{state};
+                if ~isempty(ac_react{state})
+                    ac_inward{state} = [ac_inward{state}; ac_react{state}];
+                end
+                bc_inward{state} = bc_inward{state};
+                if ~isempty(bc_react{state})
+                    bc_inward{state} = [bc_inward{state}; bc_react{state}];
+                end
             end
         end
     end
