@@ -20,7 +20,7 @@ classdef DubinsPlant < DrakeSystem
             xdot = [obj.sysparams.v*cos(theta);  obj.sysparams.v*sin(theta); u(1)];
             
             if (nargout>1)
-                [df,d2f,d3f]= dynamicsGradientsDubins(obj,t,x,u,nargout-1);
+                [df,d2f,d3f]= dynamicsGradientsUnicycle(obj,t,x,u,nargout-1);
             end
         end
         
