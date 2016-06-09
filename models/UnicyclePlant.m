@@ -1,4 +1,4 @@
-classdef DubinsPlant < DrakeSystem
+classdef UnicyclePlant < DrakeSystem
     % Defines the dynamics for the Dubins car/unicycle model.
     
     properties
