@@ -1,4 +1,4 @@
-function [df, d2f, d3f] = dynamicsGradients(a1, a2, a3, a4, order)
+function [df, d2f, d3f] = dynamicsGradientsDubins(a1, a2, a3, a4, order)
 % This is an auto-generated file.
 %
 % See <a href="matlab: help generateGradients">generateGradients</a>. 
