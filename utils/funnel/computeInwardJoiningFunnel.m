@@ -136,11 +136,10 @@ for funindx = 1:maxFunTrials
                     finalState = double(acNext(jpost).x0,0)'; %,vReg{aut.label{indexState}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
                     goalOutput = sys.state2SEconfig([],finalState,[]);
                     goalOutput = goalOutput(1:2);
-                    
-                    stepSize = options.TstepRRT;
-                    [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.init.v},[],[],[],[],initState,finalState,stepSize,sys,regTrans.init,acNext(jpost),options);
-                                    %                 [path] = buildCtrlSpaceRRT(regBnd.v,{reg(aut.label{indexState}).v},{reg(aut.label{indexState}).v},acTrans{indexTransPre}.ellipsoid,[],[],[],initState,finalState,stepSize,sys,regBnd,acNext,options);
+
                     disp('Computing nominal trajectory....')
+                    [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.init.v},[],[],[],[],initState,finalState,options.TstepRRT,sys,regTrans.init,acNext(jpost),options);
+                                    %                 [path] = buildCtrlSpaceRRT(regBnd.v,{reg(aut.label{indexState}).v},{reg(aut.label{indexState}).v},acTrans{indexTransPre}.ellipsoid,[],[],[],initState,finalState,stepSize,sys,regBnd,acNext,options);
                     
                     x0 = Traject(path.t',path.x');
                     u0 = Traject(path.t',path.u');

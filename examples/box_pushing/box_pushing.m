@@ -34,7 +34,7 @@ options.Nterm = 10;  % number of consecutive failures before coverage terminates
 options.coverPct = 0.8;
 options.deflationAmount = 0.05; % deflate each region by this amount (in meters) for initial/goal point sampling.
 
-sys(1) = DubinsPlant(sysparams);
+sys(1) = UnicyclePlant(sysparams);
 
 
 % Number of funnels/controllers for each state
@@ -43,8 +43,9 @@ options.maxFunnelsInward = 0;
 % options.maxFunnelsInward(4) = 1;
 options.maxFunnelsReactJoin = 10;
 
-% Trajectory params
+% Trajectory parameters
 options.TstepTraj = 0.02;
+options.Tfin = 1000;  % Absolute cutoff time
 options.maxTrajLength = 200/options.TstepTraj; 
 options.TstepRRT = 0.2;
 

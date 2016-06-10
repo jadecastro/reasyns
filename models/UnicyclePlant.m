@@ -6,7 +6,7 @@ classdef UnicyclePlant < DrakeSystem
     end
     
     methods
-        function obj = DubinsPlant(sysparams)
+        function obj = UnicyclePlant(sysparams)
             obj = obj@DrakeSystem(3,0,1,3,0,1);
             obj.sysparams = sysparams;
             
@@ -39,7 +39,10 @@ classdef UnicyclePlant < DrakeSystem
             y = x;
         end
 
-        % NOTE: The following two methods are optional.
+        
+        % The remaining methods are optional. If not supplied, a trajectory
+        % will be computed using a "bang-bang" controller, taking into
+        % account only the control limits.
         function [xdot] = dynamicsWaypointSteering(obj,t,x,xyPath,gotopt1)
             
             global gotopt
@@ -51,8 +54,15 @@ classdef UnicyclePlant < DrakeSystem
         end
         
         function [u, waypointIndex] = steerToXYWaypoints(obj,x,xyWaypoints,waypointIndex)
-            
-            p = obj;
+            % Given a series of waypoints, xyWaypoints, current waypoint
+            % index, waypointIndex, and an initial condition, x, find a
+            % control input, u, steering the system from x to the x-y
+            % position:
+            %
+            %     [xyWaypoints(waypointIndex,1);
+            %      xyWaypoints(waypointIndex,2) ] 
+            %
+            % from the initial state x.
             
             e = obj.sysparams.e;
             closeEnough = obj.sysparams.closeEnough;
@@ -65,7 +75,7 @@ classdef UnicyclePlant < DrakeSystem
                 desXR = xyWaypoints(end,1);  desYR = xyWaypoints(end,2);
             end
             
-            euclidDist2NextPt = sqrt((xr - desXR)^2 + (yr - desYR)^2);
+            euclidDist2NextPt = norm(xr - desXR);
             
             % If robot is within acceptance radius, index to next waypoint
             if abs(euclidDist2NextPt) < abs(closeEnough)

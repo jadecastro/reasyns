@@ -208,8 +208,7 @@ for indexTrans = indexTransPostVect'
                 goalOutput = goalOutput(1:2);
 
                 disp('Computing nominal trajectory....')
-                stepSize = options.TstepRRT;
-                [path] = buildReachabilityRRT(regBnd.v,{regMode.init.v},{regMode.init.v},[],[],[],[],initState,finalState,stepSize,sys,regMode.init,acAcceptCriterion,options);
+                [path] = buildReachabilityRRT(regBnd.v,{regMode.init.v},{regMode.init.v},[],[],[],[],initState,finalState,options.TstepRRT,sys,regMode.init,acAcceptCriterion,options);
                 
                 x0 = Traject(path.t',path.x');
                 u0 = Traject(path.t',path.u');

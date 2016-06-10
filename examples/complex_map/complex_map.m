@@ -42,8 +42,9 @@ options.maxFunnelsInward = 0;
 % options.maxFunnelsInward(4) = 1;
 options.maxFunnelsReactJoin = 10;
 
-% Trajectory params
+% Trajectory parameters
 options.TstepTraj = 0.02;
+options.Tfin = 1000;  % Absolute cutoff time
 options.maxTrajLength = 200/options.TstepTraj; 
 options.TstepRRT = 0.2;
 

@@ -1,7 +1,5 @@
 function [u0,x0] = computeTrajectory(sys,X0,xyPath,options,varargin)
 
-%TODO: most of this lives in two places-move this all to a common class method to call.
-
 n = sys.sysparams.n;
 
 type = 'output';
@@ -15,11 +13,11 @@ if ~isempty(varargin)
     if length(varargin) > 1
         if varargin{2} == 'RRT'
             odeOptions = odeset('Events',@eventsPathLength);
-            global xNormCum stepSizeGlob yLast %TODO: how to remove this dependency???
+            global xNormCum stepSizeGlob yLastGlob  % globals used in the event trigger function
 
             xNormCum = 0;
             stepSizeGlob = varargin{3};
-            yLast = sys.state2SEconfig([],X0,[]);
+            yLastGlob = sys.state2SEconfig([],X0,[]);
         end
     end
 end
@@ -27,13 +25,11 @@ end
 trimTraj = true;
 forcedEndIndx = Inf;
 
-Tfin = 200;
-t = 0:options.TstepTraj:Tfin;
+t = 0:options.TstepTraj:options.Tfin;
 
 % Model and Controller 
 
-% TODO: move all of this to a 'simulate' method in systemdynamics
-global gotopt xyPathGlob sysGlob %TODO: remove this global!!
+global gotopt xyPathGlob sysGlob  % globals used within the waypoint follower
 gotopt = 1;         % Initialize waypoint index
 xyPathGlob = xyPath;
 sysGlob = sys;
@@ -69,7 +65,6 @@ end
 % nonRegStatek = Xk(:,idxNonRegStates);
 
 % Remove data beyond when the final waypoint has been achieved
-% TODO: Instead of acceptance radius, make this dependent on the prescribed sets in the algorithm!
 % dist2LastPt = sqrt((X - xyPath(end,1)).^2 + (Y - xyPath(end,2)).^2);
 
 dist2LastPt = sqrt(sum((outputk - repmat(xyPath(end,:),size(outputk,1),1)).^2,2));
@@ -104,7 +99,6 @@ end
 u0 = Traject(t',Uk');
 x0 = Traject(t',Xk');
 
-
 end
 
 function [value,isterminal,direction] = eventsReachedWaypoint(t,x)
@@ -131,11 +125,11 @@ function [value,isterminal,direction] = eventsPathLength(t,x)
 % Locate the time when height passes through zero in a decreasing direction
 % and stop integration.
 
-global xNormCum sysGlob stepSizeGlob yLast
+global xNormCum sysGlob stepSizeGlob yLastGlob
 
 y = sysGlob.state2SEconfig([],x,[]);
 
-xNormCum = norm(y(1:2) - yLast(1:2)) + xNormCum;
+xNormCum = norm(y(1:2) - yLastGlob(1:2)) + xNormCum;
 
 % If robot is within acceptance radius, index to next waypoint
 value = xNormCum - stepSizeGlob;
@@ -143,6 +137,6 @@ value = xNormCum - stepSizeGlob;
 isterminal = 1; % stop the integration
 direction = 1; % positive direction
 
-yLast = y;
+yLastGlob = y;
 
 end

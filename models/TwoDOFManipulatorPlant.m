@@ -55,6 +55,7 @@ classdef TwoDOFManipulatorPlant < Manipulator
             C = C*qd + G + [b1;b2].*qd;
             
             B = [0; 1];
+            % B = eye(2);
         end
         
         % todo: also implement sodynamics here so that I can keep the
@@ -68,7 +69,7 @@ classdef TwoDOFManipulatorPlant < Manipulator
         end
         
         function x = getInitialState(obj)
-            x = .1*randn(4,1);
+            x = 0.1*randn(4,1);
         end
 
         function y = output(obj)
@@ -76,10 +77,9 @@ classdef TwoDOFManipulatorPlant < Manipulator
         end
         
         function y = state2SEconfig(obj,t,x,u)
-            if size(x,1) == 1
-                x = x';
-            end
-            y = x;
+
+            y(1) = obj.lc1*cos(x(1)) + obj.lc2*cos(x(3));
+            y(2) = obj.lc1*sin(x(1)) + obj.lc2*sin(x(3));
         end
         
         function n = getNumPositions(obj)

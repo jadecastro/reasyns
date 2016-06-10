@@ -108,8 +108,16 @@ for funindx = 1:maxFunTrials
             % TODO: make it an option to fall back on RRT if the
             % optional method 'dynamicsWaypointSteering' is not
             % specified!
-            [u0,x0] = computeTrajectory(sys,initState,path,options,type);
+            if (ismethod(sys,'dynamicsWaypointSteering') && ismethod(sys,'steerToXYWaypoints'))
+                [u0,x0] = computeTrajectory(sys,initState,path,options,type);
+            else
+                [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.goal.v},[],[],[],[],initState,finalState,options.TstepRRT,sys,regTrans.init,[],options);
+                
+                x0 = Traject(path.t',path.x');
+                u0 = Traject(path.t',path.u');
+            end
             
+                
             figure(500), hold on, plot(x0,[],500)
             
             % Check the trajectory for invariant violation, final point
