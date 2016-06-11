@@ -1,5 +1,5 @@
 function [ac_inward, bc_inward, errTrans, existingReg, newRegArray, reg] = computeInwardReactiveFunnel(sysArray,reg,regDefl,regBnd,aut,acTrans,acIn,indexState,options,fileName)
-% Construct inward-facing reactive funnels for all outgoing transitions
+% Construct reactive "inward-facing" funnels for all outgoing transitions
 % from a given state.
 %
 
@@ -28,9 +28,6 @@ bc = [];
 acNew = [];
 bcNew = [];
 xTest = [];
-
-% ==========================
-% Compute inward funnels
 
 containsLevelSet = false;
 
@@ -208,7 +205,7 @@ for indexTrans = indexTransPostVect'
                 goalOutput = goalOutput(1:2);
 
                 disp('Computing nominal trajectory....')
-                [path] = buildReachabilityRRT(regBnd.v,{regMode.init.v},{regMode.init.v},[],[],[],[],initState,finalState,options.TstepRRT,sys,regMode.init,acAcceptCriterion,options);
+                [path] = buildReachabilityRRT(regBnd.v,{regMode.init.v},{regMode.init.v},[],[],[],[],initState,finalState,sys,regMode.init,acAcceptCriterion,options);
                 
                 x0 = Traject(path.t',path.x');
                 u0 = Traject(path.t',path.u');

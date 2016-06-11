@@ -1,5 +1,5 @@
 function [ac_inward, errTrans] = computeInwardJoiningFunnel(sysArray,reg,regDefl,regBnd,aut,acTrans,indexState,options)
-% Construct inward-facing funnels joining together all transition funnel
+% Construct "inward-facing" funnels joining together all transition funnel
 % combinations that enter and exit a particular state.
 %
 
@@ -24,9 +24,6 @@ errTrans = [];
 regTrans.init = reg(aut.label{vertcat(aut.state{:}) == indexState});
 regTrans.goal = regTrans.init;
 regTrans.union = union(regTrans.init, regTrans.goal);
-
-% ==========================
-% Compute inward funnels
 
 funFail = true;
 
@@ -138,7 +135,7 @@ for funindx = 1:maxFunTrials
                     goalOutput = goalOutput(1:2);
 
                     disp('Computing nominal trajectory....')
-                    [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.init.v},[],[],[],[],initState,finalState,options.TstepRRT,sys,regTrans.init,acNext(jpost),options);
+                    [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.init.v},[],[],[],[],initState,finalState,sys,regTrans.init,acNext(jpost),options);
                                     %                 [path] = buildCtrlSpaceRRT(regBnd.v,{reg(aut.label{indexState}).v},{reg(aut.label{indexState}).v},acTrans{indexTransPre}.ellipsoid,[],[],[],initState,finalState,stepSize,sys,regBnd,acNext,options);
                     
                     x0 = Traject(path.t',path.x');

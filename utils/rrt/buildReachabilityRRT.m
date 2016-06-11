@@ -1,16 +1,8 @@
-function [path] = buildReachabilityRRT(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,qInit,qGoal,stepSize,sys,reg,ac,options)
+function [path] = buildReachabilityRRT(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,qInit,qGoal,sys,reg,ac,options)
 % BUILDREACHABILITYRRT: Computes a path from qInit to qGoal using RRT assuming a circular robot. 
 % Implements the reachability-based rejection sampling technique of Shkolnik, Walter, and Tedrake, '09 
 
 debug = true;
-
-maxNodes = 200;
-sampleSkipColl = 2;
-
-% Choose random points
-gaussWeight = 0.9;  % Weight [0-1] on Gaussian sampling biasing at qGoal
-% M = 0.1*eye(n);    % Covariance matrix
-M = diag([0.1, 0.1, 1]);    % Covariance matrix
 
 % Initialize the set V
 node = qInit;
@@ -29,10 +21,13 @@ path.u = [];
 if sys.sysparams.m > 1
     warning('m>1 is not yet supported; for now, the RRT will only build a reachability tree for the first input.')
 end
-% TODO: generalize to the hypercube (2^m reachability trees)
-nodeReach(1,:) = [1 addReachableNode(sys,qInit,sys.umin(1),stepSize,options)];
-nodeReach(2,:) = [1 addReachableNode(sys,qInit,sys.umax(1),stepSize,options)];
-newNodeCount = 2;
+
+qReach = computeNodesForAllMaximalActions(sys,qInit,options.TstepRRT,options);
+nodeReach = [];
+newNodeCount = size(qReach,1);
+for i = 1:newNodeCount
+    nodeReach = [nodeReach; [1 qReach(i,:)]];
+end
 
 %TODO: should we add additional goal containment checks with the reachability tree? note: this could seriously hurt the number of necessary computations! 
 
@@ -50,7 +45,7 @@ axis equal
 
 QinvBallTest = inv(sys.sysparams.Qf);
 
-for i = 1:maxNodes
+for i = 1:options.maxNodes
     disp(['RRT iteration: ',num2str(i)]);
     
 %     plotNewNode(node,edge,'k') % uncomment to plot- will slow things down
@@ -64,7 +59,7 @@ for i = 1:maxNodes
         tsum = 0;
         for ii = 1:length(nodeXU.t), tsum = tsum + length(nodeXU.t{ii}); end
         tmp = tsum - length(nodeXU.t{i-1}) + 1;
-        for k = 1:sampleSkipColl:length(t)
+        for k = 1:options.sampleSkipColl:length(t)
             %isect1(k) = checkIntersection(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,Xk(k,:),Hout,n,isCyclic,'allPts',ac,reg,sys);
 %             isect2(k) = checkIntersection4(ellBndInv11,Xk(k,:),Hout,n,isCyclic);
             isect2(k) = true;
@@ -89,13 +84,27 @@ for i = 1:maxNodes
             if isect2(k) % && k > 10 && k ~= length(t) 
                 
                 ballTest = ellipsoid(Xk(k,:)',QinvBallTest);  % construct a ball representing the expected funnel level set at the final point along the trajectory
-                if ac.funnelContainsEllipsoid(sys,ballTest,100) || debug
+                
+                if ~isempty(ac)
+                    acceptCriterion = ac.funnelContainsEllipsoid(sys,ballTest,100);
+                elseif ~isempty(reg)
+                    [H,K] = double(reg.p);
+                    hpp = hyperplane(H',K');
+                    
+                    [~,~,H] = sys.getRegNonRegStates([],Xk(k,:)',[]);
+                    ballTestProj = projection(ballTest,H(1:2,:)');
+
+                    acceptCriterion = ~any(intersect(ballTestProj,hpp,'u'));
+                else
+                    error('Unhandled exception. acceptCriterion must be defined by either supplying a goal atomic controller or a goal region.')
+                end
+                
+                if acceptCriterion || debug
                     inGoalSet = true;
                     nodeXU.t{i-1}(k+1:end) = [];
                     nodeXU.x{i-1}(k+1:end,:) = [];
                     nodeXU.u{i-1}(k+1:end,:) = [];
-                    k
-                    break,
+                    break
                 end
             end
         end
@@ -138,7 +147,7 @@ for i = 1:maxNodes
     end
     
     % If not, go fish
-    [qNew,t,Xk,Uk,nearI,nodeReach] = addNodeDynamicsReachability(vBound,vObs1,vObs2,qGoal,node,nodeReach,gaussWeight,M,stepSize,ac,reg,sys,options);
+    [qNew,t,Xk,Uk,nearI,nodeReach] = addNodeDynamicsReachability(vBound,vObs1,vObs2,qGoal,node,nodeReach,options.gaussWeight,options.M,options.TstepRRT,ac,reg,sys,options);
     if isempty(t) || isempty(qNew)
 %         disp('add node failed.')
         break
@@ -154,16 +163,13 @@ for i = 1:maxNodes
     edge = [edge; [nearI newI]];
     
     % update the reachability tree with the id of the RRT parent and qNew
-    qReachLB = addReachableNode(sys,qNew,sys.umin(1),stepSize,options);
-    qReachUB = addReachableNode(sys,qNew,sys.umax(1),stepSize,options);
+    qReach = computeNodesForAllMaximalActions(sys,qNew,options.TstepRRT,options);
     newNodeCount = 0;
-    if ~checkIntersection(vBound,vObs1,vObs2,[],[],[],[],qReachLB,'finalPt',[],reg,sys);
-        newNodeCount = newNodeCount + 1;
-        nodeReach = [nodeReach; [newI qReachLB]];
-    end
-    if ~checkIntersection(vBound,vObs1,vObs2,[],[],[],[],qReachUB,'finalPt',[],reg,sys);
-        newNodeCount = newNodeCount + 1;
-        nodeReach = [nodeReach; [newI qReachUB]];
+    for j = 1:size(qReach,1)
+        if ~checkIntersection(vBound,vObs1,vObs2,[],[],[],[],qReach,'finalPt',[],reg,sys);
+            newNodeCount = newNodeCount + 1;
+            nodeReach = [nodeReach; [newI qReach]];
+        end
     end
     if isempty(nodeReach)
 %         disp('No nodes left in the reachability graph! Cannot expand the tree.')
@@ -171,6 +177,30 @@ for i = 1:maxNodes
     end
 end
 disp('failed to construct RRT.')
+
+end
+
+function qNode = computeNodesForAllMaximalActions(sys,qNear,stepSize,options)
+
+nInputs = length(sys.umin);
+if nInputs ~= length(sys.umax), error('the properties umin and umax should be of the same size.'); end
+
+[~,bVec] = buildBinaryCube([],[],nInputs);
+
+qNode = [];
+for i = 1:size(bVec,1)
+    for j = 1:nInputs
+        U0(j) = 0;
+        if bVec(i,j) == -1
+            U0(j) = sys.umin(j);
+        elseif bVec(i,j) == 1
+            U0(j) = sys.umax(j);
+        end
+    end
+    
+    xNew = computeOpenLoopTrajectory(sys,qNear,U0,stepSize,options);
+    qNode = [qNode; xNew(end,:)];
+end
 
 end
 

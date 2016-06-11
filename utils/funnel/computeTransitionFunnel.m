@@ -1,6 +1,5 @@
 function [ac_trans, errTrans] = computeTransitionFunnel(sysArray,reg,regDefl,regBnd,aut,acTrans,iModeToPatch,iModeSuccessor,options)
-%
-% Reach operation -- construct transition funnels
+% Construct funnels for a transition of the state machine.
 %
 
 global ME
@@ -26,9 +25,6 @@ for itrans = 1:length(aut.trans)
 %     if iModeToPatch == aut.trans{itrans}(1) && iModeSuccessor == aut.trans{itrans}(2), break; end
     if iModeToPatch == aut.trans{itrans}(1) && ~isempty(intersect(iModeSuccessor,aut.trans{itrans}(2))), break; end
 end
-
-% ==========================
-% Compute transition funnels
 
 funFail = true;
 
@@ -104,15 +100,11 @@ for funindx = 1:maxFunTrials
             path = [initState; finalState];
             type = 'state';
             disp('Computing nominal trajectory....')
-            
-            % TODO: make it an option to fall back on RRT if the
-            % optional method 'dynamicsWaypointSteering' is not
-            % specified!
+
             if (ismethod(sys,'dynamicsWaypointSteering') && ismethod(sys,'steerToXYWaypoints'))
                 [u0,x0] = computeTrajectory(sys,initState,path,options,type);
             else
-                [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.goal.v},[],[],[],[],initState,finalState,options.TstepRRT,sys,regTrans.init,[],options);
-                
+                [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.goal.v},[],[],[],[],initState,finalState,sys,regTrans.goal,[],options);
                 x0 = Traject(path.t',path.x');
                 u0 = Traject(path.t',path.u');
             end

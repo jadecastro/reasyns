@@ -14,9 +14,8 @@ sysparams(1).v = 0.08;
 sysparams(1).max_w = 0.13*3;  % maximum angular velocity of the robot
 sysparams(1).limsNonRegState = [-pi; pi];
 sysparams(1).isCyclic = [0 0 1]';
-%sysparams(1).H = eye(2);
-sysparams(1).l = 1.0;  % for car model
-sysparams(1).x_look = 1;
+
+% Waypoint steering controller parameters
 sysparams(1).e = 0.1;
 sysparams(1).closeEnough = 0.2;
 sysparams(1).distAccept = 0.1;
@@ -34,8 +33,8 @@ options.Nterm = 10;  % number of consecutive failures before coverage terminates
 options.coverPct = 0.8;
 options.deflationAmount = 0.05; % deflate each region by this amount (in meters) for initial/goal point sampling.
 
+% Define the system 
 sys(1) = UnicyclePlant(sysparams);
-
 
 % Number of funnels/controllers for each state
 options.maxFunnelsTrans = 1;
@@ -47,8 +46,15 @@ options.maxFunnelsReactJoin = 10;
 options.TstepTraj = 0.02;
 options.Tfin = 1000;  % Absolute cutoff time
 options.maxTrajLength = 200/options.TstepTraj; 
-options.TstepRRT = 0.2;
 
+% RRT parameters
+options.TstepRRT = 0.2;
+options.maxNodes = 200;
+options.sampleSkipColl = 2;
+options.gaussWeight = 0.9;  % Weight [0-1] on Gaussian sampling biasing at qGoal
+options.M = diag([0.1, 0.1, 1]);    % Covariance matrix
+
+% Final rho
 options.rhof = .5;
 
 % Downsampling
