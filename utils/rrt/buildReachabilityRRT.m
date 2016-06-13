@@ -199,7 +199,8 @@ for i = 1:size(bVec,1)
     end
     
     xNew = computeOpenLoopTrajectory(sys,qNear,U0,stepSize,options);
-    qNode = [qNode; xNew(end,:)];
+    t = getTimeVec(xNew);
+    qNode = [qNode; double(xNew,t(end))];
 end
 
 end

@@ -7,13 +7,19 @@ function [randPt] = getCenterRand(sys,reg,ac_trans,varargin)
 
 n = sys.sysparams.n;
 limsNonRegState = sys.sysparams.limsNonRegState;
+stateLimits = sys.sysparams.stateLimits;
 isCyclic = sys.sysparams.isCyclic;
 Qrand = sys.sysparams.Qrand;
 
 minNonRegStates = limsNonRegState(1,:);
 maxNonRegStates = limsNonRegState(2,:);
+minStates = stateLimits(1,:);
+maxStates = stateLimits(2,:);
 
 [idxRegStates,idxNonRegStates] = getRegNonRegStates(sys);
+
+figure(90), plot(reg)
+hold on
 
 if isempty(varargin)
     tmpNonRegStates = minNonRegStates + (maxNonRegStates - minNonRegStates).*rand(1,length(idxNonRegStates));
@@ -49,7 +55,7 @@ for indx = 2:100
             if res
                 break
             else
-                tmpNonRegStates = minNonRegStates + (maxNonRegStates - minNonRegStates).*rand(length(idxNonRegStates),1);
+                tmpNonRegStates = minNonRegStates' + (maxNonRegStates - minNonRegStates)'.*rand(length(idxNonRegStates),1);
             end
         else
             break
@@ -59,6 +65,32 @@ for indx = 2:100
         tmpRegStates = 1/2*(maxReg + minReg)' + Qrand(idxRegStates,idxRegStates)*randn(length(idxRegStates),1);
     else
         tmpRegStates = qCenter(idxRegStates)' + Qrand(idxRegStates,idxRegStates)*randn(length(idxRegStates),1);
+    end
+end
+
+if indx == 100
+    
+    tmpStates = minStates' + (maxStates - minStates)'.*rand(n,1);
+    
+    for indx = 2:100
+        isect = isinside(reg,sys,tmpStates);
+        if isect
+            if ~isempty(ac_trans)
+                res = true;
+                for i = 1:length(ac_trans)
+                    res = res & isinternal(ac_trans(i),tmpStates,'u');
+                end
+                if res
+                    break
+                end
+            else
+                break
+            end
+        end
+        
+        tmpStates = minStates' + (maxStates - minStates)'.*rand(n,1);
+        tmpRegStates = sys.state2SEconfig([],tmpStates,[]);
+        figure(90), plot(tmpRegStates(1),tmpRegStates(2),'ro')
     end
 end
 

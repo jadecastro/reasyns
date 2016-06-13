@@ -108,7 +108,6 @@ for funindx = 1:maxFunTrials
                 x0 = Traject(path.t',path.x');
                 u0 = Traject(path.t',path.u');
             end
-            
                 
             figure(500), hold on, plot(x0,[],500)
             

@@ -38,10 +38,11 @@ classdef TwoDOFManipulatorPlant < Manipulator
             %        { 'lc2' }));
             obj = setParamLimits(obj,zeros(obj.getParamFrame.dim,1));
             
-            sysparams.n = getNumStates(obj); % number of states
-            sysparams.m = getNumInputs(obj); % number of inputs
-            sysparams.limsNonRegState = [-pi; pi];
-            sysparams.isCyclic = [0 0 1]';
+            obj.sysparams.n = getNumStates(obj); % number of states
+            obj.sysparams.m = getNumInputs(obj); % number of inputs
+            obj.sysparams.limsNonRegState = [-10 -10; 10 10];
+            obj.sysparams.stateLimits = [-pi -10 -pi -10; pi 10 pi 10];
+            obj.sysparams.isCyclic = [1 0 1 0]';
             
         end
         
@@ -85,9 +86,9 @@ classdef TwoDOFManipulatorPlant < Manipulator
         end
         
         function y = state2SEconfig(obj,t,x,u)
-
             y(1) = obj.lc1*cos(x(1)) + obj.lc2*cos(x(3));
             y(2) = obj.lc1*sin(x(1)) + obj.lc2*sin(x(3));
+            y = y';
         end
         
         function n = getNumPositions(obj)

@@ -40,15 +40,19 @@ for idx = 1:length(A)
         for currReg = 1:length(regionNames)
             Key   = ['rob1_',regionNames{currReg},'_rc:'];
             Index = strfind(A{idx}, Key);
-            if sscanf(A{idx}(Index(1) + length(Key):end), '%g', 1)
-                break
+            if ~isempty(Index)
+                if sscanf(A{idx}(Index(1) + length(Key):end), '%g', 1)
+                    break
+                end
             end
         end
         for nextReg = 1:length(regionNames)
             Key   = ['rob1_',regionNames{nextReg},':'];
             Index = strfind(A{idx}, Key);
-            if sscanf(A{idx}(Index(1) + length(Key):end), '%g', 1)
-                break
+            if ~isempty(Index)
+                if sscanf(A{idx}(Index(1) + length(Key):end), '%g', 1)
+                    break
+                end
             end
         end
     end
