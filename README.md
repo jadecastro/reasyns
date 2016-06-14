@@ -72,9 +72,11 @@ System models are encoded in the format of `DrakeSystem` objects, of which there
 1) Construct a class derived from `DrakeSystem` or one of its subclasses.  The class should include the following parameters:
 - sysparams.n : number of states
 - sysparams.m : number of inputs
+
 And the following methods:
 - dynamics
 - getInitialState
 - state2SEconfig
+
 Refer to the examples (e.g. `UnicyclePlant.m`) for details.
 2) Create symbolic gradients by running the function `generateGradients` using the new model. Type `help generateGradients` for details.
