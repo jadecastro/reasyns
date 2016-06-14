@@ -34,7 +34,7 @@ Upon running `setup.py`, the following dependencies will be automatically instal
      If Mosek is not installed, then SeDuMi is used instead as the optimization engine.
      
 Note: 
-- MPT and Ellipsoids come bundled with their own versions of SeDuMi, which do not work with Drake or reasyns. The paths are removed within `reasynsPath.m` (if you've installed these toolboxes in any other location, be sure to change their paths within `reasynsPath.m`).
+- MPT and Ellipsoids come bundled with their own versions of SeDuMi, which do not work with Drake or reasyns.  The paths within `reasyns_init.m` are reflective of this.
 
 Running an Example
 ==================
