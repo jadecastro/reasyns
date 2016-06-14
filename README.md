@@ -12,9 +12,9 @@ Installation
 
 This package requires MATLAB 2012b or later (setup requires python 2.7 or later). 
 
-Installation is done by running the setup `python setup.py` inside the project directory.
+Installation is done by running the setup script using the command `python setup.py` inside the project directory.
 
-The following dependencies will be automatically installed within the `\lib` folder in the project directory and an initialization script, `reasyns_init.m`, will be created.  If any of the dependencies exist, then the installation can be skipped, and the script will then simply create `reasyns_init.m`.
+Upon running `setup.py`, the following dependencies will be automatically installed within the `\lib` folder in the project directory and an initialization script, `reasyns_init.m`, will be created.  If any of the dependencies exist, then the installation can be skipped, and the script will then simply create `reasyns_init.m`.
 
 1) SeDuMi (version 1.3 tested):
      http://sedumi.ie.lehigh.edu/?page_id=58
@@ -37,15 +37,44 @@ Note:
 - MPT and Ellipsoids come bundled with their own versions of SeDuMi, which do not work with Drake or reasyns. The paths are removed within `reasynsPath.m` (if you've installed these toolboxes in any other location, be sure to change their paths within `reasynsPath.m`).
 
 Running an Example
+==================
+
+We will refer to the included `box_pushing` example (in the `/examples` directory) as a use case for illustrating how to synthesize and execute controllers. 
+
+Synthesis
+---------
+1) Set up the path by running `reasyns_init.m`.
+2) Run `box_pushing.m` to load the synthesis settings and system model into the workspace.
+3) Run the synthesis engine,
+```
+synthesizeAtomicControllers(sys, filePath, configAndProblemDomainName, options)
+```
+4) After a set of funnels has been found satisfying the task, the synthesizer will prompt whether or not to continue generating funnels. Choosing this option will increase funnel coverage over the state space, but could take considerable additional time.
+
+Note that the controllers are saved within `.mat` files inside the `reasyns_controllers` directory within the `/box_pushing` directory.
+
+Execution
+---------
+Execution of the controller requires LTLMoP; in particular, [this branch](https://github.com/jadecastro/LTLMoP/tree/reasyns_fast) of LTLMoP.  
+1) Set up the configuration file.  For the `box_pushing` example, this only requires that the name of the desired controller be inserted as an argument in the MotionControllerHandler field within the `configs/box_pushing.config` file.  
+2) From within the `LTLMoP/src` folder, LTLMoP can be called by typing `python specEditor.py <path/to/your/example>`.
+
+Creating an Example
 ===================
 
-To run an example, first set up the path, `reasyns_init.m`, then load an example into the workspace. Next, load the parameters and system model (for the included example, this may be done by running `box_pushing.m`), and then run the synthesis engine `synthesizeAtomicControllers(sys, filePath, configAndProblemDomainName, options)`. 
+High-Level Controller
+---------------------
+Reasyns requires a high-level controller from which a palette of atomic controllers will be synthesized.  Examples (`/examples` directory) require a region file (`.regions`), a configuration file (`.config`), and an explicit-state automaton file (`.aut`) in JTLV format.  These files may be generated using LTLMoP (refer to [this tutorial](https://github.com/VerifiableRobotics/LTLMoP/wiki/Tutorial) for information on getting started). 
 
-Note that each example in the `/examples` directory requires a region file (`.regions`), a configuration file (`.config`), and an automaton file (`.aut`).  These are of the same format as those generated using LTLMoP (refer to [this tutorial](https://github.com/VerifiableRobotics/LTLMoP/wiki/Tutorial) for information on getting started). 
-
-System models are encoded in the format of "Drake System" objects, of which there are several examples included within Drake.  The `DubinsCar.m` class located in the `/models` folder contains one such example.
-
-The controllers are saved within `.mat` files contained within a folder called `<example path>/reasyns_controllers`.  To use a controller, simply input the name of the desired `.mat` file as an argument in the MotionControllerHandler field.  Refer to the `box_pushing.config` example for specifics.
-
-Finally, execution of the controller requires [this branch](https://github.com/jadecastro/LTLMoP/tree/reasyns_fast) of LTLMoP.  From the `LTLMoP/src` folder, LTLMoP can be called by typing `python specEditor.py <path/to/your/example>`.
-
+System Model
+------------
+System models are encoded in the format of `DrakeSystem` objects, of which there are several examples included within Drake.  The `DubinsCar.m` class located in the `/models` folder contains one such example.
+1) Construct a class derived from `DrakeSystem` or one of its subclasses.  The class should include the following parameters:
+- sysparams.n : number of states
+- sysparams.m : number of inputs
+And the following methods:
+- dynamics
+- getInitialState
+- state2SEconfig
+Refer to the examples (e.g. `UnicyclePlant.m`) for details.
+2) Create symbolic gradients by running the function `generateGradients` using the new model. Type `help generateGradients` for details.
