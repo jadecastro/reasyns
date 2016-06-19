@@ -48,7 +48,7 @@ options.Tfin = 1000;  % Absolute cutoff time
 options.maxTrajLength = 200/options.TstepTraj; 
 
 % RRT parameters
-options.TstepRRT = 0.2;
+options.pathLengthRRT = 0.2;
 options.maxNodes = 200;
 options.sampleSkipColl = 2;
 options.gaussWeight = 0.9;  % Weight [0-1] on Gaussian sampling biasing at qGoal

@@ -22,7 +22,8 @@ for i = 1:maxTrials %while isect
         if rand < gaussWeight
             qRand = randn(1,n)*chol(M) + qGoal;
         else
-            qRand = [min(vBound) -pi] + [(max(vBound) - min(vBound)) 2*pi].*rand(1,n);
+            % qRand = [min(vBound) -pi] + [(max(vBound) - min(vBound)) 2*pi].*rand(1,n);
+            qRand = getCenterRand(sys,reg,[]);
         end
         
         % Set qNear as the nearest coordinate in V (in configuration space) to qRand
@@ -78,8 +79,12 @@ for i = 1:maxTrials %while isect
             
             if length(t) > 1
                 
+                Xkconfig = [];
+                for j = 1:size(Xk,1)
+                    Xkconfig = [Xkconfig; sys.state2SEconfig([],Xk(j,:),[])'];
+                end
                 figure(3)
-                plot(Xk(:,1),Xk(:,2),'k')
+                plot(Xkconfig(:,1),Xkconfig(:,2),'k')
                 drawnow
                 
                 qNew = Xk(end,:);
@@ -87,7 +92,9 @@ for i = 1:maxTrials %while isect
                 % Test whether the path from qNear to qNew is in free space
                 isect = checkIntersection(vBound,vObs1,vObs2,[],[],[],[],Xk,'finalPt',[],reg,sys);
                 
-                if ~isect, break, end
+                if ~isect, 
+                    break, 
+                end
             end
         end
     catch ME
@@ -126,15 +133,17 @@ for i = 1:size(bVec,1)
         end
     end
     
-    xTest{i} = computeOpenLoopTrajectory(sys,qNear,U0,stepSize,options);
+    xTraj{i} = computeOpenLoopTrajectory(sys,qNear,U0,stepSize,options);
+    xTest{i} = double(xTraj{i},getTimeVec(xTraj{i}))';
     U0trial(i,:) = U0';
     
-    distTrial(i) = norm(sys.state2SEconfig([],xTest{i}(end,:),[]) - xyRand);
+    distTrial(i) = norm(sys.state2SEconfig([],xTest{i}(end,:),[]) - xyRand');
 end
 
 [~,iMin] = min(distTrial);
 
-x0 = xTest{iMin};
-u0 = repmat(U0trial(iMin,:),size(x0,1),1);
+x0 = xTraj{iMin};
+t = getTimeVec(x0);
+u0 = Traject([0; t(end)],[U0trial(iMin,:); U0trial(iMin,:)]);
 
 end

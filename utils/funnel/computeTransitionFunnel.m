@@ -80,7 +80,7 @@ for funindx = 1:maxFunTrials
     end
 %     initState
     initOutput = sys.state2SEconfig([],initState,[]);
-    initOutput = initOutput(1:2);
+    initOutput = initOutput(1:2)
     
 %     regSafeSG = reg.getRegTrans(regBnd,aut,itrans);
     %         regSafeG = getReg(reg,regBnd,aut,iModeSuccessor);
@@ -94,7 +94,7 @@ for funindx = 1:maxFunTrials
             
             finalState = getCenterRand(sys,regDefl(aut.label{vertcat(aut.state{:}) == repmat(iModeSuccessor,length(aut.state),1)}),[]); %,vReg{aut.label{iModeToPatch}},regAvoidS.vBN,vBnd{1}, [],[],Hout,n,limsNonRegState,'rand',Qrand);
             goalOutput = sys.state2SEconfig([],finalState,[]);
-            goalOutput = goalOutput(1:2);
+            goalOutput = goalOutput(1:2)
             
 %             finalState
             path = [initState; finalState];
@@ -104,7 +104,7 @@ for funindx = 1:maxFunTrials
             if (ismethod(sys,'dynamicsWaypointSteering') && ismethod(sys,'steerToXYWaypoints'))
                 [u0,x0] = computeTrajectory(sys,initState,path,options,type);
             else
-                [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.goal.v},[],[],[],[],initState,finalState,sys,regTrans.goal,[],options);
+                [path] = buildReachabilityRRT(regBnd.v,{regTrans.init.v},{regTrans.goal.v},[],[],[],[],initState,finalState,sys,regTrans,[],options);
                 x0 = Traject(path.t',path.x');
                 u0 = Traject(path.t',path.u');
             end
@@ -126,15 +126,16 @@ for funindx = 1:maxFunTrials
             %                     noFinalEllipsoidFunnelViolation = acNext.funnelContainsEllipsoid(sys,ballTest,100);
             %                 end
             
-            [H,K] = double(regTrans.goal.p);
-            hpp = hyperplane(H',K');
+            ballTestProj = reg.projection(sys,ballTest);
             
-            [~,~,H] = sys.getRegNonRegStates([],double(x0,ttmp(end)),[]);
-            ballTestProj = projection(ballTest,H(1:2,:)');
-            
-            figure(500), plot(ballTestProj,'g',5)
-            
-            noFinalEllipsoidRegionViolation = ~any(intersect(ballTestProj,hpp,'u'));
+            noFinalEllipsoidRegionViolation = true;
+            if ~isempty(ballTestProj)
+                figure(500), plot(ballTestProj,'g',5)
+                
+                [H,K] = double(regTrans.goal.p);
+                hpp = hyperplane(H',K');
+                noFinalEllipsoidRegionViolation = ~any(intersect(ballTestProj,hpp,'u'));
+            end
             
             if noInvarViolation && noFinalPointViolation && noFinalEllipsoidFunnelViolation && noFinalEllipsoidRegionViolation ...
                     && length(x0) > 1 && length(x0) < maxTrajLength,

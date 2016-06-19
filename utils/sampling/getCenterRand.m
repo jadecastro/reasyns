@@ -98,9 +98,13 @@ if indx == 100
     error('Can''t find a non-colliding point.')
 end
 
-randPt = zeros(1,n);
-randPt(idxRegStates) = tmpRegStates; 
-randPt(idxNonRegStates) = tmpNonRegStates;
+if exist('tmpStates')
+    randPt = tmpStates';
+else
+    randPt = zeros(1,n);
+    randPt(idxRegStates) = tmpRegStates;
+    randPt(idxNonRegStates) = tmpNonRegStates;
+end
 
 if isempty(randPt)
     error('Cannot obtain a point.')

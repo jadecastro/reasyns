@@ -4,6 +4,14 @@ function [path] = buildReachabilityRRT(vBound,vObs1,vObs2,ellBndInv11,ellBndInv2
 
 debug = true;
 
+if isstruct(reg)
+    regUnion = reg.union;
+    regGoal = reg.goal;
+else
+    regUnion = reg;
+    regGoal = reg;
+end
+
 % Initialize the set V
 node = qInit;
 Xk = qInit;
@@ -22,7 +30,7 @@ if sys.sysparams.m > 1
     warning('m>1 is not yet supported; for now, the RRT will only build a reachability tree for the first input.')
 end
 
-qReach = computeNodesForAllMaximalActions(sys,qInit,options.TstepRRT,options);
+qReach = computeNodesForAllMaximalActions(sys,qInit,options.pathLengthRRT,options);
 nodeReach = [];
 newNodeCount = size(qReach,1);
 for i = 1:newNodeCount
@@ -39,7 +47,8 @@ for j = 1:length(ellCInv11)
     tmpEllCInv11{j,1} = ellCInv11{j};
 end
 
-figure(3),
+figure(3)
+plot(regUnion)
 hold on
 axis equal
 
@@ -49,7 +58,7 @@ for i = 1:options.maxNodes
     disp(['RRT iteration: ',num2str(i)]);
     
 %     plotNewNode(node,edge,'k') % uncomment to plot- will slow things down
-    plotNewReachNode(node,nodeReach,newNodeCount,'g') % uncomment to plot- will slow things down
+    plotNewReachNode(sys,node,nodeReach,newNodeCount,'g') % uncomment to plot- will slow things down
     
     % Test whether any elements in V are in the goal region (TODO: for now-- must be at least two points in the vector)
     if i > 1 && edge(end,1) ~= 1  % want at least 1 segment!
@@ -87,19 +96,20 @@ for i = 1:options.maxNodes
                 
                 if ~isempty(ac)
                     acceptCriterion = ac.funnelContainsEllipsoid(sys,ballTest,100);
-                elseif ~isempty(reg)
-                    [H,K] = double(reg.p);
-                    hpp = hyperplane(H',K');
+                elseif ~isempty(regGoal)
+                    acceptCriterion = regGoal.isinside(sys,Xk(k,:)');
                     
-                    [~,~,H] = sys.getRegNonRegStates([],Xk(k,:)',[]);
-                    ballTestProj = projection(ballTest,H(1:2,:)');
-
-                    acceptCriterion = ~any(intersect(ballTestProj,hpp,'u'));
+                    ballTestProj = regGoal.projection(sys,ballTest);
+                    if ~isempty(ballTestProj)
+                        [H,K] = double(regGoal.p);
+                        hpp = hyperplane(H',K');
+                        acceptCriterion = ~any(intersect(ballTestProj,hpp,'u'));
+                    end    
                 else
                     error('Unhandled exception. acceptCriterion must be defined by either supplying a goal atomic controller or a goal region.')
                 end
                 
-                if acceptCriterion || debug
+                if acceptCriterion
                     inGoalSet = true;
                     nodeXU.t{i-1}(k+1:end) = [];
                     nodeXU.x{i-1}(k+1:end,:) = [];
@@ -147,7 +157,7 @@ for i = 1:options.maxNodes
     end
     
     % If not, go fish
-    [qNew,t,Xk,Uk,nearI,nodeReach] = addNodeDynamicsReachability(vBound,vObs1,vObs2,qGoal,node,nodeReach,options.gaussWeight,options.M,options.TstepRRT,ac,reg,sys,options);
+    [qNew,t,Xk,Uk,nearI,nodeReach] = addNodeDynamicsReachability(vBound,vObs1,vObs2,qGoal,node,nodeReach,options.gaussWeight,options.M,options.pathLengthRRT,ac,regUnion,sys,options);
     if isempty(t) || isempty(qNew)
 %         disp('add node failed.')
         break
@@ -163,12 +173,12 @@ for i = 1:options.maxNodes
     edge = [edge; [nearI newI]];
     
     % update the reachability tree with the id of the RRT parent and qNew
-    qReach = computeNodesForAllMaximalActions(sys,qNew,options.TstepRRT,options);
+    qReach = computeNodesForAllMaximalActions(sys,qNew,options.pathLengthRRT,options);
     newNodeCount = 0;
     for j = 1:size(qReach,1)
-        if ~checkIntersection(vBound,vObs1,vObs2,[],[],[],[],qReach,'finalPt',[],reg,sys);
+        if ~checkIntersection(vBound,vObs1,vObs2,[],[],[],[],qReach,'finalPt',[],regUnion,sys);
             newNodeCount = newNodeCount + 1;
-            nodeReach = [nodeReach; [newI qReach]];
+            nodeReach = [nodeReach; [newI qReach(j,:)]];
         end
     end
     if isempty(nodeReach)
@@ -200,7 +210,7 @@ for i = 1:size(bVec,1)
     
     xNew = computeOpenLoopTrajectory(sys,qNear,U0,stepSize,options);
     t = getTimeVec(xNew);
-    qNode = [qNode; double(xNew,t(end))];
+    qNode = [qNode; double(xNew,t(end))'];
 end
 
 end
@@ -216,14 +226,17 @@ drawnow
 
 end
 
-function plotNewReachNode(node,nodeReach,newNodeCount,color)
+function plotNewReachNode(sys,node,nodeReach,newNodeCount,color)
 % Plot the two most recent reachability nodes in the current figure (NB: does not update the display due to pruning of the existing tree!) 
 
 figure(3)
 hold on
+
 for i = 1:newNodeCount
-    plot(nodeReach(end-i+1,2),nodeReach(end-i+1,3),[color,'o'])
-    plot([node(nodeReach(end-i+1,1),1) nodeReach(end-i+1,2)],[node(nodeReach(end-i+1,1),2) nodeReach(end-i+1,3)],color)
+    q1 = sys.state2SEconfig([],node(nodeReach(end-i+1,1),:),[]);
+    q2 = sys.state2SEconfig([],nodeReach(end-i+1,2:end),[]);
+    plot(q2(1),q2(2),[color,'o'])
+    plot([q1(1) q2(1)],[q1(2) q2(2)],color)
 end
 drawnow
 

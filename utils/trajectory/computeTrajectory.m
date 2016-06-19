@@ -125,18 +125,23 @@ function [value,isterminal,direction] = eventsPathLength(t,x)
 % Locate the time when height passes through zero in a decreasing direction
 % and stop integration.
 
-global xNormCum sysGlob stepSizeGlob yLastGlob
+global xNormCum sysGlob stepSizeGlob yLastGlob tLastGlob
 
 y = sysGlob.state2SEconfig([],x,[]);
 
-xNormCum = norm(y(1:2) - yLastGlob(1:2)) + xNormCum;
+if (t - tLastGlob) > 0
+    xNormCum = xNormCum + (norm(y(1:2) - yLastGlob(1:2)));
+else
+    xNormCum = xNormCum - (norm(y(1:2) - yLastGlob(1:2)));
+end
 
 % If robot is within acceptance radius, index to next waypoint
 value = xNormCum - stepSizeGlob;
 
 isterminal = 1; % stop the integration
-direction = 1; % positive direction
+direction = 0; % positive direction
 
 yLastGlob = y;
+tLastGlob = t;
 
 end

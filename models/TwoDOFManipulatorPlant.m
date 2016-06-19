@@ -21,7 +21,7 @@ classdef TwoDOFManipulatorPlant < Manipulator
     methods
         function obj = TwoDOFManipulatorPlant()
             obj = obj@Manipulator(2,1);
-            obj = setInputLimits(obj,-10,10);
+            obj = setInputLimits(obj,-0.1,0.1);
             
             obj = setInputFrame(obj,CoordinateFrame('AcrobotInput',1,'u',{'tau'}));
             obj = setStateFrame(obj,CoordinateFrame('AcrobotState',4,'x',{'theta1','theta2','theta1dot','theta2dot'}));

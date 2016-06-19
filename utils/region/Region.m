@@ -148,7 +148,12 @@ classdef Region < handle
             
             p = union([reg1.p,reg2.p]);
             verts = extractOrderedVertsFromPolytope(p);
-            reg = Region([reg1.name,'_union_',reg2.name],verts,reg1.calibMatrix);
+            
+            reg = Region([reg1.name,'_union_',reg2.name],verts);
+            
+            % prevent re-scaling the scaled vertices
+            reg.calibMatrix = reg1.calibMatrix;
+            reg.isScaled = reg1.isScaled;
         end
         
         function reg = regiondiff(reg1,reg2)
@@ -184,6 +189,22 @@ classdef Region < handle
 %                     keyboard
 %                 end
                 if ~isect
+                    return
+                end
+            end
+        end
+        
+        function ellProj = projection(obj,sys,ell)
+            
+            ellProj = [];
+            
+            [X,~] = double(ell);            
+            [~,~,H] = getRegNonRegStates(sys,[],X,[]);
+
+            try
+                ellProj = projection(ell,H(1:2,:)');
+            catch ME
+                if ~isempty(strfind(ME.message,'PROJECTION'))  % The state-to-output mapping is non-ortogonal; return empty
                     return
                 end
             end
