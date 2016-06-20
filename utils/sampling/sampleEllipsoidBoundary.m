@@ -1,4 +1,4 @@
-function [ex] = ellipsoidrand(c,Q,d)
+function [ex] = sampleEllipsoidBoundary(c,Q,d)
 
 if length(c) ~= length(Q)
     error('Dimensions of c and Q must be the same!')

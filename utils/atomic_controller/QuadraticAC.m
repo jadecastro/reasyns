@@ -217,13 +217,6 @@ classdef QuadraticAC < PolynomialAC
             
         end
         
-%         function sample
-%         end
-        
-        function ac = append(ac)
-            error('wip')
-        end
-        
         function obj = merge(obj1,obj2)
             %
             actmp = merge@PolynomialAC(obj1,obj2);

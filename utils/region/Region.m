@@ -8,6 +8,9 @@ classdef Region < handle
         name;
         v;
         p;
+        
+        hpp;
+        
         mssExt;
         mssInt;
         mssBnd;
@@ -194,6 +197,37 @@ classdef Region < handle
             end
         end
         
+        function [res, xFail] = regionContainsEllipsoid(obj,sys,ell)
+            % Checks whether or not the funnel contains a given ellipsoid.
+            % Returns 'true' if contained and 'false' otherwise.
+            
+            xFail = [];
+            
+            ellTestProj = obj.projection(sys,ell);  % Returns empty if not an orthogonal basis (often the case if nonlinear)
+            
+            if ~isempty(ellTestProj) && sys.isOutputLinear
+                res = ~any(intersect(ellTestProj,obj.hpp,'u'));
+                
+            else  % use a sample-based approximation with no guarantee that a declared containment is actually true
+                d = 100;
+                [c,Q] = double(ell);
+                x = sampleEllipsoidBoundary(c,Q,d);
+                
+                res = true;
+                
+                % Loop over all randomly-selected points
+                for i = 1:size(x,1)
+                    if ~obj.isinside(sys,x(i,:))
+                        res = false;
+                        xFail = [xFail; x(i,:)];
+                        if nargout < 2
+                            return;
+                        end
+                    end
+                end
+            end
+        end
+        
         function ellProj = projection(obj,sys,ell)
             
             ellProj = [];
@@ -318,9 +352,9 @@ classdef Region < handle
             if false
                 numOrigVerts = size(v,1);
                 indxNC = [];
-                h = gethyperplane(obj);
+                obj.hpp = gethyperplane(obj);
                 for i = 1:numOrigVerts
-                    if ~any(intersect(ellipsoid(v(i,:)',eye(2)*1e-20),h)), indxNC = [indxNC; i]; end
+                    if ~any(intersect(ellipsoid(v(i,:)',eye(2)*1e-20),obj.hpp)), indxNC = [indxNC; i]; end
                 end
                 p1 = [];
                 for i = 1:numOrigVerts

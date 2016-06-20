@@ -21,7 +21,7 @@ classdef TwoDOFManipulatorPlant < Manipulator
     methods
         function obj = TwoDOFManipulatorPlant()
             obj = obj@Manipulator(2,1);
-            obj = setInputLimits(obj,-0.1,0.1);
+            obj = setInputLimits(obj,-1,1);
             
             obj = setInputFrame(obj,CoordinateFrame('AcrobotInput',1,'u',{'tau'}));
             obj = setStateFrame(obj,CoordinateFrame('AcrobotState',4,'x',{'theta1','theta2','theta1dot','theta2dot'}));
@@ -40,9 +40,10 @@ classdef TwoDOFManipulatorPlant < Manipulator
             
             obj.sysparams.n = getNumStates(obj); % number of states
             obj.sysparams.m = getNumInputs(obj); % number of inputs
-            obj.sysparams.limsNonRegState = [-10 -10; 10 10];
-            obj.sysparams.stateLimits = [-pi -10 -pi -10; pi 10 pi 10];
+            obj.sysparams.limsNonRegState = [-100 -100; 100 100];
+            obj.sysparams.stateLimits = [-pi -100 -pi -100; pi 100 pi 100];
             obj.sysparams.isCyclic = [1 0 1 0]';
+            obj.sysparams.isOutputLinear = 0;
             
         end
         

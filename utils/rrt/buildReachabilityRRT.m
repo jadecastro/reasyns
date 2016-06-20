@@ -57,7 +57,7 @@ QinvBallTest = inv(sys.sysparams.Qf);
 for i = 1:options.maxNodes
     disp(['RRT iteration: ',num2str(i)]);
     
-%     plotNewNode(node,edge,'k') % uncomment to plot- will slow things down
+    %     plotNewNode(node,edge,'k') % uncomment to plot- will slow things down
     plotNewReachNode(sys,node,nodeReach,newNodeCount,'g') % uncomment to plot- will slow things down
     
     % Test whether any elements in V are in the goal region (TODO: for now-- must be at least two points in the vector)
@@ -70,7 +70,7 @@ for i = 1:options.maxNodes
         tmp = tsum - length(nodeXU.t{i-1}) + 1;
         for k = 1:options.sampleSkipColl:length(t)
             %isect1(k) = checkIntersection(vBound,vObs1,vObs2,ellBndInv11,ellBndInv21,ellCInv11,ellCInv21,Xk(k,:),Hout,n,isCyclic,'allPts',ac,reg,sys);
-%             isect2(k) = checkIntersection4(ellBndInv11,Xk(k,:),Hout,n,isCyclic);
+            %             isect2(k) = checkIntersection4(ellBndInv11,Xk(k,:),Hout,n,isCyclic);
             isect2(k) = true;
          
             for acidx = 1:length(ac)
@@ -79,17 +79,19 @@ for i = 1:options.maxNodes
                     isect2(k) = true;
                 end
             end
-            if isect2(k)
-%                 disp('found an intersection with the goal set!')
-%                 keyboard
-            else
-%                 disp('no intersection.')
-            end
+            %             if isect2(k)
+            %                 disp('found an intersection with the goal set!')
+            %                 keyboard
+            %             else
+            %                 disp('no intersection.')
+            %             end
+            
             %isectBnd = checkIntersection4(ellBndInv11,Xk,Hout,n,isCyclic)  % isect == true --> for all m,n there is some n for which the point is outside for all m, where ell{m,n}.
             %isectC = checkIntersection4(tmpEllCInv11,Xk,Hout,n,isCyclic)  % isect == true --> for all m,n there is some n for which the point is outside for all m, where ell{m,n}.
             %isect = isectBnd && isectC;
             % TODO: which is point in the curve which we consider the last one inside?
-%             if ~isect1(k) && ~isect2(k) && k ~= length(t) && k > 10
+            
+            %             if ~isect1(k) && ~isect2(k) && k ~= length(t) && k > 10
             if isect2(k) % && k > 10 && k ~= length(t) 
                 
                 ballTest = ellipsoid(Xk(k,:)',QinvBallTest);  % construct a ball representing the expected funnel level set at the final point along the trajectory
@@ -97,14 +99,8 @@ for i = 1:options.maxNodes
                 if ~isempty(ac)
                     acceptCriterion = ac.funnelContainsEllipsoid(sys,ballTest,100);
                 elseif ~isempty(regGoal)
-                    acceptCriterion = regGoal.isinside(sys,Xk(k,:)');
-                    
-                    ballTestProj = regGoal.projection(sys,ballTest);
-                    if ~isempty(ballTestProj)
-                        [H,K] = double(regGoal.p);
-                        hpp = hyperplane(H',K');
-                        acceptCriterion = ~any(intersect(ballTestProj,hpp,'u'));
-                    end    
+                    % acceptCriterion = regGoal.isinside(sys,Xk(k,:)');
+                    acceptCriterion = regGoal.regionContainsEllipsoid(sys,ballTest);
                 else
                     error('Unhandled exception. acceptCriterion must be defined by either supplying a goal atomic controller or a goal region.')
                 end
@@ -123,7 +119,7 @@ for i = 1:options.maxNodes
 
     %     if ~isect,
     if inGoalSet,
-%         plotNewNode(node,edge,'r')
+        %         plotNewNode(node,edge,'r')
         
         % Move backward from qGoal to qInit via edges to find the path
         path.node = [];
@@ -157,7 +153,8 @@ for i = 1:options.maxNodes
     end
     
     % If not, go fish
-    [qNew,t,Xk,Uk,nearI,nodeReach] = addNodeDynamicsReachability(vBound,vObs1,vObs2,qGoal,node,nodeReach,options.gaussWeight,options.M,options.pathLengthRRT,ac,regUnion,sys,options);
+    [qNew,t,Xk,Uk,nearI,nodeReach] = addNodeDynamicsReachability(vBound,vObs1,vObs2,qGoal,node,nodeReach, ...
+        options.gaussWeight,options.M,options.pathLengthRRT,ac,regUnion,sys,options);
     if isempty(t) || isempty(qNew)
 %         disp('add node failed.')
         break

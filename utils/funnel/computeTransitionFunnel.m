@@ -127,15 +127,11 @@ for funindx = 1:maxFunTrials
             %                 end
             
             ballTestProj = reg.projection(sys,ballTest);
-            
-            noFinalEllipsoidRegionViolation = true;
             if ~isempty(ballTestProj)
                 figure(500), plot(ballTestProj,'g',5)
-                
-                [H,K] = double(regTrans.goal.p);
-                hpp = hyperplane(H',K');
-                noFinalEllipsoidRegionViolation = ~any(intersect(ballTestProj,hpp,'u'));
             end
+            
+            noFinalEllipsoidRegionViolation = regTrans.goal.regionContainsEllipsoid(sys,ballTest);
             
             if noInvarViolation && noFinalPointViolation && noFinalEllipsoidFunnelViolation && noFinalEllipsoidRegionViolation ...
                     && length(x0) > 1 && length(x0) < maxTrajLength,

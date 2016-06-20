@@ -25,10 +25,8 @@ disp('Checking the computed funnel...')
 
 % Determine if the final ellipse is invariant to the goal region
 % NB: this should be alreay covered by the trajectory checks, but do it anyway for modularity.
-[H,K] = double(regGoal.p);
-hpp = hyperplane(H',K');
-ellProj = projection(ac,sys);
-if intersect(ellProj(end),hpp,'u')
+ell = ellipsoid(ac,sys);
+if regGoal.regionContainsEllipsoid(sys,ell(end));
     error('Final computed ellipse of the computed funnel is not contained inside the final region.  Adjust rho_if or Qf.')
 end
 
@@ -36,8 +34,7 @@ end
 % the final ellipse to fit 
 % NB: assumes we are using the same controller/dynamics throughout.  Also
 % assumes the final ellipse is a ball.
-[H,K] = double(reg.init.p);
-hpp = hyperplane(H',K');
+
 t = ac.x0.getTimeVec;
 
 isectIdx = [];
@@ -58,9 +55,10 @@ if ~debug
         [~,~,H] = sys.getRegNonRegStates([],centerTest,[]);
                     
         ballTest = ellipsoid(centerTest,inv(sys.sysparams.Qf));
-        ballTestProj = projection(ballTest,H(1:2,:)');
         
-        if ~intersect(ballTestProj,hpp,'u')  % if contained within the region, check that it is also contained within the funnel.
+        isEllipsoidContainedInsideRegion = reg.regionContainsEllipsoid(sys,ballTest);
+        
+        if isEllipsoidContainedInsideRegion  % if contained within the region, check that it is also contained within the funnel.
             
             isContained = ac.funnelContainsEllipsoid(sys,ballTest,100);
             
@@ -83,14 +81,10 @@ if ~debug
         isectIdxTest = intersect(isectIdx1,isectIdx2);
         isectIdx = [];
         for i = isectIdxTest;
-            % TODO: could this go into any of the existing classes, i.e. Region?
-            [center,Qell] = double(ellProj(i));
-            xyPoint = ellipsoidrand(center,Qell,20);  % we know this is 2-D, so can get away with a handful of boundary points
-            for j = 1:size(xyPoint,1)
-                if ~isinside(vertcat(reg.init.p),xyPoint) || ~isinside(vertcat(reg.goal.p),xyPoint)
-                    isectIdx = [isectIdx; i];
-                    break
-                end
+            isInsideUnion = reg.union.regionContainsEllipsoid(sys,ell(i));
+            if ~isInsideUnion
+                isectIdx = [isectIdx; i];
+                break
             end
         end
         
