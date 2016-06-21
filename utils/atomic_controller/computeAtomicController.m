@@ -25,8 +25,8 @@ disp('Checking the computed funnel...')
 
 % Determine if the final ellipse is invariant to the goal region
 % NB: this should be alreay covered by the trajectory checks, but do it anyway for modularity.
-ell = ellipsoid(ac,sys);
-if regGoal.regionContainsEllipsoid(sys,ell(end));
+ell = ac.ellipsoid;
+if ~regGoal.regionContainsEllipsoid(sys,ell(end));
     error('Final computed ellipse of the computed funnel is not contained inside the final region.  Adjust rho_if or Qf.')
 end
 

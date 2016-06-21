@@ -81,14 +81,14 @@ classdef QuadraticAC < PolynomialAC
             if nargin > 2
                 % makes sense to assume only one ac in this case
                 [c,~] = double(obj.ell(idx));
-                [~,~,H] = sys.getRegNonRegStates([],c,[]);
+                [~,~,H] = getRegNonRegStates(sys,[],c,[]);
                 Eproj = projection(obj.ell(idx),H(1:2,:)');
             else
                 for i = 1:length(obj)
                     ell = obj(i).ell;
                     for j = 1:length(ell)
                         [c,~] = double(ell(j));
-                        [~,~,H] = sys.getRegNonRegStates([],c,[]);
+                        [~,~,H] = getRegNonRegStates(sys,[],c,[]);
                         Eproj(j,i) = projection(ell(j),H(1:2,:)');
                     end
                 end

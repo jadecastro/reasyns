@@ -13,6 +13,9 @@ classdef UnicyclePlant < DrakeSystem
             obj = setOutputFrame(obj,getStateFrame(obj));  % allow full state feedback
             
             obj = setInputLimits(obj,-obj.sysparams.max_w,obj.sysparams.max_w);
+            
+            obj.sysparams.stateLimits = [-10 -10 -pi; 10 10 pi];
+            obj.sysparams.isOutputLinear = 0;
         end
         
         function [xdot, df, d2f, d3f] = dynamics(obj,t,x,u)

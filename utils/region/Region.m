@@ -205,7 +205,7 @@ classdef Region < handle
             
             ellTestProj = obj.projection(sys,ell);  % Returns empty if not an orthogonal basis (often the case if nonlinear)
             
-            if ~isempty(ellTestProj) && sys.isOutputLinear
+            if ~isempty(ellTestProj) && sys.sysparams.isOutputLinear
                 res = ~any(intersect(ellTestProj,obj.hpp,'u'));
                 
             else  % use a sample-based approximation with no guarantee that a declared containment is actually true
