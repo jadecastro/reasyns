@@ -2,7 +2,8 @@ classdef UnicyclePlant < DrakeSystem
     % Defines the dynamics for the Dubins car/unicycle model.
     
     properties
-        sysparams;
+        sysparams
+        v
     end
     
     methods
@@ -16,25 +17,32 @@ classdef UnicyclePlant < DrakeSystem
             
             obj.sysparams.stateLimits = [-10 -10 -pi; 10 10 pi];
             obj.sysparams.isOutputLinear = 0;
+            
+            obj.v = sysparams.v;
         end
         
         function [xdot, df, d2f, d3f] = dynamics(obj,t,x,u)
             theta = x(3);
-            xdot = [obj.sysparams.v*cos(theta);  obj.sysparams.v*sin(theta); u(1)];
+            xdot = [obj.v*cos(theta);  obj.v*sin(theta); u(1)];
             
             if (nargout>1)
                 [df,d2f,d3f]= dynamicsGradientsUnicycle(obj,t,x,u,nargout-1);
             end
         end
-        
-        function y = output(obj,t,x,u)
-            y = x;
-        end
             
+        function prepareModelGradients(obj)
+            taylorOrder = 3;
+            generateGradients('dynamics',taylorOrder,'dynamicsGradientsUnicycle',obj,0,randn(obj.sysparams.n,1),0);
+        end
+        
         function x = getInitialState(obj)
             x = [0 0 0]';
         end
-        
+                
+        function y = output(obj,t,x,u)
+            y = x;
+        end
+
         function y = state2SEconfig(obj,t,x,u)
             if size(x,1) == 1
                 x = x';

@@ -46,7 +46,7 @@ classdef TwoDOFManipulatorPlant < Manipulator
             obj.sysparams.isOutputLinear = 0;
             
         end
-        
+                
         function [H,C,B] = manipulatorDynamics(obj,q,qd)
             % keep it readable:
             m1=obj.m1; m2=obj.m2; l1=obj.l1; g=obj.g; lc1=obj.lc1; lc2=obj.lc2; b1=obj.b1; b2=obj.b2;
@@ -77,6 +77,12 @@ classdef TwoDOFManipulatorPlant < Manipulator
                 [df,d2f,d3f]= dynamicsGradientsTwoDOFManipulator(obj,t,x,u,nargout-1);
             end
         end
+        
+        function prepareModelGradients(obj)
+            taylorOrder = 3;
+            generateGradients('dynamics',taylorOrder,'dynamicsGradientsTwoDOFManipulator',obj,0,randn(obj.sysparams.n,1),0);
+        end
+
         
         function x = getInitialState(obj)
             x = 0.1*randn(4,1);
