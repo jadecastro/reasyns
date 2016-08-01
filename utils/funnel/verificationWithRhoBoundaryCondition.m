@@ -268,7 +268,7 @@ function L=findMultipliers(x,V,Vdot,rho,rhodot,options)
 
   N = length(V)-1;
  
-  parfor i=1:N  
+  parfor i=1:N
     prog = mssprog;
     Lxmonom = monomials(x,0:options.degL1);
     [prog,l] = new(prog,length(Lxmonom),'free');

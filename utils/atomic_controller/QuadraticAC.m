@@ -162,7 +162,15 @@ classdef QuadraticAC < PolynomialAC
 %                         ~nonIntersectingPlanes{2}
                         res1 = sum(vertcat(~nonIntersectingPlanes{1}));
                         res2 = sum(vertcat(~nonIntersectingPlanes{2}));
-                        if ~((res1 == 0 || res2 == 0) || (res1 == 1 && res2 == 1)),
+                        res3 = false;
+                        if (res1 == 1 && res2 == 1) 
+                            i1 = find(vertcat(~nonIntersectingPlanes{1}));
+                            i2 = find(vertcat(~nonIntersectingPlanes{2}));
+                            [H1,K1] = double(hpp{1}(i1));
+                            [H2,K2] = double(hpp{2}(i2));
+                            res3 = (all(H1 ==-H2) && all(K1 == -K2));
+                        end
+                        if ~((res1 == 0 || res2 == 0) || res3),
                             res = false;
                             if nargout < 2, break; end
                             idx = [idx; i];
