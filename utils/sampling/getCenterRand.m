@@ -18,8 +18,8 @@ maxStates = stateLimits(2,:);
 
 [idxRegStates,idxNonRegStates] = getRegNonRegStates(sys);
 
-figure(90), plot(reg)
-hold on
+%figure(90), plot(reg)
+%hold on
 
 if isempty(varargin)
     tmpNonRegStates = minNonRegStates + (maxNonRegStates - minNonRegStates).*rand(1,length(idxNonRegStates));
@@ -90,7 +90,7 @@ if indx == 100
         
         tmpStates = minStates' + (maxStates - minStates)'.*rand(n,1);
         tmpRegStates = sys.state2SEconfig([],tmpStates,[]);
-        figure(90), plot(tmpRegStates(1),tmpRegStates(2),'ro')
+        %figure(90), plot(tmpRegStates(1),tmpRegStates(2),'ro')
     end
 end
 
