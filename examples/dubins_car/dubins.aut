@@ -1,0 +1,4 @@
+State 0 with rank 0 -> <rob1_A_rc:1, rob1_B_rc:0, rob1_A:0, rob1_B:1>
+	With successors : 0, 1
+State 1 with rank 0 -> <rob1_A_rc:0, rob1_B_rc:1, , rob1_A:0, rob1_B:1>
+	With successors : 1
