@@ -168,7 +168,7 @@ classdef QuadraticAC < PolynomialAC
                             i2 = find(vertcat(~nonIntersectingPlanes{2}));
                             [H1,K1] = double(hpp{1}(i1));
                             [H2,K2] = double(hpp{2}(i2));
-                            res3 = (all(H1 ==-H2) && all(K1 == -K2));
+                            res3 = all(abs((H1+H2) < 1e-5)) && all(abs((K1+K2) < 1e-5));
                         end
                         if ~((res1 == 0 || res2 == 0) || res3),
                             res = false;

@@ -6,6 +6,7 @@ function [ac_inward, bc_inward, errTrans, existingReg, newRegArray, reg] = compu
 global ME
 
 debug = false;
+doPlot = false;
 
 maxFunnelsTrans = options.maxFunnelsTrans;
 maxFunTrials = options.maxFunTrials;
@@ -127,7 +128,9 @@ for indexTrans = indexTransPostVect'
     clf
     hold on, axis equal
     plot(reg(aut.label{vertcat(aut.state{:}) == indexState}),'r')
-    plot(acNext,sys,3)
+    if doPlot
+        plot(acNext,sys,3)
+    end
 %     plot(acLast,sys,3)
     
     % ==========================
@@ -381,7 +384,9 @@ for indexTrans = indexTransPostVect'
             ac = [ac; acNew];
             bc = [bc; bcNew];
             
-            plot(acNew,sys,5)
+            if doPlot
+                plot(acNew,sys,5)
+            end
             
             if ~containsLevelSet
                 funFail = true;

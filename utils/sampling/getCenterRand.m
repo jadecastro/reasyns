@@ -5,6 +5,8 @@ function [randPt] = getCenterRand(sys,reg,ac_trans,varargin)
 % directions are sampled from a Gaussian centered about the centroid of the
 % region and any other (bounded) directions are sampled uniformly.
 
+doPlot = false;
+
 n = sys.sysparams.n;
 limsNonRegState = sys.sysparams.limsNonRegState;
 stateLimits = sys.sysparams.stateLimits;
@@ -20,6 +22,10 @@ maxStates = stateLimits(2,:);
 
 %figure(90), plot(reg)
 %hold on
+if doPlot
+    figure(90), plot(reg)
+    hold on
+end
 
 if isempty(varargin)
     tmpNonRegStates = minNonRegStates + (maxNonRegStates - minNonRegStates).*rand(1,length(idxNonRegStates));
@@ -91,6 +97,9 @@ if indx == 100
         tmpStates = minStates' + (maxStates - minStates)'.*rand(n,1);
         tmpRegStates = sys.state2SEconfig([],tmpStates,[]);
         %figure(90), plot(tmpRegStates(1),tmpRegStates(2),'ro')
+        if doPlot
+            figure(90), plot(tmpRegStates(1),tmpRegStates(2),'ro')
+        end
     end
 end
 

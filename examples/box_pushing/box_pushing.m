@@ -11,7 +11,7 @@ configAndProblemDomainName = 'box_pushing';
 sysparams(1).n = 3; % number of states
 sysparams(1).m = 1; % number of inputs
 sysparams(1).v = 0.08;
-sysparams(1).max_w = 0.13*3;  % maximum angular velocity of the robot
+sysparams(1).max_w = 0.13*5;  % maximum angular velocity of the robot
 sysparams(1).limsNonRegState = [-pi; pi];
 sysparams(1).isCyclic = [0 0 1]';
 
@@ -24,7 +24,7 @@ sysparams(1).distAccept = 0.1;
 sysparams(1).Q = 100*diag([0.01 0.01 0.01]); %0.01*eye(sysparams.n);
 % sysparams(1).ctrloptions.R = 0.007;
 sysparams(1).R = 0.05;
-sysparams(1).Qf = 10*eye(sysparams(1).n);  % To enable 'fast' rejection of bad trajectories (prior to the funnel-creation step), we require the final ellipsoid to be a ball
+sysparams(1).Qf = 100*eye(sysparams(1).n);  % To enable 'fast' rejection of bad trajectories (prior to the funnel-creation step), we require the final ellipsoid to be a ball
 
 % Sampling parameters
 sysparams(1).Qrand = 0.1*eye(sysparams(1).n);

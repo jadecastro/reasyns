@@ -5,6 +5,7 @@ function [ac_trans, errTrans] = computeTransitionFunnel(sysArray,reg,regDefl,reg
 global ME
 
 debug = false;
+doPlot = false;
 
 maxFunnelsTrans = options.maxFunnelsTrans;
 maxFunTrials = options.maxFunTrials;
@@ -187,6 +188,7 @@ for funindx = 1:maxFunTrials
         % TODO: create the isinside method
         if ~isinside(ac,[regTrans.init; regTrans.goal],sys,options.sampSkipValid)
             disp('... computed funnel does not lie in the union of the designated regions'); 
+            %keyboard
             if ~debug
                 funFail = true;
             end
@@ -201,7 +203,9 @@ for funindx = 1:maxFunTrials
         
         ac_trans = [ac_trans; ac];
         
-        plot(ac,sys,5)
+        if doPlot
+            plot(ac,sys,5)
+        end
         %plot(ac.x0,'k',3)
         
 %         disp(['Iteration #',num2str(i),' / ',num2str(maxFunnelsTrans(iModeToPatch))])

@@ -6,6 +6,7 @@ function [ac_inward, errTrans] = computeInwardJoiningFunnel(sysArray,reg,regDefl
 global ME
 
 debug = true;
+doPlot = false;
 
 maxFunnelsTrans = options.maxFunnelsTrans;
 maxFunTrials = options.maxFunTrials;
@@ -92,7 +93,9 @@ for funindx = 1:maxFunTrials
             acLast = acTrans{indexTransPre};
             
             sys = sysArray(aut.f{vertcat(aut.state{:}) == aut.trans{indexTransPost}(1)}); % Assign the dynamics according to the transition to be taken.
-            plot(acLast,sys,3)
+            if doPlot
+                plot(acLast,sys,3)
+            end
             %plot(acNext,sys,3)
             
             regSafeSG = getRegTrans(reg,regBnd,aut,indexTransPre);
@@ -159,7 +162,7 @@ for funindx = 1:maxFunTrials
                     end
                     
                     ballTestProj = reg.projection(sys,ballTest);
-                    if ~isempty(ballTestProj)
+                    if ~isempty(ballTestProj) && doPlot
                         figure(500), plot(ballTestProj,'g',5)
                     end
                     
@@ -237,7 +240,9 @@ for funindx = 1:maxFunTrials
 
             ac_inward = [ac_inward; ac];
             
-            plot(ac,sys,5)
+            if doPlot
+                plot(ac,sys,5)
+            end
             %plot(ac.x0,'k',3)
             
 %             disp(['Iteration #',num2str(i),' / ',num2str(maxFunnelsTrans(indexState))])
