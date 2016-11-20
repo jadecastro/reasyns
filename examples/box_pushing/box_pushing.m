@@ -24,7 +24,8 @@ sysparams(1).distAccept = 0.1;
 sysparams(1).Q = 100*diag([0.01 0.01 0.01]); %0.01*eye(sysparams.n);
 % sysparams(1).ctrloptions.R = 0.007;
 sysparams(1).R = 0.05;
-sysparams(1).Qf = 100*eye(sysparams(1).n);  % To enable 'fast' rejection of bad trajectories (prior to the funnel-creation step), we require the final ellipsoid to be a ball
+sysparams(1).Qf = 10*eye(sysparams(1).n);  % Final ellipsoid in the transition funnels. Require it to be a ball.
+sysparams(1).Qf_join = 100*eye(sysparams(1).n);  % Final ellipsoid in the join funnels. Require it to be a ball.
 
 % Sampling parameters
 sysparams(1).Qrand = 0.1*eye(sysparams(1).n);
@@ -48,14 +49,14 @@ options.Tfin = 1000;  % Absolute cutoff time
 options.maxTrajLength = 200/options.TstepTraj; 
 
 % RRT parameters
-options.pathLengthRRT = 0.2;
-options.maxNodes = 200;
+options.pathLengthRRT = 0.05;
+options.maxNodes = 400;
 options.sampleSkipColl = 2;
 options.gaussWeight = 0.9;  % Weight [0-1] on Gaussian sampling biasing at qGoal
 options.M = diag([0.1, 0.1, 1]);    % Covariance matrix
 
 % Final rho
-options.rhof = .5;
+options.rhof = 0.5;
 
 % Downsampling
 options.sampSkipColl = 5;  % skipped samples in collision check -- higher value speed up collision checks but may miss parts of the trajectory

@@ -1,4 +1,4 @@
-function [ac,c,isectIdx] = computeAtomicController(u0,x0,sys,reg,ellToCompose,options,varargin)
+function [ac,c,isectIdx] = computeAtomicController(u0,x0,sys,reg,ellToCompose,options,transFlag,varargin)
 % reg must contain the field 'init'; if it also includes 'goal' and
 % 'union', then additional appropriate funnel containment checks will be made.
 % 
@@ -13,12 +13,18 @@ debug = true;
 
 rho_if = varargin{1};
 
-[ac, c] = recursiveControllerComputation(u0,x0,sys,reg,ellToCompose,options,rho_if);
+[ac, c] = recursiveControllerComputation(u0,x0,sys,reg,ellToCompose,options,transFlag,rho_if);
 
 if isfield(reg,'goal')
     regGoal = reg.goal;
 elseif isfield(reg,'init')
     regGoal = reg.init;
+end
+
+if transFlag
+    Qf = sys.sysparams.Qf;
+else
+    Qf = sys.sysparams.Qf_join;
 end
 
 disp('Checking the computed funnel...')
@@ -53,8 +59,8 @@ if ~debug
         end
         
         [~,~,H] = sys.getRegNonRegStates([],centerTest,[]);
-                    
-        ballTest = ellipsoid(centerTest,inv(sys.sysparams.Qf));
+        
+        ballTest = ellipsoid(centerTest,inv(Qf));
         
         isEllipsoidContainedInsideRegion = reg.regionContainsEllipsoid(sys,ballTest);
         
@@ -108,7 +114,7 @@ end
 
 end
 
-function [ac,c] = recursiveControllerComputation(u0,x0,sys,reg,ellToCompose,options,varargin)
+function [ac,c] = recursiveControllerComputation(u0,x0,sys,reg,ellToCompose,options,transFlag,varargin)
 %
 
 ac = [];
@@ -123,7 +129,7 @@ end
 try
     rho_if = varargin{1};
     if length(varargin) == 1, endSegmentFlag = true; else endSegmentFlag = varargin{2}; end
-    [ac,c] = computeAtomicControllerSegment(u0,x0,sys,regInvariant,ellToCompose,rho_if,options,endSegmentFlag);
+    [ac,c] = computeAtomicControllerSegment(u0,x0,sys,regInvariant,ellToCompose,rho_if,options,endSegmentFlag,transFlag);
 
 catch ME
     if strcmp(ME.identifier, 'Drake:PolynomialTrajectorySystem:InfeasibleRho')
@@ -134,9 +140,9 @@ catch ME
             
             figidx = 20;
             
-            disp('two')
+            %disp('two')
             %TODO: ensure containment of sequenced funnels - reverse ordering 
-            [ac2, c2] = recursiveControllerComputation(u02,x02,sys,reg,ellToCompose,options,rho_if,endSegmentFlag);
+            [ac2, c2] = recursiveControllerComputation(u02,x02,sys,reg,ellToCompose,options,transFlag,rho_if,endSegmentFlag);
             
             t0 = ac2.P.getTimeVec();
             
@@ -149,8 +155,8 @@ catch ME
             %             Qf = getMaximalQ(funnelI2,Xk2(1+Noverlap,:));
             %keyboard
             
-            disp('one')
-            [ac1, c1] = recursiveControllerComputation(u01,x01,sys,reg,ellToCompose,options,rho_if,false);
+            %disp('one')
+            [ac1, c1] = recursiveControllerComputation(u01,x01,sys,reg,ellToCompose,options,transFlag,rho_if,false);
             
             t0 = ac1.P.getTimeVec();
             

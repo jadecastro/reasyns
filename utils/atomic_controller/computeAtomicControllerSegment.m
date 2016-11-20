@@ -1,4 +1,4 @@
-function [ac,c] = computeAtomicControllerSegment(u0,x0,sys,regMode,ellToCompose,rho_if,options,endSegmentFlag)
+function [ac,c] = computeAtomicControllerSegment(u0,x0,sys,regMode,ellToCompose,rho_if,options,endSegmentFlag,transFlag)
 %
 % Main function for computing funnels based on a quadratic Lyapunov function.
 %
@@ -16,7 +16,11 @@ sampSkip = options.sampSkipFun;
 
 Q = sys.sysparams.Q;
 R = sys.sysparams.R;
-Qf = sys.sysparams.Qf;
+if transFlag
+    Qf = sys.sysparams.Qf;
+else
+    Qf = sys.sysparams.Qf_join;
+end
 
 x = msspoly('x',sys.sysparams.n);
 

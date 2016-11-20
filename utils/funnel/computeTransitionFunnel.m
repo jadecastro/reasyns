@@ -7,6 +7,8 @@ global ME
 debug = false;
 doPlot = false;
 
+transFlag = true;
+
 maxFunnelsTrans = options.maxFunnelsTrans;
 maxFunTrials = options.maxFunTrials;
 maxTrajLength = options.maxTrajLength;
@@ -168,7 +170,7 @@ for funindx = 1:maxFunTrials
             rhof = options.rhof;   %final rho.
             options.isMaximization = true;
             
-            [ac, c] = computeAtomicController(u0,x0,sys,regTrans,ellToCompose,options,rhof);
+            [ac, c] = computeAtomicController(u0,x0,sys,regTrans,ellToCompose,options,transFlag,rhof);
             ac = ac.setTransition(iModeToPatch,iModeSuccessor);
             
             funFail = false;

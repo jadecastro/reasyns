@@ -52,7 +52,10 @@ plot(regUnion)
 hold on
 axis equal
 
-QinvBallTest = inv(sys.sysparams.Qf);
+% Assume we only use the RRT for the join or reactive join funnels.
+Qf = sys.sysparams.Qf_join;
+if ~isdiag(Qf) && ~(max(diag(Qf)) == min(diag(Qf))), error('sys.sysparams.Qf_join must be a ball.'); end
+QinvBallTest = inv(Qf);
 
 for i = 1:options.maxNodes
     disp(['RRT iteration: ',num2str(i)]);
@@ -60,7 +63,7 @@ for i = 1:options.maxNodes
     %     plotNewNode(node,edge,'k') % uncomment to plot- will slow things down
     plotNewReachNode(sys,node,nodeReach,newNodeCount,'g') % uncomment to plot- will slow things down
     
-    % Test whether any elements in V are in the goal region (TODO: for now-- must be at least two points in the vector)
+    % Test whether any elements in V are in the goal region (TODO: for now -- there must be at least two points in the vector)
     if i > 1 && edge(end,1) ~= 1  % want at least 1 segment!
         %isect1 = [];
         isect2 = [];

@@ -8,6 +8,8 @@ global ME
 debug = true;
 doPlot = false;
 
+transFlag = false;
+
 maxFunnelsTrans = options.maxFunnelsTrans;
 maxFunTrials = options.maxFunTrials;
 maxTrajLength = options.maxTrajLength;
@@ -154,7 +156,7 @@ for funindx = 1:maxFunTrials
                     noFinalPointViolation = isinside(regTrans.goal,sys,double(x0,ttmp(end))');
                     
                     noFinalEllipsoidFunnelViolation = true;
-                    ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof^2*inv(sys.sysparams.Qf));
+                    ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof^2*inv(sys.sysparams.Qf_join));
                     if ~debug
                         if ~isempty(acNext(jpost)) % any transition funnels have been already computed for any of the successors and only one outgoing transition from the successor
                             noFinalEllipsoidFunnelViolation = acNext(jpost).funnelContainsEllipsoid(sys,ballTest,100);
@@ -205,7 +207,7 @@ for funindx = 1:maxFunTrials
                     rhof = options.rhof;   %final rho.  TODO: handle the more general case and get it from containment
                     options.isMaximization = true;
                     
-                    [ac, c] = computeAtomicController(u0,x0,sys,regTrans,ellToCompose,options,rhof);
+                    [ac, c] = computeAtomicController(u0,x0,sys,regTrans,ellToCompose,options,transFlag,rhof);
                     
                     funFail = false;
                     
@@ -214,7 +216,7 @@ for funindx = 1:maxFunTrials
                     plot(ac.x0,'k',5)
                     
                 catch ME
-                    %                 rethrow(ME)
+                    % rethrow(ME)
                     disp(ME.message)
                     disp('something went wrong with the funnel computation...  kicking back out to the main script.')
                     errTrans = trans(:,2)==indexState;

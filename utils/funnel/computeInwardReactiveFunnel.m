@@ -8,6 +8,8 @@ global ME
 debug = false;
 doPlot = false;
 
+transFlag = false;
+
 maxFunnelsTrans = options.maxFunnelsTrans;
 maxFunTrials = options.maxFunTrials;
 maxTrajLength = options.maxTrajLength;
@@ -222,7 +224,7 @@ for indexTrans = indexTransPostVect'
                 
                 noFinalEllipsoidFunnelViolation = true;
                 if ~debug
-                    ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof^2*inv(sys.sysparams.Qf));
+                    ballTest = ellipsoid(double(x0,ttmp(end)),options.rhof^2*inv(sys.sysparams.Qf_join));
                     if ~isempty(acAcceptCriterion) % any transition funnels have been already computed for any of the successors and only one outgoing transition from the successor
                         noFinalEllipsoidFunnelViolation = acAcceptCriterion.funnelContainsEllipsoid(sys,ballTest,100);
                     end
@@ -263,7 +265,7 @@ for indexTrans = indexTransPostVect'
                 
                 rhof = options.rhof;   %final rho.  TODO: handle the more general case and get it from containment
                 options.isMaximization = true;
-                [acNew, cNew, isectIdx] = computeAtomicController(u00,x00,sys,regMode,ellToCompose,options,rhof);
+                [acNew, cNew, isectIdx] = computeAtomicController(u00,x00,sys,regMode,ellToCompose,options,transFlag,rhof);
                 acNew.setTransition(indexState);
                 
                 plot(acNew.x0,'k',5)
@@ -309,7 +311,7 @@ for indexTrans = indexTransPostVect'
                             % Compute a new atomic controller that minimizes the funnel (in contrast to the original method that maximizes it).
                             % The minimization is used here to find a suitable initial condition for the CBF.
                             options.isMaximization = false;
-                            [acPre] = computeAtomicController(u0,x0,sys,regMode,ellToCompose,options,rhoi);
+                            [acPre] = computeAtomicController(u0,x0,sys,regMode,ellToCompose,options,transFlag,rhoi);
                             acPre.setTransition(indexState);
                             
                         end
