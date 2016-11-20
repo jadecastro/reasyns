@@ -196,6 +196,7 @@ classdef QuadraticAC < PolynomialAC
             % Checks whether or not the funnel contains a given ellipsoid.
             % Returns 'true' if contained and 'false' otherwise.
             
+            %keyboard;
             d = 100;
             xFail = [];
             
@@ -214,7 +215,7 @@ classdef QuadraticAC < PolynomialAC
             
             % Loop over all randomly-selected points
             for i = 1:size(x,1)
-                if ~obj.isinternal(x(i,:),'u',sys)
+                if ~obj.isinternal(x(i,:)','u',sys)
                     res = false;
                     xFail = [xFail; x(i,:)];
                     if nargout < 2

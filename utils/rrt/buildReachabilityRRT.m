@@ -2,7 +2,7 @@ function [path] = buildReachabilityRRT(vBound,vObs1,vObs2,ellBndInv11,ellBndInv2
 % BUILDREACHABILITYRRT: Computes a path from qInit to qGoal using RRT assuming a circular robot. 
 % Implements the reachability-based rejection sampling technique of Shkolnik, Walter, and Tedrake, '09 
 
-debug = true;
+debug = false;
 
 if isstruct(reg)
     regUnion = reg.union;
@@ -77,7 +77,7 @@ for i = 1:options.maxNodes
             isect2(k) = true;
          
             for acidx = 1:length(ac)
-                isect2(k) = isect2(k) & isinternal(ac(acidx),Xk(k,:)','u');
+                isect2(k) = isect2(k) & isinternal(ac(acidx),Xk(k,:)','u',sys);
                 if debug && norm(Xk(k,1:2)' - qGoal(1:2)') < sys.sysparams.closeEnough
                     isect2(k) = true;
                 end
@@ -96,11 +96,13 @@ for i = 1:options.maxNodes
             
             %             if ~isect1(k) && ~isect2(k) && k ~= length(t) && k > 10
             if isect2(k) % && k > 10 && k ~= length(t) 
-                
+                disp('   Found an intersection with the goal set. Checking for funnel composition.')
                 ballTest = ellipsoid(Xk(k,:)',QinvBallTest);  % construct a ball representing the expected funnel level set at the final point along the trajectory
-                
+                %keyboard;
                 if ~isempty(ac)
-                    acceptCriterion = ac.funnelContainsEllipsoid(sys,ballTest,100);
+                    acceptCriterion = ac.funnelContainsEllipsoid(sys,ballTest);
+                    %[acceptCriterion,xFail] = ac.funnelContainsEllipsoid(sys,ballTest);
+                    %disp(size(xFail,1));
                 elseif ~isempty(regGoal)
                     % acceptCriterion = regGoal.isinside(sys,Xk(k,:)');
                     acceptCriterion = regGoal.regionContainsEllipsoid(sys,ballTest);
