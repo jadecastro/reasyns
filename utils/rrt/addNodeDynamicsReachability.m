@@ -25,6 +25,9 @@ for i = 1:maxTrials %while isect
             % qRand = [min(vBound) -pi] + [(max(vBound) - min(vBound)) 2*pi].*rand(1,n);
             qRand = getCenterRand(sys,reg,[]);
         end
+        %figure(3), plot(qRand(1), qRand(2), 'bo');
+        q2d = sys.state2SEconfig([],qRand,[]);
+        figure(3), plot(q2d(1), q2d(2), 'bo');
         
         % Set qNear as the nearest coordinate in V (in configuration space) to qRand
         for j = 1:size(node,1)
@@ -109,7 +112,7 @@ if i == maxTrials,
     qNew = [];
     disp(['Cannot add node ',num2str(node),' to tree'])
 else
-    % Since qNew is collision free, save the id of the parent and remove the child node from the reachability tree 
+    % Since qNew is collision free, save the id of the parent and remove the child node from the reachability tree
     nearI = nodeReach(nearReachI,1);
     nodeReach(nearReachI,:) = [];
 end

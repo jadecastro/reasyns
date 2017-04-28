@@ -24,8 +24,8 @@ sysparams(1).distAccept = 0.1;
 sysparams(1).Q = 100*diag([0.01 0.01 0.01]); %0.01*eye(sysparams.n);
 % sysparams(1).ctrloptions.R = 0.007;
 sysparams(1).R = 0.05;
-sysparams(1).Qf = 10*eye(sysparams(1).n);  % Final ellipsoid in the transition funnels. Require it to be a ball.
-sysparams(1).Qf_join = 50*eye(sysparams(1).n);  % Final ellipsoid in the join funnels. Require it to be a ball.
+sysparams(1).Qf = 10*eye(sysparams(1).n);  % Final ellipsoid for each transition funnel. Require it to be a ball.
+sysparams(1).Qf_join = 50*eye(sysparams(1).n);  % Final ellipsoid for each join funnel. Require it to be a ball.
 
 % Sampling parameters
 sysparams(1).Qrand = 0.1*eye(sysparams(1).n);

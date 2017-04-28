@@ -106,6 +106,7 @@ for i = 1:options.maxNodes
                 elseif ~isempty(regGoal)
                     % acceptCriterion = regGoal.isinside(sys,Xk(k,:)');
                     acceptCriterion = regGoal.regionContainsEllipsoid(sys,ballTest);
+                    1
                 else
                     error('Unhandled exception. acceptCriterion must be defined by either supplying a goal atomic controller or a goal region.')
                 end
