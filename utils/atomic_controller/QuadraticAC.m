@@ -269,14 +269,14 @@ classdef QuadraticAC < PolynomialAC
             drawnow
         end
         
-        function u = execute(obj,x)
+        function u = evaluate(obj,x)
             %
             % look up the command input given the state
             
             teval = 0.02;
             
             % Use a weighted Euclidean distance to resolve the current state of the TVLQR controller.
-            weights = 1 * (~obj.sys.params.isCyclic) + 0.2 * obj.sys.params.isCyclic;
+            weights = 1 * (~obj.sys.sysparams.isCyclic) + 0.2 * obj.sys.sysparams.isCyclic;
             
             ell = ellipsoid(obj);
             t_trials = getTimeVec(obj.x0);
@@ -287,9 +287,9 @@ classdef QuadraticAC < PolynomialAC
                 xtmp = double(obj.x0, t_trials(i));
                 % unwrap the heading cyclic coordinate
                 [testMinDist, minIdx] = min([
-                    norm(weights.*(xtmp - (x+obj.sys.params.isCyclic*obj.sys.params.limsNonRegState(1)))) 
+                    norm(weights.*(xtmp - (x+obj.sys.sysparams.isCyclic*obj.sys.sysparams.limsNonRegState(1)))) 
                     norm(weights.*(xtmp - x)) 
-                    norm(weights.*(xtmp - (x+obj.sys.params.isCyclic*obj.sys.params.limsNonRegState(2))))
+                    norm(weights.*(xtmp - (x+obj.sys.sysparams.isCyclic*obj.sys.sysparams.limsNonRegState(2))))
                     ]);
                 if testMinDist < minDelta
                     teval = t_trials(i);
@@ -306,9 +306,9 @@ classdef QuadraticAC < PolynomialAC
             K = K(end-length(u0)+1:end,:);
             
             u_test = [
-                (K*(x+obj.sys.params.isCyclic*obj.sys.params.limsNonRegState(1) - x0))'
+                (K*(x+obj.sys.sysparams.isCyclic*obj.sys.sysparams.limsNonRegState(1) - x0))'
                 (K*(x - x0))'
-                (K*(x+obj.sys.params.isCyclic*obj.sys.params.limsNonRegState(2) - x0))'
+                (K*(x+obj.sys.sysparams.isCyclic*obj.sys.sysparams.limsNonRegState(2) - x0))'
                 ]';
             % u_idx = abs(u_test(end,:)) == min(abs(u_test(end,:)));  
             u_ctrl = u_test(:,idxEval);

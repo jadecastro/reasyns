@@ -255,7 +255,7 @@ function [rho,rhointegral]=maximizeRho(x,V,Vdot,L,dts,Vmin,rhof,options)
   try
   rho = doubleSafe(prog(rho));
   catch ME
-      keyboard
+      %keyboard
       rethrow(ME)
   end
   rhointegral = doubleSafe(prog(rhointegral));

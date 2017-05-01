@@ -113,7 +113,7 @@ for funindx = 1:maxFunTrials
             end
                 
             figure(500), hold on, plot(x0,[],500)
-            
+            keyboard;
             % Check the trajectory for invariant violation, final point
             % violation of a successor funnel (if only one), and
             % violation of the successor region.
@@ -138,6 +138,7 @@ for funindx = 1:maxFunTrials
             
             if noInvarViolation && noFinalPointViolation && noFinalEllipsoidFunnelViolation && noFinalEllipsoidRegionViolation ...
                     && length(x0) > 1 && length(x0) < maxTrajLength,
+                funFail = false;
                 break,
             end
             disp('Trajectory incompatible with constraints; recomputing...')
@@ -147,16 +148,11 @@ for funindx = 1:maxFunTrials
             if ~noFinalEllipsoidRegionViolation, disp('... final ellipse not contained within the goal region'); end
         catch ME
             %  rethrow(ME)
+            funFail = true;
             disp('something went wrong with the trajectory computation... recomputing')
         end
     end
-    if trial2 == maxTrials2
-        funFail = true;
-        % error('Cannot find a feasible trajectory for this mode. Consider increasing the tree depth.')
-    else
-        funFail = false;
-    end
-    
+
     if ~funFail
         disp('Computing funnel....')
         

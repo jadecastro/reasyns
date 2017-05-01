@@ -215,7 +215,7 @@ classdef Region < handle
                 
                 res = true;
                 
-                % Loop over all randomly-selected points
+                % Loop over all randomly-selected points.
                 for i = 1:size(x,1)
                     if ~obj.isinside(sys,x(i,:))
                         res = false;
